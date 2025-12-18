@@ -24,7 +24,7 @@ export class BusinessController {
       : [];
     return await this.businessService.test(timeList);
   }
-  @Get('list')
+  @Get('list') //한번 더 시도
   async getBusinessList(
     @Query('type') type: string,
     @Query('areaIds[]') areaIds?: string[] | string,
