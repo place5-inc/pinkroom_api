@@ -12,8 +12,6 @@ import { DatabaseProvider } from './libs/db';
 import { HttpModule } from '@nestjs/axios';
 import { AzureBlobService } from './azure/blob.service';
 import { ScheduleModule } from '@nestjs/schedule';
-import { BusinessController } from './business/business.controller';
-import { BusinessService } from './business/business.service';
 import { AdminRepository } from './admin/admin.repository';
 const modules: ModuleMetadata = {
   imports: [
@@ -21,12 +19,7 @@ const modules: ModuleMetadata = {
     JwtModule.register({}),
     HttpModule,
   ],
-  controllers: [
-    UserController,
-    CommonController,
-    AdminController,
-    BusinessController,
-  ],
+  controllers: [UserController, CommonController, AdminController],
   providers: [
     DatabaseProvider,
     UserService,
@@ -35,7 +28,6 @@ const modules: ModuleMetadata = {
     AdminService,
     AzureBlobService,
     CommonService,
-    BusinessService,
   ],
 };
 

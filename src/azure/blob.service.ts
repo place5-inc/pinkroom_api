@@ -6,7 +6,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseProvider } from '../libs/db';
 import { v4 } from 'uuid';
 import { DateTime } from 'luxon';
-import { Image, isValidImage, BusinessMemberVO } from 'src/libs/types';
+import { Image, isValidImage } from 'src/libs/types';
 
 export type ContainerName = 'business-images';
 export type TableName = 'business_member' | 'business_images';

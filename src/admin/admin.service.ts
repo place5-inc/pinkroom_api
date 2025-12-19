@@ -6,26 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
-import {
-  BusinessVO,
-  Subway,
-  DTO,
-  BusinessServiceCategoryVO,
-  BusinessServiceItemVO,
-  BusinessSectionVO,
-  BusinessMemberVO,
-  BusinessReviewVO,
-  BusinessScheduleVO,
-  BusinessPriceVO,
-  Image,
-  BusinessDetailVO,
-  BusinessType,
-  BusinessStatusType,
-  BusinessSectionType,
-  isValidBusinessSectionType,
-  isValidBusinessReviewType,
-  BusinessReviewType,
-} from 'src/libs/types';
+import { DTO, Image } from 'src/libs/types';
 import { isEmpty, isNull } from 'src/libs/helpers';
 import { UpdateObjectExpression } from 'kysely/dist/cjs/parser/update-set-parser';
 import { DB } from 'src/libs/db/types';
@@ -50,6 +31,173 @@ export class AdminService {
         status: HttpStatus.OK,
         test,
         message: '',
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async addStyle(name: string) {
+    try {
+      const result = await this.db
+        .insertInto('code_hair_style')
+        .values({
+          name: name,
+        })
+        .outputAll('inserted')
+        .executeTakeFirst();
+
+      return {
+        status: HttpStatus.OK,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async updateStyle(id: number, name: string) {
+    try {
+      const result = await this.db
+        .updateTable('code_hair_style')
+        .set({
+          name: name,
+        })
+        .where('id', '=', id)
+        .execute();
+
+      return {
+        status: HttpStatus.OK,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async publishStyle(id: number, setOn: boolean) {
+    try {
+      const result = await this.db
+        .updateTable('code_hair_style')
+        .set({
+          published_at: setOn ? Date() : null,
+        })
+        .where('id', '=', id)
+        .execute();
+
+      return {
+        status: HttpStatus.OK,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+
+  async addDesign(styleId: number, name: string) {
+    try {
+      const result = await this.db
+        .insertInto('code_hair_design')
+        .values({
+          style_id: styleId,
+          name: name,
+        })
+        .outputAll('inserted')
+        .executeTakeFirst();
+
+      return {
+        status: HttpStatus.OK,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async updateDesign(id: number, name: string) {
+    try {
+      const result = await this.db
+        .updateTable('code_hair_design')
+        .set({
+          name: name,
+        })
+        .where('id', '=', id)
+        .execute();
+
+      return {
+        status: HttpStatus.OK,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async publishDesign(id: number, setOn: boolean) {
+    try {
+      const result = await this.db
+        .updateTable('code_hair_design')
+        .set({
+          published_at: setOn ? Date() : null,
+        })
+        .where('id', '=', id)
+        .execute();
+
+      return {
+        status: HttpStatus.OK,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async getPrompt(designId: number) {
+    try {
+      const item = await this.db
+        .selectFrom('prompt')
+        .where('design_id', '=', designId)
+        .select(['design_id as designId', 'ment'])
+        .execute();
+      return {
+        status: HttpStatus.OK,
+        item,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async updatePrompt(designId: number, ment: string) {
+    try {
+      const updateResult = await this.db
+        .updateTable('prompt')
+        .set({ ment })
+        .where('design_id', '=', designId)
+        .executeTakeFirst();
+
+      if (updateResult.numUpdatedRows === 0n) {
+        await this.db
+          .insertInto('prompt')
+          .values({
+            design_id: designId,
+            ment,
+          })
+          .execute();
+      }
+      return {
+        status: HttpStatus.OK,
       };
     } catch (e) {
       return {
