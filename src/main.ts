@@ -13,7 +13,7 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({ bodyLimit: 1024 * 1024 * 50 }),
   );
-  // 정적 파일 설정
+
   app
     .getHttpAdapter()
     .getInstance()
@@ -23,9 +23,12 @@ async function bootstrap() {
       },
     })
     .register(fastifyStatic, {
-      root: path.join(__dirname, '..', 'resources'), // 정적 파일 경로
-      prefix: '/static/', // URL 접두사
+      root: path.join(__dirname, '..', 'resources'),
+      prefix: '/static/',
     });
-  await app.listen(process.env.PORT || 3001, '0.0.0.0');
+
+  const port = Number(process.env.PORT) || 8080;
+
+  await app.listen(port, '0.0.0.0');
 }
 bootstrap();
