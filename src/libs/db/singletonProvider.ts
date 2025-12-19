@@ -59,7 +59,7 @@ export class SingletonDatabaseProvider {
               type: 'default',
             },
             options: {
-              database: process.env.SQLSERVER_DB ?? 'sbc',
+              database: process.env.SQLSERVER_DB ?? 'pinkroom',
               port: Number(process.env.SQLSERVER_PORT ?? '1433'),
               trustServerCertificate: true,
               encrypt: false,
