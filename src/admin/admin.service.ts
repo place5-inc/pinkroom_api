@@ -84,7 +84,7 @@ export class AdminService {
       const result = await this.db
         .updateTable('code_hair_style')
         .set({
-          published_at: setOn ? Date() : null,
+          published_at: setOn ? new Date() : null,
         })
         .where('id', '=', id)
         .execute();
@@ -146,7 +146,7 @@ export class AdminService {
       const result = await this.db
         .updateTable('code_hair_design')
         .set({
-          published_at: setOn ? Date() : null,
+          published_at: setOn ? new Date() : null,
         })
         .where('id', '=', id)
         .execute();
