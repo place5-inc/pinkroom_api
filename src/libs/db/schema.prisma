@@ -10,185 +10,39 @@ datasource db {
   url      = env("SQLSERVER_URL")
 }
 
-model business {
-  id               Int              @id(map: "PK_business") @default(autoincrement())
-  type             String?          @db.NVarChar(50)
-  area_id          Int?
-  name             String?          @db.NVarChar(100)
-  name_ko          String?          @db.NVarChar(100)
-  curation_price   String?          @db.NVarChar(300)
-  curation_traffic String?          @db.NVarChar(300)
-  curation_service String?          @db.NVarChar(300)
-  rank             Int?
-  line_url         String?          @db.NVarChar(200)
-  access_info      String?          @db.NVarChar(100)
-  status           String?          @db.NVarChar(50)
-  x                Float?
-  y                Float?
-  updated_at       DateTime?        @db.DateTime
-  business_detail  business_detail?
-}
-
-model business_detail {
-  id                Int      @id(map: "PK_business_detail")
-  tax_benefit       String?  @db.NVarChar(50)
-  review_google_url String?  @db.NVarChar(Max)
-  review_naver_url  String?  @db.NVarChar(Max)
-  address_korea     String?  @db.NVarChar(Max)
-  address_japan     String?  @db.NVarChar(Max)
-  business          business @relation(fields: [id], references: [id], onUpdate: NoAction, map: "FK_business_detail_business")
-}
-
-model business_service_category {
-  id          Int @id(map: "PK_business_service_category") @default(autoincrement())
-  business_id Int
-  code_id     Int
-}
-
-model business_subway {
-  id          Int     @id(map: "PK_business_subway") @default(autoincrement())
-  business_id Int?
-  subway_id   String? @db.NVarChar(50)
-}
-
-model code_business_area {
-  id      Int     @id(map: "PK_code_business_area") @default(autoincrement())
-  name_ko String? @db.NVarChar(50)
-  name    String? @db.NVarChar(50)
-}
-
-model code_business_service_category {
-  id                         Int                          @id(map: "PK_code_business_service_category") @default(autoincrement())
-  name                       String?                      @db.NVarChar(50)
-  name_ko                    String?                      @db.NVarChar(50)
-  type                       String?                      @db.NVarChar(50)
-  order_seq                  Int?
-  code_business_service_item code_business_service_item[]
-}
-
-model code_business_service_item {
-  id                             Int                             @id(map: "PK_code_business_service_item") @default(autoincrement())
-  category_id                    Int?
-  name                           String?                         @db.NVarChar(50)
-  name_ko                        String?                         @db.NVarChar(50)
-  description                    String?                         @db.NVarChar(Max)
-  url                            String?                         @db.NVarChar(300)
-  upload_file_id                 String?                         @db.UniqueIdentifier
-  code_business_service_category code_business_service_category? @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_code_business_service_item_code_business_service_category")
-}
-
-model business_images {
-  id             Int     @id(map: "PK_business_images") @default(autoincrement())
-  business_id    Int?
-  url            String? @db.NVarChar(200)
-  upload_file_id String? @db.UniqueIdentifier
-  order_seq      Int?
-}
-
-model business_member {
-  id             Int     @id(map: "PK_business_member") @default(autoincrement())
-  business_id    Int?
-  upload_file_id String? @db.UniqueIdentifier
-  profile_url    String? @db.NVarChar(200)
-  name           String? @db.NVarChar(50)
-  grade          String? @db.NVarChar(50)
-  job            String? @db.NVarChar(50)
-}
-
-model business_price_category {
-  id                  Int                   @id(map: "PK_business_price_category") @default(autoincrement())
-  business_id         Int?
-  parent_id           Int?
-  name                String?               @db.NVarChar(50)
-  order_seq           Int?
-  category_id         Int?
-  business_price_item business_price_item[]
-}
-
-model business_price_item {
-  id                      Int                      @id(map: "PK_business_price_item") @default(autoincrement())
-  category_id             Int?
-  name                    String?                  @db.NVarChar(200)
-  price                   Int?
-  order_seq               Int?
-  min_price               Int?
-  max_price               Int?
-  business_price_category business_price_category? @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_business_price_item_business_price_category")
-}
-
-model business_review {
-  id          Int       @id(map: "PK_business_review") @default(autoincrement())
-  business_id Int?
-  type        String?   @db.NVarChar(50)
-  ment        String?   @db.NVarChar(Max)
-  created_at  DateTime? @db.DateTime
-}
-
-model business_schedule_breaks {
-  id          Int       @id(map: "PK_business_schedule_breaks") @default(autoincrement())
-  business_id Int?
-  type        String?   @db.NVarChar(50)
-  weekday     Int?
-  open_time   DateTime? @db.Time
-  close_time  DateTime? @db.Time
-  is_open     Boolean?
-}
-
-model business_schedule_exception_recurring {
-  id          Int       @id(map: "PK_business_schedule_exception_recurring") @default(autoincrement())
-  business_id Int?
-  weekday     Int?
-  nth_week    Int?
-  open_time   DateTime? @db.Time
-  close_time  DateTime? @db.Time
-  is_open     Boolean?
-}
-
-model business_schedule_hours {
-  id               Int       @id(map: "PK_business_schedule_hours") @default(autoincrement())
-  business_id      Int?
-  weekday          Int?
-  open_time        DateTime? @db.Time
-  close_time       DateTime? @db.Time
-  booking_deadline DateTime? @db.Time
-  is_open          Boolean?
-}
-
-model business_schedule_ments {
-  id          Int     @id(map: "PK_business_schedule_ments") @default(autoincrement())
-  business_id Int?
-  ment        String? @db.NVarChar(100)
-}
-
-model business_section {
-  id          Int     @id(map: "PK_business_section") @default(autoincrement())
-  business_id Int?
-  type        String? @db.NVarChar(50)
-  ment        String? @db.NVarChar(300)
-}
-
-model business_service_item {
-  id          Int @id(map: "PK_business_service_item") @default(autoincrement())
-  business_id Int
-  category_id Int
-  code_id     Int
-}
-
 model upload_file {
-  id         String   @id(map: "PK_upload_file") @db.UniqueIdentifier
-  file_name  String?  @db.NVarChar(100)
-  url        String   @db.NVarChar(500)
-  created_at DateTime @db.DateTime
+  id         String    @id(map: "PK_upload_file") @db.UniqueIdentifier
+  file_name  String?   @db.NVarChar(100)
+  url        String?   @db.NChar(10)
+  created_at DateTime? @db.DateTime
 }
 
-model user_action_log {
-  id          Int       @id(map: "PK_user_action_log") @default(autoincrement())
-  user_id     String?   @db.NVarChar(100)
-  description String?
-  log_at      DateTime? @db.DateTime
+model code_hair_design {
+  id              Int             @id(map: "PK_code_hair_design") @default(autoincrement())
+  style_id        Int
+  name            String          @db.NVarChar(50)
+  published_at    DateTime?       @db.DateTime
+  order_seq       Int
+  code_hair_style code_hair_style @relation(fields: [style_id], references: [id], onUpdate: NoAction, map: "FK_code_hair_design_code_hair_style")
+  prompt          prompt?
 }
 
-model user_tester_id {
-  id      Int     @id(map: "PK_user_tester_id") @default(autoincrement())
-  user_id String? @db.NVarChar(20)
+model code_hair_style {
+  id               Int                @id(map: "PK_code_hair_style") @default(autoincrement())
+  name             String             @db.NVarChar(50)
+  published_at     DateTime?          @db.DateTime
+  order_seq        Int
+  code_hair_design code_hair_design[]
+}
+
+model prompt {
+  design_id        Int              @id(map: "PK_prompt")
+  ment             String?          @db.NChar(10)
+  code_hair_design code_hair_design @relation(fields: [design_id], references: [id], onUpdate: NoAction, map: "FK_prompt_code_hair_design")
+}
+
+model users {
+  id         Int       @id(map: "PK_users") @default(autoincrement())
+  phone      String?   @db.NVarChar(50)
+  created_at DateTime? @db.DateTime
 }

@@ -39,4 +39,23 @@ export class AdminService {
     private readonly db: DatabaseProvider,
     private readonly adminRepository: AdminRepository,
   ) {}
+  async test() {
+    try {
+      const test = await this.db
+        .selectFrom('users')
+        .selectAll()
+        .executeTakeFirst();
+
+      return {
+        status: HttpStatus.OK,
+        test,
+        message: '',
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
 }

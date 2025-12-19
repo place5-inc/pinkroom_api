@@ -27,4 +27,8 @@ export class AdminController {
     private readonly businessService: BusinessService,
     private readonly commonService: CommonService,
   ) {}
+  @Get('test')
+  async test() {
+    return await this.adminService.test();
+  }
 }
