@@ -13,13 +13,20 @@ import { HttpModule } from '@nestjs/axios';
 import { AzureBlobService } from './azure/blob.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AdminRepository } from './admin/admin.repository';
+import { MessageService } from './message/message.service';
+import { AuthController } from './auth/auth.controller';
 const modules: ModuleMetadata = {
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({}),
     HttpModule,
   ],
-  controllers: [UserController, CommonController, AdminController],
+  controllers: [
+    UserController,
+    CommonController,
+    AdminController,
+    AuthController,
+  ],
   providers: [
     DatabaseProvider,
     UserService,
@@ -28,6 +35,7 @@ const modules: ModuleMetadata = {
     AdminService,
     AzureBlobService,
     CommonService,
+    MessageService,
   ],
 };
 

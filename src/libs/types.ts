@@ -40,6 +40,10 @@ export type AdminBody = {
   designId?: number;
   setOn?: boolean;
 };
+export type AuthBody = {
+  phone?: string;
+  code?: string;
+};
 export function isValidImage(fileData: string) {
   const pattern =
     /^data:(image\/(png|jpeg|jpg|gif|webp));base64,([A-Za-z0-9+/=]+)$/;
