@@ -28,4 +28,11 @@ export class AuthController {
     }
     return await this.messageService.requestVerifyCode(body.phone);
   }
+  @Post('confirmCode')
+  async confirmCode(@Body() body: AuthBody) {
+    if (isEmpty(body.phone)) {
+      throw new BadRequestException('phone is required.');
+    }
+    return await this.messageService.requestVerifyCode(body.phone);
+  }
 }
