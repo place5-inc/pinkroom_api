@@ -9,13 +9,30 @@ export type code_hair_design = {
     style_id: number;
     name: string;
     published_at: Timestamp | null;
-    order_seq: number;
+    order_seq: number | null;
 };
 export type code_hair_style = {
     id: Generated<number>;
     name: string;
     published_at: Timestamp | null;
-    order_seq: number;
+    order_seq: number | null;
+};
+export type kakao_log = {
+    key: Generated<number>;
+    user_id: number | null;
+    phone_number: string | null;
+    template_code: string | null;
+    created_at: Timestamp | null;
+    json: string | null;
+    result_code: string | null;
+    exception_message: string | null;
+};
+export type photos = {
+    id: Generated<number>;
+    user_id: string;
+    upload_file_id: number;
+    payment_id: number | null;
+    created_at: Timestamp | null;
 };
 export type prompt = {
     design_id: number;
@@ -27,15 +44,25 @@ export type upload_file = {
     url: string | null;
     created_at: Timestamp | null;
 };
-export type users = {
+export type user_certification = {
     id: Generated<number>;
-    phone: string | null;
-    created_at: Timestamp | null;
+    phone_number: string;
+    code: string;
+    required_at: Timestamp;
+    expire_time: Timestamp;
+};
+export type users = {
+    id: string;
+    phone: string;
+    created_at: Timestamp;
 };
 export type DB = {
     code_hair_design: code_hair_design;
     code_hair_style: code_hair_style;
+    kakao_log: kakao_log;
+    photos: photos;
     prompt: prompt;
     upload_file: upload_file;
+    user_certification: user_certification;
     users: users;
 };
