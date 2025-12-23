@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  GoneException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
 
 @Injectable()
@@ -22,5 +27,28 @@ export class VerificationService {
       .execute();
 
     return code;
+  }
+
+  async verifyCode(phone: string, code: string) {
+    const record = await this.db
+      .selectFrom('user_certification')
+      .selectAll()
+      .orderBy('id', 'desc')
+      .where('phone_number', '=', phone)
+      .executeTakeFirst();
+
+    if (!record) {
+      throw new NotFoundException('Verification code not found.');
+    }
+
+    const now = new Date();
+
+    if (record.expire_time < now) {
+      throw new GoneException('Verification code expired.');
+    }
+
+    if (record.code !== code) {
+      throw new BadRequestException('Invalid verification code.');
+    }
   }
 }
