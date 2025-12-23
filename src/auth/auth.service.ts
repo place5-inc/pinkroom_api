@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
 import { VerificationService } from './verification.service';
 import { MessageService } from 'src/message/message.service';
@@ -23,5 +23,9 @@ export class AuthService {
     const user =
       (await this.userService.findByPhone(phone)) ??
       (await this.userService.createUser(phone));
+    return {
+      status: HttpStatus.OK,
+      userId: user?.id,
+    };
   }
 }
