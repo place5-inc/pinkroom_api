@@ -35,6 +35,7 @@ jobs:
         run: |
           zip -r release.zip \
             dist \
+            node_modules \
             package.json \
             package-lock.json \
             resources \
