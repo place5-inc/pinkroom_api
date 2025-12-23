@@ -76,3 +76,14 @@ model user_certification {
   required_at  DateTime @db.DateTime
   expire_time  DateTime @db.DateTime
 }
+
+model payments {
+  id         Int       @id(map: "PK_payments") @default(autoincrement())
+  user_id    String?   @db.UniqueIdentifier
+  photo_id   Int?
+  status     String?   @db.NVarChar(50)
+  created_at DateTime? @db.DateTime
+  tid        String?   @db.NVarChar(Max)
+  oid        String?   @db.NVarChar(Max)
+  price      Int?
+}

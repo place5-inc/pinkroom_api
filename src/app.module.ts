@@ -18,6 +18,9 @@ import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { VerificationService } from './auth/verification.service';
 import { PhotoService } from './user/photo.service';
+import { InicisController } from './inicis/inicis.controller';
+import { InicisService } from './inicis/inicis.service';
+import { PaymentService } from './payment/payment.service';
 const modules: ModuleMetadata = {
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -29,6 +32,7 @@ const modules: ModuleMetadata = {
     CommonController,
     AdminController,
     AuthController,
+    InicisController,
   ],
   providers: [
     DatabaseProvider,
@@ -42,6 +46,8 @@ const modules: ModuleMetadata = {
     AuthService,
     VerificationService,
     PhotoService,
+    InicisService,
+    PaymentService,
   ],
 };
 
