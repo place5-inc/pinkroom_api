@@ -1,5 +1,4 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { DatabaseProvider } from 'src/libs/db';
 
 import axios from 'axios';
 import * as FormData from 'form-data';
@@ -10,29 +9,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class MessageService {
-  constructor(private readonly db: DatabaseProvider) {}
-  async requestVerifyCode(phone: string) {
+  constructor() {}
+  async requestVerifyCode(phone: string, code: string) {
     try {
-      // 4자리 랜덤 숫자 생성
-      const randomNumber = Math.floor(Math.random() * 9000) + 1000;
-      const code = randomNumber.toString();
-
-      // 현재 시간과 만료 시간 설정
-      const now = new Date();
-      const expireTime = new Date(now.getTime() + 5 * 60000); // 5분 후
-
-      // 인증 정보 저장
-      await this.db
-        .insertInto('user_certification')
-        .values({
-          phone_number: phone,
-          code: code,
-          required_at: now,
-          expire_time: expireTime,
-        })
-        .execute();
-
-      // 메시지 내용 설정
       const ment = `핑크룸 인증번호 : ${code}`;
 
       await this.sendSMSCertiCode(phone, ment);
