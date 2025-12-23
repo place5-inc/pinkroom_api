@@ -20,12 +20,17 @@ export class AuthService {
   async confirmCode(phone: string, code: string) {
     await this.verificationService.verifyCode(phone, code);
 
-    const user =
-      (await this.userService.findByPhone(phone)) ??
-      (await this.userService.createUser(phone));
+    let isNew = false;
+    let user = await this.userService.findByPhone(phone);
+    if (!user) {
+      user = await this.userService.createUser(phone);
+      isNew = true;
+    }
+
     return {
       status: HttpStatus.OK,
-      userId: user?.id,
+      user,
+      isNew,
     };
   }
 }

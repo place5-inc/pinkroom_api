@@ -17,6 +17,7 @@ import { MessageService } from './message/message.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { VerificationService } from './auth/verification.service';
+import { PhotoService } from './user/photo.service';
 const modules: ModuleMetadata = {
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -40,6 +41,7 @@ const modules: ModuleMetadata = {
     MessageService,
     AuthService,
     VerificationService,
+    PhotoService,
   ],
 };
 

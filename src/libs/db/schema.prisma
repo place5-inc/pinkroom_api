@@ -15,6 +15,7 @@ model upload_file {
   file_name  String?   @db.NVarChar(100)
   url        String?   @db.NChar(10)
   created_at DateTime? @db.DateTime
+  photos     photos[]
 }
 
 model code_hair_design {
@@ -47,11 +48,12 @@ model kakao_log {
 }
 
 model photos {
-  id             Int       @id(map: "PK_photos") @default(autoincrement())
-  user_id        String    @db.UniqueIdentifier
-  upload_file_id Int
+  id             Int         @id(map: "PK_photos") @default(autoincrement())
+  user_id        String      @db.UniqueIdentifier
+  upload_file_id String      @db.UniqueIdentifier
   payment_id     Int?
-  created_at     DateTime? @db.DateTime
+  created_at     DateTime?   @db.DateTime
+  upload_file    upload_file @relation(fields: [upload_file_id], references: [id], onUpdate: NoAction, map: "FK_photos_upload_file")
 }
 
 model prompt {
@@ -64,17 +66,7 @@ model users {
   id         String   @id(map: "PK_users_1") @db.UniqueIdentifier
   phone      String   @db.NVarChar(50)
   created_at DateTime @db.DateTime
-}
-
-model kakao_log {
-  key               Int       @id(map: "PK_kakao_log") @default(autoincrement())
-  user_id           Int?
-  phone_number      String?   @db.VarChar(20)
-  template_code     String?   @db.VarChar(50)
-  created_at        DateTime? @db.DateTime
-  json              String?   @db.NVarChar(2000)
-  result_code       String?   @db.VarChar(50)
-  exception_message String?   @db.NVarChar(2000)
+  name       String?  @db.NVarChar(50)
 }
 
 model user_certification {
@@ -83,10 +75,4 @@ model user_certification {
   code         String   @db.NVarChar(50)
   required_at  DateTime @db.DateTime
   expire_time  DateTime @db.DateTime
-}
-
-model users {
-  id         String   @id(map: "PK_users_1") @db.UniqueIdentifier
-  phone      String   @db.NVarChar(50)
-  created_at DateTime @db.DateTime
 }

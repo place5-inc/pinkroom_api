@@ -13,11 +13,16 @@ import {
   Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
+import { PhotoService } from './photo.service';
+import { UploadPhotoVo, Image } from 'src/libs/types';
 
 @Controller('user')
 export class UserController {
-  constructor() {}
-
+  constructor(private photoService: PhotoService) {}
+  @Post('photo')
+  async uploadPhoto(@Body() body: UploadPhotoVo) {
+    return await this.photoService.uploadPhoto(body.userId, body.image);
+  }
   // @Get()
   // async getUser(@Request() { user: token }) {
   //   const { status, message, data } = await this.userService.getUser(

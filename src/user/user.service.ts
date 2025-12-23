@@ -13,12 +13,14 @@ export class UserService {
   }
   async createUser(phone: string) {
     const id = randomUUID();
+    const name = phone.slice(-4); // 마지막 4글자
     await this.db
       .insertInto('users')
       .values({
         id,
         phone,
         created_at: new Date(),
+        name,
       })
       .executeTakeFirst();
 
