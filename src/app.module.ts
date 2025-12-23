@@ -15,6 +15,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AdminRepository } from './admin/admin.repository';
 import { MessageService } from './message/message.service';
 import { AuthController } from './auth/auth.controller';
+import { AuthService } from './auth/auth.service';
+import { VerificationService } from './auth/verification.service';
 const modules: ModuleMetadata = {
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -36,6 +38,8 @@ const modules: ModuleMetadata = {
     AzureBlobService,
     CommonService,
     MessageService,
+    AuthService,
+    VerificationService,
   ],
 };
 

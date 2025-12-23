@@ -1,60 +1,69 @@
-import type { ColumnType } from "kysely";
-export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
-  ? ColumnType<S, I | undefined, U>
-  : ColumnType<T, T | undefined, T>;
+import type { ColumnType } from 'kysely';
+export type Generated<T> =
+  T extends ColumnType<infer S, infer I, infer U>
+    ? ColumnType<S, I | undefined, U>
+    : ColumnType<T, T | undefined, T>;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export type code_hair_design = {
-    id: Generated<number>;
-    style_id: number;
-    name: string;
-    published_at: Timestamp | null;
-    order_seq: number | null;
+  id: Generated<number>;
+  style_id: number;
+  name: string;
+  published_at: Timestamp | null;
+  order_seq: number | null;
 };
 export type code_hair_style = {
-    id: Generated<number>;
-    name: string;
-    published_at: Timestamp | null;
-    order_seq: number | null;
+  id: Generated<number>;
+  name: string;
+  published_at: Timestamp | null;
+  order_seq: number | null;
 };
 export type kakao_log = {
-    key: Generated<number>;
-    user_id: number | null;
-    phone_number: string | null;
-    template_code: string | null;
-    created_at: Timestamp | null;
-    json: string | null;
-    result_code: string | null;
-    exception_message: string | null;
+  key: Generated<number>;
+  user_id: number | null;
+  phone_number: string | null;
+  template_code: string | null;
+  created_at: Timestamp | null;
+  json: string | null;
+  result_code: string | null;
+  exception_message: string | null;
+};
+export type photos = {
+  id: Generated<number>;
+  user_id: string;
+  upload_file_id: number;
+  payment_id: number | null;
+  created_at: Timestamp | null;
 };
 export type prompt = {
-    design_id: number;
-    ment: string | null;
+  design_id: number;
+  ment: string | null;
 };
 export type upload_file = {
-    id: string;
-    file_name: string | null;
-    url: string | null;
-    created_at: Timestamp | null;
+  id: string;
+  file_name: string | null;
+  url: string | null;
+  created_at: Timestamp | null;
 };
 export type user_certification = {
-    id: Generated<number>;
-    phone_number: string;
-    code: string;
-    required_at: Timestamp;
-    expire_time: Timestamp;
+  id: Generated<number>;
+  phone_number: string;
+  code: string;
+  required_at: Timestamp;
+  expire_time: Timestamp;
 };
 export type users = {
-    id: Generated<number>;
-    phone: string | null;
-    created_at: Timestamp | null;
+  id: string;
+  phone: string;
+  created_at: Timestamp;
 };
 export type DB = {
-    code_hair_design: code_hair_design;
-    code_hair_style: code_hair_style;
-    kakao_log: kakao_log;
-    prompt: prompt;
-    upload_file: upload_file;
-    user_certification: user_certification;
-    users: users;
+  code_hair_design: code_hair_design;
+  code_hair_style: code_hair_style;
+  kakao_log: kakao_log;
+  photos: photos;
+  prompt: prompt;
+  upload_file: upload_file;
+  user_certification: user_certification;
+  users: users;
 };
