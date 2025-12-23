@@ -45,3 +45,27 @@ export function parseNumberArray(val?: string[] | string): number[] {
 
   return arr.map((v) => Number(v)).filter((v) => !Number.isNaN(v));
 }
+
+import * as crypto from 'crypto';
+
+export function encrypt(
+  text: string,
+  {
+    algorithm = 'aes-256-cbc',
+    encoding = 'utf8',
+    secret = process.env.BACKDOOR_SECRET_KEY ?? 'marrykim-backdoor-!@#',
+  }: {
+    algorithm?: string;
+    encoding?: crypto.Encoding;
+    secret?: string;
+  } = {},
+) {
+  const secretKey = crypto.createHash('sha256').update(secret).digest();
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
+  const encrypted = Buffer.concat([
+    cipher.update(text, encoding),
+    cipher.final(),
+  ]);
+  return [iv.toString('hex'), encrypted.toString('hex')];
+}
