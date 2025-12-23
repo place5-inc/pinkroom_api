@@ -27,7 +27,7 @@ export class KakaoService {
   // 카카오 알림톡 전송
   async sendKakaoNotification(
     isKakaoProduction: boolean = false,
-    userId: number | null,
+    userId: string | null,
     templateCode: string,
     to: string,
     values: string[] = [],
@@ -48,7 +48,7 @@ export class KakaoService {
 
     let [i, k] = [null, null];
     if (userId) {
-      [i, k] = encrypt(userId.toString());
+      [i, k] = encrypt(userId);
     }
 
     let message: string;
@@ -125,7 +125,7 @@ export class KakaoService {
   async KakaoJson(
     templatecode: string,
     to: string,
-    userId: number | null,
+    userId: string | null,
     message: string,
     buttonList: KakaoContentButtonJson[] = [],
     type: string,
@@ -168,7 +168,7 @@ export class KakaoService {
 
   // 카카오 메시지 전송하기
   async sendKakao(
-    userId: number | null,
+    userId: string | null,
     value: KakaoJson,
     to: string,
   ): Promise<{ status: number; data: { message: string } }> {
