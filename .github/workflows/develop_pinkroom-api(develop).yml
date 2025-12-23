@@ -26,16 +26,19 @@ jobs:
       - name: Install all packages
         run: npm install
 
-      - name: Build project
-        run: npm run build
-
       - name: Remove devDependencies from package-lock.json
         run: |
           jq 'del(.devDependencies)' package-lock.json > package-lock-cleaned.json
           mv package-lock-cleaned.json package-lock.json
 
       - name: Zip artifact for deployment
-        run: zip -r develop.zip package.json package-lock.json dist resources .npmrc
+        run: zip -r develop.zip \
+          package.json \
+          package-lock.json \
+          src \
+          resources \
+          index.js \
+          .npmrc
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
