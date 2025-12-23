@@ -33,6 +33,7 @@ jobs:
         run: |
           zip -r develop.zip \
             dist \
+            node_modules \
             package.json \
             package-lock.json \
             resources \
