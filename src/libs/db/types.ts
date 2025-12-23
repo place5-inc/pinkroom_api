@@ -45,9 +45,9 @@ export type user_certification = {
     expire_time: Timestamp;
 };
 export type users = {
-    id: Generated<number>;
-    phone: string | null;
-    created_at: Timestamp | null;
+    id: string;
+    phone: string;
+    created_at: Timestamp;
 };
 export type DB = {
     code_hair_design: code_hair_design;

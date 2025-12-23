@@ -37,14 +37,14 @@ model code_hair_style {
 
 model prompt {
   design_id        Int              @id(map: "PK_prompt")
-  ment             String?          @db.NChar(10)
+  ment             String?          @db.NVarChar(Max)
   code_hair_design code_hair_design @relation(fields: [design_id], references: [id], onUpdate: NoAction, map: "FK_prompt_code_hair_design")
 }
 
 model users {
-  id         Int       @id(map: "PK_users") @default(autoincrement())
-  phone      String?   @db.NVarChar(50)
-  created_at DateTime? @db.DateTime
+  id         String   @id(map: "PK_users_1") @db.UniqueIdentifier
+  phone      String   @db.NVarChar(50)
+  created_at DateTime @db.DateTime
 }
 
 model kakao_log {

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
+import { randomUUID } from 'crypto';
 @Injectable()
 export class UserService {
   constructor(private readonly db: DatabaseProvider) {}
@@ -11,15 +12,15 @@ export class UserService {
       .executeTakeFirst();
   }
   async createUser(phone: string) {
-    const result = await this.db
+    const id = randomUUID();
+    await this.db
       .insertInto('users')
       .values({
+        id,
         phone,
         created_at: new Date(),
       })
       .executeTakeFirst();
-
-    const id = Number(result.insertId);
 
     return this.db
       .selectFrom('users')
