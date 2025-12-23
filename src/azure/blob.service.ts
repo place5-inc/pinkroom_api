@@ -80,7 +80,8 @@ export class AzureBlobService {
   }
 
   async uploadFileForAdmin(fileData: string) {
-    const containerClient = this.blobServiceClient.getContainerClient('sbl');
+    const containerClient =
+      this.blobServiceClient.getContainerClient('pinkroom');
 
     const matches = fileData.match(/^data:(.+);base64,(.+)$/);
     if (!matches || matches.length !== 3) {
