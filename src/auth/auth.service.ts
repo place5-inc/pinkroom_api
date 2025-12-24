@@ -14,7 +14,7 @@ export class AuthService {
 
   async sendCode(phone: string) {
     const code = await this.verificationService.createdCode(phone);
-    await this.messageService.requestVerifyCode(phone, code);
+    return await this.messageService.requestVerifyCode(phone, code);
   }
 
   async confirmCode(phone: string, code: string) {
