@@ -7,8 +7,6 @@ import {
 import { DatabaseProvider } from 'src/libs/db';
 import { AzureBlobService } from 'src/azure/blob.service';
 import { Image, PhotoVO } from 'src/libs/types';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
 import { PhotoWorkerService } from './photo-worker.service';
 import { PhotoRepository } from './photo.repository';
 @Injectable()

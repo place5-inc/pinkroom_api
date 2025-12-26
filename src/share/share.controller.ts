@@ -20,7 +20,7 @@ import { ShareService } from './share.service';
 export class ShareController {
   constructor(private shareService: ShareService) {}
 
-  @Get(':code')
+  @Get('code/:code')
   async getPhotoWithCode(@Param('code') code: string) {
     return await this.shareService.getPhotoWithCode(code);
   }
