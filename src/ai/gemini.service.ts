@@ -3,15 +3,10 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { DatabaseProvider } from 'src/libs/db';
-import { HairDesignVO, HairStyleVO, Image, PromptVO } from 'src/libs/types';
-import { isEmpty, isNull, getMimeTypeFromUri } from 'src/libs/helpers';
+import { getMimeTypeFromUri } from 'src/libs/helpers';
 import { AzureBlobService } from 'src/azure/blob.service';
-import { DateTime } from 'luxon';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import { GoogleGenAI } from '@google/genai';
-import { PhotoService } from './../user/photo.service';
 @Injectable()
 export class GeminiService {
   constructor(

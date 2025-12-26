@@ -1,5 +1,4 @@
 import { Module, ModuleMetadata } from '@nestjs/common';
-import { UserController } from './user/user.controller';
 import { UserService } from './user/user.service';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
@@ -17,11 +16,13 @@ import { MessageService } from './message/message.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { VerificationService } from './auth/verification.service';
-import { PhotoService } from './user/photo.service';
 import { InicisController } from './inicis/inicis.controller';
 import { InicisService } from './inicis/inicis.service';
 import { PaymentService } from './payment/payment.service';
 import { GeminiService } from './ai/gemini.service';
+import { PhotoService } from './photo/photo.service';
+import { PhotoWorkerService } from './photo/photo-worker.service';
+import { UserController } from './user/user.controller';
 const modules: ModuleMetadata = {
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -50,6 +51,7 @@ const modules: ModuleMetadata = {
     InicisService,
     PaymentService,
     GeminiService,
+    PhotoWorkerService,
   ],
 };
 

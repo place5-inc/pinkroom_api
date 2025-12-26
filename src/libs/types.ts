@@ -47,7 +47,7 @@ export type AuthBody = {
   phone?: string;
   code?: string;
 };
-export type UploadPhotoVo = {
+export type UploadPhotoBody = {
   userId?: string;
   image?: Image;
   paymentId?: number;
@@ -55,6 +55,22 @@ export type UploadPhotoVo = {
   designId?: number;
   originalPhotoId?: number;
 };
+
+export type PhotoVO = {
+  id: number;
+  paymentId: number;
+  sourceImageUrl: string;
+  resultImages: ResultImageVO[];
+  createdAt: string;
+};
+
+export type ResultImageVO = {
+  id: number;
+  url: string;
+  designId: number;
+  status: string;
+};
+
 export function isValidImage(fileData: string) {
   const pattern =
     /^data:(image\/(png|jpeg|jpg|gif|webp));base64,([A-Za-z0-9+/=]+)$/;
