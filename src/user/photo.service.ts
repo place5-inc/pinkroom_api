@@ -19,6 +19,9 @@ export class PhotoService {
     private readonly commonService: CommonService,
   ) {}
 
+  /* 
+  유저가 사진 업로드
+  */
   async uploadPhoto(
     userId: string,
     image: Image,
@@ -100,6 +103,9 @@ export class PhotoService {
       };
     }
   }
+  /*
+  이미 원본 있을 때, 하나의 디자인 만들기
+   */
   async retryUploadPhoto(
     userId: string,
     originalPhotoId: number,
@@ -146,15 +152,40 @@ export class PhotoService {
       };
     }
   }
-
+  /*
+애저에 올리기 
+*/
   async uploadToAzure(base64: string) {
     return await this.azureBlobService.uploadFileImageBase64(base64);
   }
+
   async insertIntoPhoto(
     originalPhotoId: number,
     hairDesignId: number,
     resultImageId?: string,
   ) {
+    const before = await this.db
+      .selectFrom('photo_results')
+      .where('original_photo_id', '=', originalPhotoId)
+      .where('hair_design_id', '=', hairDesignId)
+      .select('id')
+      .executeTakeFirst();
+    if (before) {
+      if (resultImageId) {
+        await this.db
+          .updateTable('photo_results')
+          .set({
+            created_at: new Date(),
+            result_image_id: resultImageId,
+            status: resultImageId ? 'complete' : 'fail',
+          })
+          .where('original_photo_id', '=', originalPhotoId)
+          .where('hair_design_id', '=', hairDesignId)
+          .output(['inserted.id'])
+          .executeTakeFirst();
+      }
+      return before;
+    }
     return await this.db
       .insertInto('photo_results')
       .values({
@@ -167,7 +198,9 @@ export class PhotoService {
       .output(['inserted.id'])
       .executeTakeFirst();
   }
-
+  /*
+  사진 하나 만을기
+   */
   async generatePhoto(
     photoId: number,
     photoUrl: string,
