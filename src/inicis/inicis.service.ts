@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { DateTime } from 'luxon';
 import { DatabaseProvider } from 'src/libs/db';
 import * as crypto from 'crypto';
@@ -22,6 +26,7 @@ export class InicisService {
     },
   });
   async confirmPcPayment({
+    userId,
     resultCode,
     resultMsg,
     orderNumber,
@@ -31,6 +36,7 @@ export class InicisService {
     netCancelUrl,
     charset,
   }: {
+    userId: string;
     resultCode: string;
     resultMsg: string;
     orderNumber: string;
@@ -76,9 +82,69 @@ export class InicisService {
           confirmResponse.data.resultCode === '0000'
         ) {
           const data = confirmResponse.data;
-          return await this.paymentService.completePayment(data.MOID, data.tid);
+          return await this.paymentService.completePayment(
+            userId,
+            data.MOID,
+            data.tid,
+          );
         }
       } catch (err) {}
+    }
+  }
+  async confirmMobilePayment({
+    userId,
+    P_STATUS,
+    P_RMESG1,
+    P_TID,
+    P_AMT,
+    idc_name,
+    P_REQ_URL,
+    P_NOTI,
+  }: {
+    userId: string;
+    P_STATUS: string;
+    P_RMESG1: string;
+    P_TID: string;
+    P_AMT: string;
+    idc_name: 'fc' | 'ks' | 'stg';
+    P_REQ_URL: string;
+    P_NOTI: string;
+  }) {
+    const P_MID = P_TID.substring(10, 20);
+    if (P_STATUS === '00') {
+      const _P_NET_CANCEL_URL = `https://${idc_name}mobile.inicis.com/smart/payNetCancel.ini`;
+
+      try {
+        const confirmResponse = await this.axiosClient.post(P_REQ_URL, {
+          P_MID,
+          P_TID,
+        });
+
+        if (confirmResponse.status === 200) {
+          const data = confirmResponse.data.split('&').reduce(
+            (cur, arr) => {
+              const [key, value] = arr.split('=');
+              cur[key] = value;
+              return cur;
+            },
+            {} as Record<string, string>,
+          );
+
+          if (data.P_STATUS === '00') {
+            return await this.paymentService.completePayment(
+              userId,
+              data.P_OID,
+              data.P_TID,
+            );
+          } else {
+            throw new Error();
+          }
+        } else {
+          throw new Error();
+        }
+      } catch {}
+    } else {
+      throw new BadRequestException(P_RMESG1);
     }
   }
 }

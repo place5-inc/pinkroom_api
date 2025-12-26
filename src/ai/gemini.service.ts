@@ -20,7 +20,7 @@ export class GeminiService {
     private readonly httpService: HttpService,
     //private readonly photoService: PhotoService,
   ) {}
-  async generateHair(fileUri: string, ment: string): Promise<string> {
+  async generatePhoto(fileUri: string, ment: string): Promise<string> {
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {

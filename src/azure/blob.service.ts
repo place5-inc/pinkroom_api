@@ -78,7 +78,14 @@ export class AzureBlobService {
     }
     return;
   }
-
+  async uploadFileImageBase64(image?: string) {
+    if (image != null) {
+      if (isValidImage(image)) {
+        return await this.uploadFileForAdmin(image);
+      }
+    }
+    return;
+  }
   async uploadFileForAdmin(fileData: string) {
     const containerClient =
       this.blobServiceClient.getContainerClient('pinkroom');

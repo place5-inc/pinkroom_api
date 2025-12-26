@@ -80,10 +80,18 @@ model user_certification {
 model payments {
   id         Int       @id(map: "PK_payments") @default(autoincrement())
   user_id    String?   @db.UniqueIdentifier
-  photo_id   Int?
   status     String?   @db.NVarChar(50)
   created_at DateTime? @db.DateTime
   tid        String?   @db.NVarChar(Max)
   oid        String?   @db.NVarChar(Max)
   price      Int?
+}
+
+model photo_results {
+  id                Int       @id(map: "PK_photo_results") @default(autoincrement())
+  original_photo_id Int?
+  hair_design_id    Int?
+  result_image_id   String?   @db.UniqueIdentifier
+  created_at        DateTime? @db.DateTime
+  status            String?   @db.NVarChar(10)
 }

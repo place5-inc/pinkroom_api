@@ -21,7 +21,13 @@ export class UserController {
   constructor(private photoService: PhotoService) {}
   @Post('photo')
   async uploadPhoto(@Body() body: UploadPhotoVo) {
-    return await this.photoService.uploadPhoto(body.userId, body.image);
+    return await this.photoService.uploadPhoto(
+      body.userId,
+      body.image,
+      body.designId,
+      body.paymentId,
+      body.code,
+    );
   }
   // @Get()
   // async getUser(@Request() { user: token }) {

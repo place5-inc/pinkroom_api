@@ -1,26 +1,17 @@
-import {
-  HttpStatus,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
-import { HairDesignVO, HairStyleVO, Image, PromptVO } from 'src/libs/types';
-import { isEmpty, isNull } from 'src/libs/helpers';
-import { AzureBlobService } from 'src/azure/blob.service';
-import { DateTime } from 'luxon';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
-import { GoogleGenAI } from '@google/genai';
-import { PhotoService } from './../user/photo.service';
+import { HairDesignVO, HairStyleVO, PromptVO } from 'src/libs/types';
+
 @Injectable()
 export class CommonService {
-  constructor(
-    private readonly db: DatabaseProvider,
-    private readonly azureBlobService: AzureBlobService,
-    private readonly httpService: HttpService,
-    private readonly photoService: PhotoService,
-  ) {}
-
+  constructor(private readonly db: DatabaseProvider) {}
+  async getFileUrl(uploadFileId: string) {
+    return this.db
+      .selectFrom('upload_file')
+      .select('url')
+      .where('id', '=', uploadFileId)
+      .executeTakeFirst();
+  }
   async getSytleList(withDesign: boolean) {
     try {
       const styles = await this.db

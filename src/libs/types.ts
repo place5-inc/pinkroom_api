@@ -50,6 +50,9 @@ export type AuthBody = {
 export type UploadPhotoVo = {
   userId?: string;
   image?: Image;
+  paymentId?: number;
+  code?: string;
+  designId?: number;
 };
 export function isValidImage(fileData: string) {
   const pattern =
