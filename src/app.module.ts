@@ -23,6 +23,9 @@ import { GeminiService } from './ai/gemini.service';
 import { PhotoService } from './photo/photo.service';
 import { PhotoWorkerService } from './photo/photo-worker.service';
 import { UserController } from './user/user.controller';
+import { ShareController } from './share/share.controller';
+import { ShareService } from './share/share.service';
+import { PhotoRepository } from './photo/photo.repository';
 const modules: ModuleMetadata = {
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -35,6 +38,7 @@ const modules: ModuleMetadata = {
     AdminController,
     AuthController,
     InicisController,
+    ShareController,
   ],
   providers: [
     DatabaseProvider,
@@ -48,10 +52,12 @@ const modules: ModuleMetadata = {
     AuthService,
     VerificationService,
     PhotoService,
+    PhotoRepository,
     InicisService,
     PaymentService,
     GeminiService,
     PhotoWorkerService,
+    ShareService,
   ],
 };
 

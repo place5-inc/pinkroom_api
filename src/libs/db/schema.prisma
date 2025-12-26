@@ -13,7 +13,7 @@ datasource db {
 model upload_file {
   id         String    @id(map: "PK_upload_file") @db.UniqueIdentifier
   file_name  String?   @db.NVarChar(100)
-  url        String?   @db.NChar(10)
+  url        String?   @db.NVarChar(500)
   created_at DateTime? @db.DateTime
   photos     photos[]
 }
@@ -63,10 +63,11 @@ model prompt {
 }
 
 model users {
-  id         String   @id(map: "PK_users_1") @db.UniqueIdentifier
-  phone      String   @db.NVarChar(50)
-  created_at DateTime @db.DateTime
-  name       String?  @db.NVarChar(50)
+  id          String   @id(map: "PK_users_1") @db.UniqueIdentifier
+  phone       String   @db.NVarChar(50)
+  created_at  DateTime @db.DateTime
+  name        String?  @db.NVarChar(50)
+  use_code_id String?  @db.NVarChar(50)
 }
 
 model user_certification {
@@ -94,4 +95,29 @@ model photo_results {
   result_image_id   String?   @db.UniqueIdentifier
   created_at        DateTime? @db.DateTime
   status            String?   @db.NVarChar(10)
+}
+
+model photo_code_log {
+  id           Int       @id(map: "PK_photo_code_log") @default(autoincrement())
+  photo_id     Int?
+  code         String?   @db.NVarChar(50)
+  used_user_id String?   @db.UniqueIdentifier
+  created_at   DateTime? @db.DateTime
+}
+
+model photo_share_code {
+  id         Int       @id(map: "PK_photo_share_code") @default(autoincrement())
+  photo_id   Int?
+  code       String?   @db.NVarChar(50)
+  created_at DateTime? @db.DateTime
+  expired_at DateTime? @db.DateTime
+  code_type  String?   @db.NVarChar(50)
+}
+
+model worldcup_votes {
+  id         Int       @id(map: "PK_worldcup_votes") @default(autoincrement())
+  photo_id   Int?
+  result_id  Int?
+  name       String?   @db.NVarChar(50)
+  created_at DateTime? @db.DateTime
 }

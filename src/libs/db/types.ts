@@ -36,6 +36,13 @@ export type payments = {
     oid: string | null;
     price: number | null;
 };
+export type photo_code_log = {
+    id: Generated<number>;
+    photo_id: number | null;
+    code: string | null;
+    used_user_id: string | null;
+    created_at: Timestamp | null;
+};
 export type photo_results = {
     id: Generated<number>;
     original_photo_id: number | null;
@@ -43,6 +50,14 @@ export type photo_results = {
     result_image_id: string | null;
     created_at: Timestamp | null;
     status: string | null;
+};
+export type photo_share_code = {
+    id: Generated<number>;
+    photo_id: number | null;
+    code: string | null;
+    created_at: Timestamp | null;
+    expired_at: Timestamp | null;
+    code_type: string | null;
 };
 export type photos = {
     id: Generated<number>;
@@ -73,16 +88,27 @@ export type users = {
     phone: string;
     created_at: Timestamp;
     name: string | null;
+    use_code_id: string | null;
+};
+export type worldcup_votes = {
+    id: Generated<number>;
+    photo_id: number | null;
+    result_id: number | null;
+    name: string | null;
+    created_at: Timestamp | null;
 };
 export type DB = {
     code_hair_design: code_hair_design;
     code_hair_style: code_hair_style;
     kakao_log: kakao_log;
     payments: payments;
+    photo_code_log: photo_code_log;
     photo_results: photo_results;
+    photo_share_code: photo_share_code;
     photos: photos;
     prompt: prompt;
     upload_file: upload_file;
     user_certification: user_certification;
     users: users;
+    worldcup_votes: worldcup_votes;
 };
