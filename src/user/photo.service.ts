@@ -100,6 +100,11 @@ export class PhotoService {
       };
     }
   }
+  async retryUploadPhoto(
+    userId: string,
+    originalPhotoId: number,
+    designId: number,
+  ) {}
 
   async uploadToAzure(base64: string) {
     return await this.azureBlobService.uploadFileImageBase64(base64);

@@ -19,7 +19,7 @@ import { UploadPhotoVo, Image } from 'src/libs/types';
 @Controller('user')
 export class UserController {
   constructor(private photoService: PhotoService) {}
-  @Post('photo')
+  @Post('photo/upload')
   async uploadPhoto(@Body() body: UploadPhotoVo) {
     return await this.photoService.uploadPhoto(
       body.userId,
@@ -27,6 +27,14 @@ export class UserController {
       body.designId,
       body.paymentId,
       body.code,
+    );
+  }
+  @Post('photo/retry')
+  async retryPhoto(@Body() body: UploadPhotoVo) {
+    return await this.photoService.retryUploadPhoto(
+      body.userId,
+      body.originalPhotoId,
+      body.designId,
     );
   }
   // @Get()

@@ -53,6 +53,7 @@ export type UploadPhotoVo = {
   paymentId?: number;
   code?: string;
   designId?: number;
+  originalPhotoId?: number;
 };
 export function isValidImage(fileData: string) {
   const pattern =
