@@ -9,10 +9,11 @@ export class ShareService {
     private readonly photoRepository: PhotoRepository,
   ) {}
 
-  async getPhotoWithCode(code: string) {
+  async getPhotoWithCode(_code: string) {
     try {
       const code = await this.db
         .selectFrom('photo_share_code')
+        .where('code', '=', _code)
         .selectAll()
         .executeTakeFirst();
 
