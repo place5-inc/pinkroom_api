@@ -104,7 +104,48 @@ export class PhotoService {
     userId: string,
     originalPhotoId: number,
     designId: number,
-  ) {}
+  ) {
+    const originalPhoto = await this.db
+      .selectFrom('photos as p')
+      .innerJoin('upload_file as u', 'u.id', 'p.upload_file_id')
+      .where('p.id', '=', originalPhotoId)
+      .select(['p.id as photo_id', 'u.url as url'])
+      .executeTakeFirst();
+    const ment = await this.db
+      .selectFrom('prompt')
+      .where('design_id', '=', designId)
+      .select('ment')
+      .executeTakeFirst();
+    const result = await this.generatePhoto(
+      originalPhoto.photo_id,
+      originalPhoto.url,
+      designId,
+      ment.ment,
+      1,
+    );
+
+    if (result) {
+      const photoResult = await this.db
+        .selectFrom('photo_results')
+        .where('id', '=', result.id)
+        .selectAll()
+        .executeTakeFirst();
+      const resultUrl = await this.db
+        .selectFrom('upload_file')
+        .where('id', '=', photoResult.result_image_id)
+        .selectAll()
+        .executeTakeFirst();
+
+      return {
+        status: HttpStatus.OK,
+        item: {
+          id: result.id,
+          url: resultUrl.url,
+          designId: designId,
+        },
+      };
+    }
+  }
 
   async uploadToAzure(base64: string) {
     return await this.azureBlobService.uploadFileImageBase64(base64);
