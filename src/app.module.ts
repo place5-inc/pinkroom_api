@@ -21,6 +21,7 @@ import { PhotoService } from './user/photo.service';
 import { InicisController } from './inicis/inicis.controller';
 import { InicisService } from './inicis/inicis.service';
 import { PaymentService } from './payment/payment.service';
+import { GeminiService } from './ai/gemini.service';
 const modules: ModuleMetadata = {
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -48,6 +49,7 @@ const modules: ModuleMetadata = {
     PhotoService,
     InicisService,
     PaymentService,
+    GeminiService,
   ],
 };
 
