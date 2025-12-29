@@ -119,5 +119,6 @@ model worldcup_votes {
   photo_id   Int?
   result_id  Int?
   name       String?   @db.NVarChar(50)
+  user_id    String?   @db.UniqueIdentifier
   created_at DateTime? @db.DateTime
 }

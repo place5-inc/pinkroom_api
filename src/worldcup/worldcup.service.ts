@@ -1,0 +1,173 @@
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { DatabaseProvider } from 'src/libs/db';
+import { PhotoRepository } from 'src/photo/photo.repository';
+
+@Injectable()
+export class WorldcupService {
+  constructor(
+    private readonly db: DatabaseProvider,
+    private readonly photoRepository: PhotoRepository,
+  ) {}
+  async getWorldcupList(userId: string) {
+    try {
+      const photosWithVoteCount = await this.db
+        .selectFrom('photos as p')
+        .leftJoin('worldcup_votes as wv', (join) =>
+          join.onRef('wv.photo_id', '=', 'p.id').on('wv.name', 'is not', null),
+        )
+        .leftJoin('upload_file as uf', 'uf.id', 'p.upload_file_id')
+        .where('p.user_id', '=', userId)
+        .select([
+          'p.id as photoId',
+          'p.payment_id as paymentId',
+          'uf.url as sourceImageUrl',
+          'p.created_at',
+          this.db.fn
+            .coalesce(this.db.fn.count<number>('wv.id'), this.db.val(0))
+            .as('voteCount'),
+        ])
+        .groupBy(['p.id', 'p.payment_id', 'p.created_at', 'uf.url'])
+        .execute();
+      return {
+        status: HttpStatus.OK,
+        results: photosWithVoteCount,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async getWorldcupReusults(userId: string, photoId: number) {
+    try {
+      const votes = await this.db
+        .selectFrom('worldcup_votes')
+        .where('photo_id', '=', photoId)
+        .selectAll()
+        .execute();
+
+      const photoResults = await this.db
+        .selectFrom('photo_results as pr')
+        .leftJoin('upload_file as uf', 'uf.id', 'pr.result_image_id')
+        .where('pr.original_photo_id', '=', photoId)
+        .select([
+          'pr.id as resultId',
+          'pr.hair_design_id as designId',
+          'uf.url as url',
+        ])
+        .execute();
+      const votesByResultId = votes.reduce<Record<number, string[]>>(
+        (acc, vote) => {
+          // ✅ name이 없는 경우(user_id만 있는 경우 포함) 제외
+          if (!vote.name) {
+            return acc;
+          }
+
+          if (!acc[vote.result_id]) {
+            acc[vote.result_id] = [];
+          }
+
+          acc[vote.result_id].push(vote.name);
+          return acc;
+        },
+        {},
+      );
+      const photoResultsWithNames = photoResults.map((pr) => {
+        const names = votesByResultId[pr.resultId] ?? [];
+
+        return {
+          ...pr,
+          names,
+          voteCount: names.length,
+        };
+      });
+      const sortedPhotoResults = [...photoResultsWithNames].sort((a, b) => {
+        if (b.voteCount !== a.voteCount) {
+          return b.voteCount - a.voteCount;
+        }
+        return a.resultId - b.resultId;
+      });
+      const mySelect = votes.find(
+        (vote) => vote.name == null && vote.user_id != userId,
+      );
+      if (mySelect) {
+        const mySelectPhoto = photoResults.find(
+          (result) => result.resultId == mySelect.result_id,
+        );
+        if (mySelectPhoto != null) {
+          return {
+            status: HttpStatus.OK,
+            results: sortedPhotoResults,
+            my: mySelectPhoto,
+          };
+        }
+      }
+      return {
+        status: HttpStatus.OK,
+        results: sortedPhotoResults,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async vote(_code: string, resultId: number, name?: string, userId?: string) {
+    try {
+      const code = await this.db
+        .selectFrom('photo_share_code')
+        .where('code', '=', _code)
+        .selectAll()
+        .executeTakeFirst();
+      const photo = await this.db
+        .selectFrom('photos')
+        .where('id', '=', code.photo_id)
+        .selectAll()
+        .executeTakeFirst();
+      if (!photo) {
+        throw new HttpException(
+          '존재하지 않는 원본 사진입니다.',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      const result = await this.db
+        .selectFrom('photo_results')
+        .where('id', '=', resultId)
+        .selectAll()
+        .executeTakeFirst();
+      if (!result) {
+        throw new HttpException(
+          '존재하지 않는 사진입니다.',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      if (result.original_photo_id != photo.id) {
+        throw new HttpException(
+          '투표 id값이 잘못되었습니다.',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      await this.db
+        .insertInto('worldcup_votes')
+        .values({
+          photo_id: photo.id,
+          result_id: resultId,
+          created_at: new Date(),
+          name: name ?? null,
+          user_id: userId ?? null,
+        })
+        .execute();
+
+      return {
+        status: HttpStatus.OK,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+}

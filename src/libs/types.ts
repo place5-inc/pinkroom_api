@@ -55,6 +55,12 @@ export type UploadPhotoBody = {
   designId?: number;
   originalPhotoId?: number;
 };
+export type WorldcupBody = {
+  code: string;
+  resultId: number;
+  userId?: string;
+  name?: string;
+};
 
 export type PhotoVO = {
   id: number;

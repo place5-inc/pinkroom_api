@@ -24,4 +24,12 @@ export class ShareController {
   async getPhotoWithCode(@Param('code') code: string) {
     return await this.shareService.getPhotoWithCode(code);
   }
+  @Post('code/make')
+  async makePhotoCode(
+    @Query('userId') userId: string,
+    @Query('photoId') photoId: number,
+    @Query('codeType') codeType: string,
+  ) {
+    return await this.shareService.makePhotoCode(userId, photoId, codeType);
+  }
 }

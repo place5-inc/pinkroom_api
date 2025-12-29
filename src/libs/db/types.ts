@@ -95,6 +95,7 @@ export type worldcup_votes = {
     photo_id: number | null;
     result_id: number | null;
     name: string | null;
+    user_id: string | null;
     created_at: Timestamp | null;
 };
 export type DB = {
