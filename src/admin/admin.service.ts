@@ -14,11 +14,13 @@ import { AdminRepository } from './admin.repository';
 
 import { AllSelection } from 'kysely/dist/cjs/parser/select-parser';
 import { DateTime } from 'luxon';
+import { AzureBlobService } from 'src/azure/blob.service';
 @Injectable()
 export class AdminService {
   constructor(
     private readonly db: DatabaseProvider,
     private readonly adminRepository: AdminRepository,
+    private readonly azureBlobService: AzureBlobService,
   ) {}
   async test() {
     try {
@@ -165,12 +167,28 @@ export class AdminService {
     try {
       const item = await this.db
         .selectFrom('prompt')
-        .where('design_id', '=', designId)
-        .select(['design_id as designId', 'ment'])
-        .execute();
+        .leftJoin('upload_file', 'upload_file.id', 'prompt.design_id')
+        .where('prompt.design_id', '=', designId)
+        .select([
+          'prompt.design_id as designId',
+          'prompt.ment',
+          'upload_file.id as imageId',
+          'upload_file.url as imageUrl',
+        ])
+        .executeTakeFirst();
+
       return {
         status: HttpStatus.OK,
-        item,
+        item: {
+          designId: item?.designId,
+          ment: item?.ment,
+          image: item?.imageId
+            ? {
+                id: item.imageId,
+                url: item.imageUrl,
+              }
+            : null,
+        },
       };
     } catch (e) {
       return {
@@ -179,11 +197,21 @@ export class AdminService {
       };
     }
   }
-  async updatePrompt(designId: number, ment: string) {
+  async updatePrompt(designId: number, ment: string, image?: Image) {
     try {
+      let uploadFileId = null;
+      if (image) {
+        if (image.data) {
+          const uploadedFile =
+            await this.azureBlobService.uploadFileImage(image);
+          uploadFileId = uploadedFile.id;
+        } else if (image.id) {
+          uploadFileId = image.id;
+        }
+      }
       const updateResult = await this.db
         .updateTable('prompt')
-        .set({ ment })
+        .set({ ment: ment, upload_file_id: uploadFileId })
         .where('design_id', '=', designId)
         .executeTakeFirst();
 
@@ -192,7 +220,8 @@ export class AdminService {
           .insertInto('prompt')
           .values({
             design_id: designId,
-            ment,
+            ment: ment,
+            upload_file_id: uploadFileId,
           })
           .execute();
       }

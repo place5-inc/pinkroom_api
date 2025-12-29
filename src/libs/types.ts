@@ -29,6 +29,7 @@ export type HairDesignVO = {
 export type PromptVO = {
   designId?: number;
   ment?: string;
+  image?: Image;
 };
 export type Image = {
   url?: string;
@@ -42,6 +43,7 @@ export type AdminBody = {
   styleId?: number;
   designId?: number;
   setOn?: boolean;
+  image?: Image;
 };
 export type AuthBody = {
   phone?: string;

@@ -59,6 +59,7 @@ model photos {
 model prompt {
   design_id        Int              @id(map: "PK_prompt")
   ment             String?          @db.NVarChar(Max)
+  upload_file_id   String?          @db.UniqueIdentifier
   code_hair_design code_hair_design @relation(fields: [design_id], references: [id], onUpdate: NoAction, map: "FK_prompt_code_hair_design")
 }
 

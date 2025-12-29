@@ -52,7 +52,7 @@ export class InicisController {
         throw new BadRequestException('invalid referrence');
       }
 
-      //return await this.inicisService.confirmMobilePayment(paymentResult);
+      return await this.inicisService.confirmMobilePayment(paymentResult);
     }
   }
 }

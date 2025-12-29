@@ -91,20 +91,38 @@ export class CommonService {
         };
       }
 
-      const prompts = await this.db
+      // ✅ prompt + upload_file (1:1)
+      const rows = await this.db
         .selectFrom('prompt')
-        .select(['design_id as designId', 'ment'])
+        .leftJoin('upload_file', 'upload_file.id', 'prompt.upload_file_id')
+        .select([
+          'prompt.design_id as designId',
+          'prompt.ment',
+          'upload_file.id as imageId',
+          'upload_file.url as imageUrl',
+        ])
         .execute();
 
+      /**
+       * designId
+       *   └─ PromptVO[]
+       */
       const designMap = new Map<number, PromptVO[]>();
 
-      for (const prompt of prompts) {
-        if (!designMap.has(prompt.designId)) {
-          designMap.set(prompt.designId, []);
+      for (const row of rows) {
+        if (!designMap.has(row.designId)) {
+          designMap.set(row.designId, []);
         }
-        designMap.get(prompt.designId)!.push({
-          designId: prompt.designId,
-          ment: prompt.ment,
+
+        designMap.get(row.designId)!.push({
+          designId: row.designId,
+          ment: row.ment,
+          image: row.imageId
+            ? {
+                id: row.imageId,
+                url: row.imageUrl,
+              }
+            : undefined,
         });
       }
 

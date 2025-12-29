@@ -109,7 +109,11 @@ export class AdminController {
     if (isEmpty(body.ment)) {
       throw new BadRequestException('ment is required.');
     }
-    return await this.adminService.updatePrompt(body.designId, body.ment);
+    return await this.adminService.updatePrompt(
+      body.designId,
+      body.ment,
+      body.image,
+    );
   }
 
   @Get('prompt')

@@ -69,6 +69,7 @@ export type photos = {
 export type prompt = {
     design_id: number;
     ment: string | null;
+    upload_file_id: string | null;
 };
 export type upload_file = {
     id: string;
