@@ -29,11 +29,19 @@ export class PhotoWorkerService {
       .where('p.id', '=', originalPhotoId)
       .select(['p.id as photo_id', 'u.url as url'])
       .executeTakeFirst();
-    const ments = await this.db.selectFrom('prompt').selectAll().execute();
+    const ments = await this.db
+      .selectFrom('prompt')
+      .leftJoin('upload_file', 'upload_file.id', 'prompt.design_id')
+      .select([
+        'prompt.design_id as designId',
+        'prompt.ment',
+        'upload_file.url as imageUrl',
+      ])
+      .execute();
     for (let designId = 1; designId <= 16; designId++) {
       if (completedSet.has(designId)) continue;
       const prompt = ments.find(
-        (m) => m.design_id === designId, // 또는 m.id === designId
+        (m) => m.designId === designId, // 또는 m.id === designId
       );
       if (!prompt) {
         continue;
@@ -44,6 +52,7 @@ export class PhotoWorkerService {
         originalPhoto.url,
         designId,
         prompt.ment,
+        prompt.imageUrl,
         1,
       );
     }
@@ -104,11 +113,16 @@ export class PhotoWorkerService {
     photoUrl: string,
     designId: number,
     ment: string,
-    retry: number,
+    sampleUrl?: string,
+    retry: number = 1,
   ) {
     try {
       for (let i = 0; i <= retry; i++) {
-        const image = await this.geminiService.generatePhoto(photoUrl, ment);
+        const image = await this.geminiService.generatePhoto(
+          photoUrl,
+          ment,
+          sampleUrl,
+        );
         if (image) {
           const upload_file = await this.uploadToAzure(image);
           if (upload_file) {

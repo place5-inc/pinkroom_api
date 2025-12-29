@@ -144,19 +144,25 @@ export class PhotoService {
         .output(['inserted.id'])
         .executeTakeFirst();
 
-      const ment = await this.db
+      const prompt = await this.db
         .selectFrom('prompt')
-        .where('design_id', '=', designId)
-        .select('ment')
+        .leftJoin('upload_file', 'upload_file.id', 'prompt.design_id')
+        .where('prompt.design_id', '=', designId)
+        .select([
+          'prompt.design_id as designId',
+          'prompt.ment',
+          'upload_file.url as imageUrl',
+        ])
         .executeTakeFirst();
-      if (!ment) {
+      if (!prompt) {
         throw new NotFoundException('prompt를 찾을 수 없습니다.');
       }
       const result = await this.workerService.generatePhoto(
         photo.id,
         uploadedFile.url,
         designId,
-        ment.ment,
+        prompt.ment,
+        prompt.imageUrl,
         5,
       );
       if (result) {
@@ -192,16 +198,22 @@ export class PhotoService {
       .where('p.id', '=', originalPhotoId)
       .select(['p.id as photo_id', 'u.url as url'])
       .executeTakeFirst();
-    const ment = await this.db
+    const prompt = await this.db
       .selectFrom('prompt')
-      .where('design_id', '=', designId)
-      .select('ment')
+      .leftJoin('upload_file', 'upload_file.id', 'prompt.design_id')
+      .where('prompt.design_id', '=', designId)
+      .select([
+        'prompt.design_id as designId',
+        'prompt.ment',
+        'upload_file.url as imageUrl',
+      ])
       .executeTakeFirst();
     const result = await this.workerService.generatePhoto(
       originalPhoto.photo_id,
       originalPhoto.url,
       designId,
-      ment.ment,
+      prompt.ment,
+      prompt.imageUrl,
       1,
     );
 
