@@ -100,7 +100,7 @@ export class WorldcupService {
         return a.resultId - b.resultId;
       });
       const mySelect = votes.find(
-        (vote) => vote.name == null && vote.user_id != userId,
+        (vote) => vote.name == null && vote.user_id == userId,
       );
       if (mySelect) {
         const mySelectPhoto = photoResults.find(
@@ -125,18 +125,47 @@ export class WorldcupService {
       };
     }
   }
-  async vote(_code: string, resultId: number, name?: string, userId?: string) {
+  async vote(
+    _code?: string,
+    photoId?: number,
+    resultId?: number,
+    name?: string,
+    userId?: string,
+  ) {
     try {
-      const code = await this.db
-        .selectFrom('photo_share_code')
-        .where('code', '=', _code)
-        .selectAll()
-        .executeTakeFirst();
+      let targetPhotoId: number | undefined;
+
+      if (_code) {
+        const shareCode = await this.db
+          .selectFrom('photo_share_code')
+          .where('code', '=', _code)
+          //.where('expired_at','>',new Date())
+          .selectAll()
+          .executeTakeFirst();
+
+        if (!shareCode) {
+          throw new HttpException(
+            '유효하지 않은 공유 코드입니다.',
+            HttpStatus.NOT_FOUND,
+          );
+        }
+
+        targetPhotoId = shareCode.photo_id;
+      } else if (photoId != null) {
+        targetPhotoId = photoId;
+      } else {
+        throw new HttpException(
+          'code 또는 photoId가 필요합니다.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       const photo = await this.db
         .selectFrom('photos')
-        .where('id', '=', code.photo_id)
+        .where('id', '=', targetPhotoId)
         .selectAll()
         .executeTakeFirst();
+
       if (!photo) {
         throw new HttpException(
           '존재하지 않는 원본 사진입니다.',

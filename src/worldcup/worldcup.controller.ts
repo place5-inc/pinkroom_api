@@ -36,7 +36,9 @@ export class WorldcupController {
   @Post('vote')
   async vote(@Body() body: WorldcupBody) {
     if (isEmpty(body.code)) {
-      throw new BadRequestException('code is required.');
+      if (isEmpty(body.photoId)) {
+        throw new BadRequestException('code or photoId is need.');
+      }
     }
     if (isEmpty(body.resultId)) {
       throw new BadRequestException('resultId is required.');
@@ -48,6 +50,7 @@ export class WorldcupController {
     }
     return await this.worldcupService.vote(
       body.code,
+      body.photoId,
       body.resultId,
       body.name,
       body.userId,
