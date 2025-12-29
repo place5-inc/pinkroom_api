@@ -146,7 +146,7 @@ export class PhotoService {
 
       const prompt = await this.db
         .selectFrom('prompt')
-        .leftJoin('upload_file', 'upload_file.id', 'prompt.design_id')
+        .leftJoin('upload_file', 'upload_file.id', 'prompt.upload_file_id')
         .where('prompt.design_id', '=', designId)
         .select([
           'prompt.design_id as designId',
@@ -200,7 +200,7 @@ export class PhotoService {
       .executeTakeFirst();
     const prompt = await this.db
       .selectFrom('prompt')
-      .leftJoin('upload_file', 'upload_file.id', 'prompt.design_id')
+      .leftJoin('upload_file', 'upload_file.id', 'prompt.upload_file_id')
       .where('prompt.design_id', '=', designId)
       .select([
         'prompt.design_id as designId',

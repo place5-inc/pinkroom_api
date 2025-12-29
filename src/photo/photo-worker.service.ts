@@ -31,7 +31,7 @@ export class PhotoWorkerService {
       .executeTakeFirst();
     const ments = await this.db
       .selectFrom('prompt')
-      .leftJoin('upload_file', 'upload_file.id', 'prompt.design_id')
+      .leftJoin('upload_file', 'upload_file.id', 'prompt.upload_file_id')
       .select([
         'prompt.design_id as designId',
         'prompt.ment',
