@@ -116,4 +116,9 @@ export class AdminController {
   async getPrompt(@Query('designId') designId: number) {
     return await this.adminService.getPrompt(designId);
   }
+
+  @Get('test/kakao')
+  async testKakao(@Query('userId') userId: string) {
+    return await this.adminService.testKakao(userId);
+  }
 }

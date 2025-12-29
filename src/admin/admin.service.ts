@@ -14,11 +14,13 @@ import { AdminRepository } from './admin.repository';
 
 import { AllSelection } from 'kysely/dist/cjs/parser/select-parser';
 import { DateTime } from 'luxon';
+import { KakaoService } from 'src/kakao/kakao.service';
 @Injectable()
 export class AdminService {
   constructor(
     private readonly db: DatabaseProvider,
     private readonly adminRepository: AdminRepository,
+    private readonly kakaoService: KakaoService,
   ) {}
   async test() {
     try {
@@ -199,6 +201,23 @@ export class AdminService {
       return {
         status: HttpStatus.OK,
       };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async testKakao(userId: string) {
+    try {
+      await this.kakaoService.sendKakaoNotification(
+        true,
+        userId,
+        'test_01',
+        null,
+        [],
+        [],
+      );
     } catch (e) {
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,

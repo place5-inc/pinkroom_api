@@ -44,6 +44,10 @@ export class KakaoService {
       if (user! || (user && user.phone == null)) {
         return;
       }
+
+      if (to == null && user.phone != null) {
+        to = user.phone;
+      }
     }
 
     let [i, k] = [null, null];
@@ -74,6 +78,8 @@ export class KakaoService {
 
     let isSend = false;
 
+    isSend = true;
+
     if (isSend) {
       // KakaoJson 객체 생성하기
       const kakaoJson = await this.KakaoJson(
@@ -92,7 +98,7 @@ export class KakaoService {
   // 실제 런칭용 getKakaoTemplateInfo 함수
   async getKakaoTemplateInfo(
     isKakaoProduction: boolean = false,
-    templatecode: string,
+    templateCode: string,
     values: string[] = [],
     params: string[] = [],
     i: string | null,
@@ -106,10 +112,10 @@ export class KakaoService {
       isKakaoProduction,
       values,
       params,
-      templatecode,
+      templateCode,
       i,
       k,
-    )[templatecode];
+    )[templateCode];
 
     if (!templateInfo) {
       throw new BadRequestException('유효하지 않은 템플릿 코드입니다.');
@@ -123,7 +129,7 @@ export class KakaoService {
   }
 
   async KakaoJson(
-    templatecode: string,
+    templateCode: string,
     to: string,
     userId: string | null,
     message: string,
@@ -131,8 +137,10 @@ export class KakaoService {
     type: string,
   ): Promise<{ KakaoJson: KakaoJson }> {
     const _content: KakaoContentBaseJson = {
-      senderkey: '863844ca56c8013f6760403bf9737cfd13d21637', //김결혼용
-      templatecode: templatecode,
+      senderkey:
+        process.env.KAKAO_SENDER_KEY ??
+        '29cd61ed1b58fe1d8dbccd1ce48d5e8837c7a460', //핑크룸용
+      templatecode: templateCode,
       message: message,
       button: buttonList,
     };
@@ -140,11 +148,11 @@ export class KakaoService {
     let [i, k] = [null, null];
 
     if (userId) {
-      [i, k] = encrypt(userId.toString());
+      [i, k] = encrypt(userId);
     }
 
     const kakaoJson: KakaoJson = {
-      templeteCode: templatecode,
+      templeteCode: templateCode,
       to,
       i,
       k,
@@ -209,7 +217,7 @@ export class KakaoService {
         });
 
         logData.result_code = response.data.code; // 성공 시 result_code 업데이트
-        //await this.db.insertInto('kakao_log').values(logData).execute();
+        await this.db.insertInto('kakao_log').values(logData).execute();
         return {
           status: HttpStatus.OK,
           data: {
@@ -220,7 +228,7 @@ export class KakaoService {
         logData.result_code = error.response?.data?.code; // 실패 시 result_code 업데이트
         logData.exception_message =
           error.response?.data?.description || error.message; // 실패 시 exception_message 업데이트
-        //await this.db.insertInto('kakao_log').values(logData).execute();
+        await this.db.insertInto('kakao_log').values(logData).execute();
 
         throw new HttpException(
           `카카오 메시지 전송 실패: ${error.response?.data?.description || error.message}`,
