@@ -63,11 +63,12 @@ model prompt {
 }
 
 model users {
-  id          String   @id(map: "PK_users_1") @db.UniqueIdentifier
-  phone       String   @db.NVarChar(50)
-  created_at  DateTime @db.DateTime
-  name        String?  @db.NVarChar(50)
-  use_code_id String?  @db.NVarChar(50)
+  id                String   @id(map: "PK_users_1") @db.UniqueIdentifier
+  phone             String   @db.NVarChar(50)
+  created_at        DateTime @db.DateTime
+  name              String?  @db.NVarChar(50)
+  use_code_id       String?  @db.NVarChar(50)
+  use_code_photo_id Int?
 }
 
 model user_certification {

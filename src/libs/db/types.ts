@@ -89,6 +89,7 @@ export type users = {
     created_at: Timestamp;
     name: string | null;
     use_code_id: string | null;
+    use_code_photo_id: number | null;
 };
 export type worldcup_votes = {
     id: Generated<number>;
