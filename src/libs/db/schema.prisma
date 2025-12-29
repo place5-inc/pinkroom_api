@@ -38,7 +38,7 @@ model code_hair_style {
 
 model kakao_log {
   key               Int       @id(map: "PK_kakao_log") @default(autoincrement())
-  user_id           Int?
+  user_id           String?   @db.UniqueIdentifier
   phone_number      String?   @db.VarChar(20)
   template_code     String?   @db.VarChar(50)
   created_at        DateTime? @db.DateTime
@@ -80,6 +80,15 @@ model user_certification {
   expire_time  DateTime @db.DateTime
 }
 
+model users {
+  id                String   @id(map: "PK_users_1") @db.UniqueIdentifier
+  phone             String   @db.NVarChar(50)
+  created_at        DateTime @db.DateTime
+  name              String?  @db.NVarChar(50)
+  use_code_id       String?  @db.NVarChar(50)
+  use_code_photo_id Int?
+}
+
 model payments {
   id         Int       @id(map: "PK_payments") @default(autoincrement())
   user_id    String?   @db.UniqueIdentifier
@@ -90,6 +99,14 @@ model payments {
   price      Int?
 }
 
+model photo_code_log {
+  id           Int       @id(map: "PK_photo_code_log") @default(autoincrement())
+  photo_id     Int?
+  code         String?   @db.NVarChar(50)
+  used_user_id String?   @db.UniqueIdentifier
+  created_at   DateTime? @db.DateTime
+}
+
 model photo_results {
   id                Int       @id(map: "PK_photo_results") @default(autoincrement())
   original_photo_id Int?
@@ -97,14 +114,6 @@ model photo_results {
   result_image_id   String?   @db.UniqueIdentifier
   created_at        DateTime? @db.DateTime
   status            String?   @db.NVarChar(10)
-}
-
-model photo_code_log {
-  id           Int       @id(map: "PK_photo_code_log") @default(autoincrement())
-  photo_id     Int?
-  code         String?   @db.NVarChar(50)
-  used_user_id String?   @db.UniqueIdentifier
-  created_at   DateTime? @db.DateTime
 }
 
 model photo_share_code {
