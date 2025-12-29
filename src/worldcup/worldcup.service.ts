@@ -10,11 +10,8 @@ export class WorldcupService {
   ) {}
   async getWorldcupList(userId: string) {
     try {
-      const photosWithVoteCount = await this.db
+      const photos = await this.db
         .selectFrom('photos as p')
-        .leftJoin('worldcup_votes as wv', (join) =>
-          join.onRef('wv.photo_id', '=', 'p.id').on('wv.name', 'is not', null),
-        )
         .leftJoin('upload_file as uf', 'uf.id', 'p.upload_file_id')
         .where('p.user_id', '=', userId)
         .select([
@@ -22,12 +19,26 @@ export class WorldcupService {
           'p.payment_id as paymentId',
           'uf.url as sourceImageUrl',
           'p.created_at',
-          this.db.fn
-            .coalesce(this.db.fn.count<number>('wv.id'), this.db.val(0))
-            .as('voteCount'),
         ])
-        .groupBy(['p.id', 'p.payment_id', 'p.created_at', 'uf.url'])
         .execute();
+      const photoIds = photos.map((p) => p.photoId);
+      const votes = await this.db
+        .selectFrom('worldcup_votes')
+        .where('name', 'is not', null)
+        .where('photo_id', 'in', photoIds)
+        .selectAll()
+        .execute();
+      const voteCountByPhotoId = votes.reduce<Record<number, number>>(
+        (acc, vote) => {
+          acc[vote.photo_id] = (acc[vote.photo_id] ?? 0) + 1;
+          return acc;
+        },
+        {},
+      );
+      const photosWithVoteCount = photos.map((photo) => ({
+        ...photo,
+        voteCount: voteCountByPhotoId[photo.photoId] ?? 0,
+      }));
       return {
         status: HttpStatus.OK,
         results: photosWithVoteCount,
