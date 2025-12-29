@@ -208,12 +208,12 @@ export class AdminService {
       };
     }
   }
-  async testKakao(userId: string) {
+  async testKakao(userId: string, templateCode: string) {
     try {
       await this.kakaoService.sendKakaoNotification(
         true,
         userId,
-        'test_01',
+        templateCode,
         null,
         [],
         [],
