@@ -122,7 +122,16 @@ export class AdminController {
   }
 
   @Get('test/kakao')
-  async testKakao(@Query('userId') userId: string) {
-    return await this.adminService.testKakao(userId);
+  async testKakao(
+    @Query('userId') userId: string,
+    @Query('templateCode') templateCode: string,
+  ) {
+    if (isEmpty(userId)) {
+      throw new BadRequestException('userId is required.');
+    }
+    if (isEmpty(templateCode)) {
+      throw new BadRequestException('templateCode is required.');
+    }
+    return await this.adminService.testKakao(userId, templateCode);
   }
 }
