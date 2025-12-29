@@ -12,24 +12,22 @@ export class PhotoWorkerService {
   ) {}
 
   async makeAllPhotos(originalPhotoId: number) {
-    const completed = await this.db
-      .selectFrom('photo_results')
-      .where('original_photo_id', '=', originalPhotoId)
-      .where('status', '=', 'complete')
-      .select('hair_design_id')
-      .execute();
-    const completedSet = new Set(completed.map((r) => r.hair_design_id));
-    if (completedSet.size === 16) {
-      console.log('이미 전부 완료됨');
-      return;
-    }
+    const MAX_RETRY = 5;
+    let attempt = 0;
+    // 2️⃣ 원본 사진
     const originalPhoto = await this.db
       .selectFrom('photos as p')
       .innerJoin('upload_file as u', 'u.id', 'p.upload_file_id')
       .where('p.id', '=', originalPhotoId)
       .select(['p.id as photo_id', 'u.url as url'])
       .executeTakeFirst();
-    const ments = await this.db
+
+    if (!originalPhoto) {
+      throw new Error('원본 사진 없음');
+    }
+
+    // 3️⃣ 프롬프트
+    const prompts = await this.db
       .selectFrom('prompt')
       .leftJoin('upload_file', 'upload_file.id', 'prompt.upload_file_id')
       .select([
@@ -38,26 +36,56 @@ export class PhotoWorkerService {
         'upload_file.url as imageUrl',
       ])
       .execute();
-    for (let designId = 1; designId <= 16; designId++) {
-      if (completedSet.has(designId)) continue;
-      const prompt = ments.find(
-        (m) => m.designId === designId, // 또는 m.id === designId
-      );
-      if (!prompt) {
-        continue;
+    while (attempt < MAX_RETRY) {
+      attempt++;
+
+      // 1️⃣ 완료된 것 조회
+      const completed = await this.db
+        .selectFrom('photo_results')
+        .where('original_photo_id', '=', originalPhotoId)
+        .where('status', '=', 'complete')
+        .select('hair_design_id')
+        .execute();
+
+      const completedSet = new Set(completed.map((r) => r.hair_design_id));
+
+      if (completedSet.size === 16) {
+        console.log(`🎉 ${attempt}번째 시도에서 전부 완료`);
+        this.sendKakao(originalPhotoId);
+        return;
       }
 
-      await this.generatePhoto(
-        originalPhotoId,
-        originalPhoto.url,
-        designId,
-        prompt.ment,
-        prompt.imageUrl,
-        1,
-      );
+      // 4️⃣ 미완료 design만 재요청
+      for (let designId = 1; designId <= 16; designId++) {
+        if (completedSet.has(designId)) continue;
+
+        const prompt = prompts.find((m) => m.designId === designId);
+        if (!prompt) continue;
+
+        try {
+          await this.generatePhoto(
+            originalPhotoId,
+            originalPhoto.url,
+            designId,
+            prompt.ment,
+            prompt.imageUrl,
+            attempt, // 몇 번째 시도인지 넘겨도 좋음
+          );
+        } catch (e) {
+          console.error(`❌ design ${designId} 실패 (attempt ${attempt})`, e);
+        }
+      }
+
+      // 5️⃣ 외부 API 반영 시간 대비 약간 대기
+      await new Promise((r) => setTimeout(r, 2000));
     }
+
+    console.error('🚨 최대 재시도 초과, 일부 실패');
   }
-  async checkMakeAll() {}
+
+  async sendKakao(photoId: number) {
+    //todo kakaoRepo 호출
+  }
 
   /*
 애저에 올리기 
