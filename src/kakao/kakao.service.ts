@@ -208,7 +208,9 @@ export class KakaoService {
     };
     if (
       process.env.NODE_ENV === 'production' ||
-      process.env.NODE_ENV === 'staging'
+      process.env.NODE_ENV === 'staging' ||
+      process.env.NODE_ENV === 'development' ||
+      process.env.NODE_ENV === undefined
     ) {
       try {
         const response = await axios.post(url, postData, {
@@ -246,6 +248,7 @@ export class KakaoService {
     if (
       process.env.NODE_ENV === 'production' ||
       process.env.NODE_ENV === 'staging' ||
+      process.env.NODE_ENV === 'development' ||
       process.env.NODE_ENV === undefined
     ) {
       try {
