@@ -69,3 +69,18 @@ export function encrypt(
   ]);
   return [iv.toString('hex'), encrypted.toString('hex')];
 }
+export function getMimeTypeFromUri(uri: string): string {
+  const ext = uri.split('?')[0].split('.').pop()?.toLowerCase();
+
+  switch (ext) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'png':
+      return 'image/png';
+    case 'webp':
+      return 'image/webp';
+    default:
+      throw new Error(`Unsupported image extension: ${ext}`);
+  }
+}

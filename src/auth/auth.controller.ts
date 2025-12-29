@@ -23,13 +23,12 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('sendCode')
-  @HttpCode(HttpStatus.OK)
   async sendCode(@Body() body: AuthBody) {
     if (isEmpty(body.phone)) {
       throw new BadRequestException('phone is required.');
     }
 
-    await this.authService.sendCode(body.phone);
+    return await this.authService.sendCode(body.phone);
   }
   @Post('confirmCode')
   async confirmCode(@Body() body: AuthBody) {
