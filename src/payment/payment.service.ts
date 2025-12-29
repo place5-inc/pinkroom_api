@@ -5,13 +5,19 @@ import { DatabaseProvider } from 'src/libs/db';
 export class PaymentService {
   constructor(private readonly db: DatabaseProvider) {}
 
-  async completePayment(userId: string, oId: string, tId: string) {
+  async completePayment(
+    userId: string,
+    oId: string,
+    tId: string,
+    price: number,
+  ) {
     const result = await this.db
       .insertInto('payments')
       .values({
         user_id: userId,
         oid: oId,
         tid: tId,
+        price: price,
         created_at: new Date(),
       })
       .output(['inserted.id'])

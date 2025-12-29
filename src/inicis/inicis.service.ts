@@ -86,6 +86,7 @@ export class InicisService {
             userId,
             data.MOID,
             data.tid,
+            data.TotPrice,
           );
         }
       } catch (err) {}
@@ -135,6 +136,7 @@ export class InicisService {
               userId,
               data.P_OID,
               data.P_TID,
+              data.P_AMT,
             );
           } else {
             throw new Error();
