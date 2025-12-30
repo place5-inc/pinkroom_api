@@ -28,6 +28,7 @@ import { ShareService } from './share/share.service';
 import { PhotoRepository } from './photo/photo.repository';
 import { WorldcupController } from './worldcup/worldcup.controller';
 import { WorldcupService } from './worldcup/worldcup.service';
+import { KakaoService } from './kakao/kakao.service';
 const modules: ModuleMetadata = {
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -62,6 +63,7 @@ const modules: ModuleMetadata = {
     PhotoWorkerService,
     ShareService,
     WorldcupService,
+    KakaoService,
   ],
 };
 
