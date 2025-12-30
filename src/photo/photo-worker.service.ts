@@ -3,6 +3,7 @@ import { GeminiService } from 'src/ai/gemini.service';
 import { AzureBlobService } from 'src/azure/blob.service';
 import { DatabaseProvider } from 'src/libs/db';
 import { KakaoService } from 'src/kakao/kakao.service';
+import { sql } from 'kysely';
 @Injectable()
 export class PhotoWorkerService {
   constructor(
@@ -37,6 +38,11 @@ export class PhotoWorkerService {
         'upload_file.url as imageUrl',
       ])
       .execute();
+    const totalCount = await this.db
+      .selectFrom('users')
+      .select(sql<number>`count(*)`.as('count'))
+      .executeTakeFirst();
+
     while (attempt < MAX_RETRY) {
       attempt++;
 
@@ -50,7 +56,7 @@ export class PhotoWorkerService {
 
       const completedSet = new Set(completed.map((r) => r.hair_design_id));
 
-      if (completedSet.size === 16) {
+      if (completedSet.size === totalCount.count) {
         console.log(`🎉 ${attempt}번째 시도에서 전부 완료`);
         this.sendKakao(originalPhotoId);
         return;
