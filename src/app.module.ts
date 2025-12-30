@@ -13,6 +13,7 @@ import { HttpModule } from '@nestjs/axios';
 import { AzureBlobService } from './azure/blob.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AdminRepository } from './admin/admin.repository';
+import { KakaoService } from './kakao/kakao.service';
 const modules: ModuleMetadata = {
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -28,6 +29,7 @@ const modules: ModuleMetadata = {
     AdminService,
     AzureBlobService,
     CommonService,
+    KakaoService,
   ],
 };
 
