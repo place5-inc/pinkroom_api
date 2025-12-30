@@ -144,15 +144,6 @@ export class PhotoService {
         .output(['inserted.id'])
         .executeTakeFirst();
 
-      //TODO 꿀배포 삭제 해야함
-      const test = true;
-      if (test) {
-        return {
-          status: HttpStatus.OK,
-          //result: item,
-        };
-      }
-
       const prompt = await this.db
         .selectFrom('prompt')
         .leftJoin('upload_file', 'upload_file.id', 'prompt.upload_file_id')
