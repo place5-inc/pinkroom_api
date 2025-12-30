@@ -3,10 +3,8 @@ import { GeminiService } from 'src/ai/gemini.service';
 import { AzureBlobService } from 'src/azure/blob.service';
 import { DatabaseProvider } from 'src/libs/db';
 import { KakaoService } from 'src/kakao/kakao.service';
-import { DEV_CONFIG } from 'src/libs/types';
 @Injectable()
 export class PhotoWorkerService {
-  private readonly _isKakaoProduction = DEV_CONFIG.isKakaoProduction;
   constructor(
     private readonly db: DatabaseProvider,
     private readonly azureBlobService: AzureBlobService,
@@ -97,7 +95,6 @@ export class PhotoWorkerService {
       return;
     }
     await this.kakaoService.sendKakaoNotification(
-      this._isKakaoProduction,
       user.user_id,
       'pr_cplt_hr_smln_test', //테스트용 템플릿 임시 추가
       null,

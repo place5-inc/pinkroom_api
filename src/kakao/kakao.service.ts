@@ -26,7 +26,6 @@ export class KakaoService {
 
   // 카카오 알림톡 전송
   async sendKakaoNotification(
-    isKakaoProduction: boolean = false,
     userId: string | null,
     templateCode: string,
     to: string,
@@ -60,6 +59,10 @@ export class KakaoService {
     let buttonList: KakaoContentButtonJson[] = [];
     let type: string;
 
+    let isKakaoProduction = false;
+    if (this._isKakaoProduction) {
+      isKakaoProduction = true;
+    }
     // 런칭용
     const {
       message: _message,
@@ -79,7 +82,7 @@ export class KakaoService {
 
     let isSend = false;
 
-    if (this._isKakaoProduction) {
+    if (isKakaoProduction) {
       //실서버에서는 발송
       isSend = true;
     } else {

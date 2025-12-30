@@ -31,11 +31,11 @@ export class AdminController {
     return await this.adminService.test();
   }
   @Get('style')
-  async getSytleList(
+  async getStyleList(
     @Query('withDesign', new ParseBoolPipe({ optional: true }))
     withDesign = false,
   ) {
-    return await this.commonService.getSytleList(withDesign);
+    return await this.commonService.getStyleList(withDesign);
   }
   @Post('style')
   async addStyle(@Body() body: AdminBody) {

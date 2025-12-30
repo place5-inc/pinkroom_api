@@ -6,7 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
-import { DEV_CONFIG, DTO, Image } from 'src/libs/types';
+import { DTO, Image } from 'src/libs/types';
 import { isEmpty, isNull } from 'src/libs/helpers';
 import { UpdateObjectExpression } from 'kysely/dist/cjs/parser/update-set-parser';
 import { DB } from 'src/libs/db/types';
@@ -18,7 +18,6 @@ import { AzureBlobService } from 'src/azure/blob.service';
 import { KakaoService } from 'src/kakao/kakao.service';
 @Injectable()
 export class AdminService {
-  private readonly _isKakaoProduction = DEV_CONFIG.isKakaoProduction;
   constructor(
     private readonly db: DatabaseProvider,
     private readonly adminRepository: AdminRepository,
@@ -241,7 +240,6 @@ export class AdminService {
   async testKakao(userId: string, templateCode: string) {
     try {
       await this.kakaoService.sendKakaoNotification(
-        this._isKakaoProduction,
         userId,
         templateCode,
         null,

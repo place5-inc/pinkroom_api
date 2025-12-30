@@ -12,7 +12,7 @@ export class CommonService {
       .where('id', '=', uploadFileId)
       .executeTakeFirst();
   }
-  async getSytleList(withDesign: boolean) {
+  async getStyleList(withDesign: boolean) {
     try {
       const styles = await this.db
         .selectFrom('code_hair_style')
