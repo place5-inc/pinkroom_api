@@ -166,7 +166,7 @@ export class PhotoService {
         5,
       );
       if (result) {
-        const item = this.photoRepository.getPhotoById(photo.id);
+        const item = await this.photoRepository.getPhotoById(photo.id);
 
         if (paymentId) {
           this.workerService.makeAllPhotos(photo.id);
