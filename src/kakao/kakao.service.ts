@@ -43,7 +43,7 @@ export class KakaoService {
       .select(['id', 'phone'])
       .executeTakeFirst();
 
-    if (user! || (user && user.phone == null)) {
+    if (user == undefined || (user && user.phone == null)) {
       return;
     }
 
@@ -79,7 +79,15 @@ export class KakaoService {
 
     let isSend = false;
 
-    isSend = true;
+    if (this._isKakaoProduction) {
+      //실서버에서는 발송
+      isSend = true;
+    } else {
+      //개발서버에서는 테스터 번호가 맞다면 발송
+      if (this.devPhoneNumberList.includes(to)) {
+        isSend = true;
+      }
+    }
 
     if (isSend) {
       // KakaoJson 객체 생성하기

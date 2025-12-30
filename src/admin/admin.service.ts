@@ -6,7 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
-import { DTO, Image } from 'src/libs/types';
+import { DEV_CONFIG, DTO, Image } from 'src/libs/types';
 import { isEmpty, isNull } from 'src/libs/helpers';
 import { UpdateObjectExpression } from 'kysely/dist/cjs/parser/update-set-parser';
 import { DB } from 'src/libs/db/types';
@@ -23,6 +23,7 @@ export class AdminService {
     private readonly adminRepository: AdminRepository,
     private readonly azureBlobService: AzureBlobService,
     private readonly kakaoService: KakaoService,
+    private readonly _isKakaoProduction = DEV_CONFIG.isKakaoProduction,
   ) {}
   async test() {
     try {
@@ -240,7 +241,7 @@ export class AdminService {
   async testKakao(userId: string, templateCode: string) {
     try {
       await this.kakaoService.sendKakaoNotification(
-        true,
+        this._isKakaoProduction,
         userId,
         templateCode,
         null,

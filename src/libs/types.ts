@@ -1,8 +1,16 @@
 import { HttpStatus } from '@nestjs/common';
 
 export const DEV_CONFIG = {
-  isKakaoProduction: false,
-  devPhoneNumberList: [],
+  isKakaoProduction: process.env.IS_KAKAO_PRODUCTION === 'on',
+  devPhoneNumberList: [
+    '01053095304',
+    '01027175360',
+    '01082559695',
+    '01073002335',
+    '01054697884',
+    '01021632335',
+    '01029056598',
+  ],
 };
 
 export type DTO<T = never> = Promise<DTOBody<T>>;
