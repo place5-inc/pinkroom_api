@@ -168,7 +168,7 @@ export class KakaoService {
       type: type, //ai이미지 알림톡 , at텍스트 알림톡
       content: {},
       account: 'richard555',
-      refkey: 'kim',
+      refkey: 'pinkroom',
       from: '01045209089',
     };
 
@@ -264,7 +264,7 @@ export class KakaoService {
         const url = 'https://api.bizppurio.com/v1/token';
         const headers = {
           'Content-Type': 'application/json; charset=utf-8',
-          Authorization: 'Basic cmljaGFyZDU1MTU6QWFiYjExMjIh',
+          Authorization: 'Basic cmljaGFyZDU1NTphYWJiMTEyMiFA',
         };
         const response = await axios.post(url, {}, { headers, timeout: 30000 });
         const data = response.data;
