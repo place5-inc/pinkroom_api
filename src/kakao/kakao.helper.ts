@@ -17,10 +17,10 @@ export class KakaoHelper {
   ) {
     let BASE_PARAMS = `code=${templateCode}&i=${i}&k=${k}`;
 
-    let URL = `${KakaoConstants.BASE_URL}/kakao-auth?${BASE_PARAMS}`;
+    let URL = `${KakaoConstants.BASE_URL}?${BASE_PARAMS}`;
 
     if (!isKakaoProduction) {
-      URL = `${KakaoConstants.TEST_URL}/kakao-auth?${BASE_PARAMS}`;
+      URL = `${KakaoConstants.TEST_URL}?${BASE_PARAMS}`;
     }
 
     const OBJ_URL = {
