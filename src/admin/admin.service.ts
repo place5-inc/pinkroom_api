@@ -18,12 +18,12 @@ import { AzureBlobService } from 'src/azure/blob.service';
 import { KakaoService } from 'src/kakao/kakao.service';
 @Injectable()
 export class AdminService {
+  private readonly _isKakaoProduction = DEV_CONFIG.isKakaoProduction;
   constructor(
     private readonly db: DatabaseProvider,
     private readonly adminRepository: AdminRepository,
     private readonly azureBlobService: AzureBlobService,
     private readonly kakaoService: KakaoService,
-    private readonly _isKakaoProduction = DEV_CONFIG.isKakaoProduction,
   ) {}
   async test() {
     try {
