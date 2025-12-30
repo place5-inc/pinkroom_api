@@ -34,25 +34,26 @@ export class KakaoService {
     params: string[] = [],
   ): Promise<void> {
     //카카오 알림을 껐다면 보내지 않는다.
-    if (userId) {
-      const user = await this.db
-        .selectFrom('users')
-        .where('id', '=', userId)
-        .select('phone')
-        .executeTakeFirst();
+    if (!userId) {
+      return;
+    }
+    const user = await this.db
+      .selectFrom('users')
+      .where('id', '=', userId)
+      .select(['id', 'phone'])
+      .executeTakeFirst();
 
-      if (user! || (user && user.phone == null)) {
-        return;
-      }
+    if (user! || (user && user.phone == null)) {
+      return;
+    }
 
-      if (to == null && user.phone != null) {
-        to = user.phone;
-      }
+    if (to == null && user.phone != null) {
+      to = user.phone;
     }
 
     let [i, k] = [null, null];
-    if (userId) {
-      [i, k] = encrypt(userId);
+    if (user.id) {
+      [i, k] = encrypt(user.id);
     }
 
     let message: string;
