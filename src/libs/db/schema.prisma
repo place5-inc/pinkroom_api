@@ -63,6 +63,15 @@ model prompt {
   code_hair_design code_hair_design @relation(fields: [design_id], references: [id], onUpdate: NoAction, map: "FK_prompt_code_hair_design")
 }
 
+model users {
+  id                String   @id(map: "PK_users_1") @db.UniqueIdentifier
+  phone             String   @db.NVarChar(50)
+  created_at        DateTime @db.DateTime
+  name              String?  @db.NVarChar(50)
+  use_code_id       String?  @db.NVarChar(50)
+  use_code_photo_id Int?
+}
+
 model user_certification {
   id           Int      @id(map: "PK_user_certification") @default(autoincrement())
   phone_number String   @db.NVarChar(50)

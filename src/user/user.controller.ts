@@ -13,10 +13,38 @@ import {
   Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
+import { PhotoService } from '../photo/photo.service';
+import { UploadPhotoBody, Image } from 'src/libs/types';
 
 @Controller('user')
 export class UserController {
-  constructor() {}
+  constructor(private photoService: PhotoService) {}
+  @Post('photo/upload')
+  async uploadPhoto(@Body() body: UploadPhotoBody) {
+    return await this.photoService.uploadPhoto(
+      body.userId,
+      body.image,
+      body.designId,
+      body.paymentId,
+      body.code,
+    );
+  }
+  @Post('photo/retry')
+  async retryPhoto(@Body() body: UploadPhotoBody) {
+    return await this.photoService.retryUploadPhoto(
+      body.userId,
+      body.originalPhotoId,
+      body.designId,
+    );
+  }
+  @Get()
+  async getPhotoList(@Query('userId') userId: string) {
+    return await this.photoService.getPhotoList(userId);
+  }
+  @Get('photo')
+  async getResultPhotoList(@Query('photoId') photoId: number) {
+    return await this.photoService.getResultPhotoList(photoId);
+  }
 
   // @Get()
   // async getUser(@Request() { user: token }) {

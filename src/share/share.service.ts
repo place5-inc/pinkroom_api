@@ -1,0 +1,110 @@
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { DatabaseProvider } from 'src/libs/db';
+import { PhotoRepository } from 'src/photo/photo.repository';
+
+@Injectable()
+export class ShareService {
+  constructor(
+    private readonly db: DatabaseProvider,
+    private readonly photoRepository: PhotoRepository,
+  ) {}
+
+  async getPhotoWithCode(_code: string) {
+    try {
+      const code = await this.db
+        .selectFrom('photo_share_code')
+        .where('code', '=', _code)
+        .selectAll()
+        .executeTakeFirst();
+
+      if (!code) {
+        // 코드 없음
+        throw new HttpException(
+          '존재하지 않는 코드입니다.',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // 현재 시간과 비교
+      const now = new Date();
+      if (code.expired_at && now > code.expired_at) {
+        throw new HttpException('만료된 코드입니다.', HttpStatus.FORBIDDEN);
+      }
+      const result = await this.photoRepository.getPhotoById(code.photo_id);
+      return {
+        status: HttpStatus.OK,
+        result,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async makePhotoCode(userId: string, photoId: number, type: string) {
+    try {
+      const photo = await this.db
+        .selectFrom('photos')
+        .where('id', '=', photoId)
+        .where('user_id', '=', userId)
+        //.where('payment_id','is not',null)
+        .selectAll()
+        .executeTakeFirst();
+
+      if (!photo) {
+        throw new HttpException(
+          '존재하지 않는 사진입니다.',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      let code: string;
+      let exists = true;
+
+      while (exists) {
+        code = await this.generateCode();
+
+        const found = await this.db
+          .selectFrom('photo_share_code')
+          .select('id')
+          .where('code', '=', code)
+          .executeTakeFirst();
+
+        exists = !!found;
+      }
+      const now = new Date();
+      const expireTime = new Date(now.getTime() + 3 * 24 * 60 * 60000);
+
+      await this.db
+        .insertInto('photo_share_code')
+        .values({
+          photo_id: photo.id,
+          created_at: now,
+          expired_at: expireTime, // 3일 후
+          code: code,
+          code_type: type,
+        })
+        .execute();
+
+      return {
+        status: HttpStatus.OK,
+        code: code,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async generateCode(length: number = 10): Promise<string> {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; // 대문자 + 숫자
+    let result = '';
+
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    return result;
+  }
+}

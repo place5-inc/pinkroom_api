@@ -1,19 +1,17 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
-import { HairDesignVO, HairStyleVO, Image, PromptVO } from 'src/libs/types';
-import { isEmpty, isNull } from 'src/libs/helpers';
-import { AzureBlobService } from 'src/azure/blob.service';
-import { DateTime } from 'luxon';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { HairDesignVO, HairStyleVO, PromptVO } from 'src/libs/types';
+
 @Injectable()
 export class CommonService {
-  constructor(
-    private readonly db: DatabaseProvider,
-    private readonly azureBlobService: AzureBlobService,
-    private readonly httpService: HttpService,
-  ) {}
-
+  constructor(private readonly db: DatabaseProvider) {}
+  async getFileUrl(uploadFileId: string) {
+    return this.db
+      .selectFrom('upload_file')
+      .select('url')
+      .where('id', '=', uploadFileId)
+      .executeTakeFirst();
+  }
   async getSytleList(withDesign: boolean) {
     try {
       const styles = await this.db
@@ -93,20 +91,38 @@ export class CommonService {
         };
       }
 
-      const prompts = await this.db
+      // ✅ prompt + upload_file (1:1)
+      const rows = await this.db
         .selectFrom('prompt')
-        .select(['design_id as designId', 'ment'])
+        .leftJoin('upload_file', 'upload_file.id', 'prompt.upload_file_id')
+        .select([
+          'prompt.design_id as designId',
+          'prompt.ment',
+          'upload_file.id as imageId',
+          'upload_file.url as imageUrl',
+        ])
         .execute();
 
+      /**
+       * designId
+       *   └─ PromptVO[]
+       */
       const designMap = new Map<number, PromptVO[]>();
 
-      for (const prompt of prompts) {
-        if (!designMap.has(prompt.designId)) {
-          designMap.set(prompt.designId, []);
+      for (const row of rows) {
+        if (!designMap.has(row.designId)) {
+          designMap.set(row.designId, []);
         }
-        designMap.get(prompt.designId)!.push({
-          designId: prompt.designId,
-          ment: prompt.ment,
+
+        designMap.get(row.designId)!.push({
+          designId: row.designId,
+          ment: row.ment,
+          image: row.imageId
+            ? {
+                id: row.imageId,
+                url: row.imageUrl,
+              }
+            : undefined,
         });
       }
 

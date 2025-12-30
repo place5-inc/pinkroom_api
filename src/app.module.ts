@@ -1,5 +1,4 @@
 import { Module, ModuleMetadata } from '@nestjs/common';
-import { UserController } from './user/user.controller';
 import { UserService } from './user/user.service';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
@@ -13,6 +12,22 @@ import { HttpModule } from '@nestjs/axios';
 import { AzureBlobService } from './azure/blob.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AdminRepository } from './admin/admin.repository';
+import { MessageService } from './message/message.service';
+import { AuthController } from './auth/auth.controller';
+import { AuthService } from './auth/auth.service';
+import { VerificationService } from './auth/verification.service';
+import { InicisController } from './inicis/inicis.controller';
+import { InicisService } from './inicis/inicis.service';
+import { PaymentService } from './payment/payment.service';
+import { GeminiService } from './ai/gemini.service';
+import { PhotoService } from './photo/photo.service';
+import { PhotoWorkerService } from './photo/photo-worker.service';
+import { UserController } from './user/user.controller';
+import { ShareController } from './share/share.controller';
+import { ShareService } from './share/share.service';
+import { PhotoRepository } from './photo/photo.repository';
+import { WorldcupController } from './worldcup/worldcup.controller';
+import { WorldcupService } from './worldcup/worldcup.service';
 import { KakaoService } from './kakao/kakao.service';
 const modules: ModuleMetadata = {
   imports: [
@@ -20,7 +35,15 @@ const modules: ModuleMetadata = {
     JwtModule.register({}),
     HttpModule,
   ],
-  controllers: [UserController, CommonController, AdminController],
+  controllers: [
+    UserController,
+    CommonController,
+    AdminController,
+    AuthController,
+    InicisController,
+    ShareController,
+    WorldcupController,
+  ],
   providers: [
     DatabaseProvider,
     UserService,
@@ -29,6 +52,17 @@ const modules: ModuleMetadata = {
     AdminService,
     AzureBlobService,
     CommonService,
+    MessageService,
+    AuthService,
+    VerificationService,
+    PhotoService,
+    PhotoRepository,
+    InicisService,
+    PaymentService,
+    GeminiService,
+    PhotoWorkerService,
+    ShareService,
+    WorldcupService,
     KakaoService,
   ],
 };

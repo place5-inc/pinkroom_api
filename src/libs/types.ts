@@ -29,6 +29,7 @@ export type HairDesignVO = {
 export type PromptVO = {
   designId?: number;
   ment?: string;
+  image?: Image;
 };
 export type Image = {
   url?: string;
@@ -42,7 +43,43 @@ export type AdminBody = {
   styleId?: number;
   designId?: number;
   setOn?: boolean;
+  image?: Image;
 };
+export type AuthBody = {
+  phone?: string;
+  code?: string;
+};
+export type UploadPhotoBody = {
+  userId?: string;
+  image?: Image;
+  paymentId?: number;
+  code?: string;
+  designId?: number;
+  originalPhotoId?: number;
+};
+export type WorldcupBody = {
+  photoId?: number;
+  code?: string;
+  resultId: number;
+  userId?: string;
+  name?: string;
+};
+
+export type PhotoVO = {
+  id: number;
+  paymentId: number;
+  sourceImageUrl: string;
+  resultImages: ResultImageVO[];
+  createdAt: string;
+};
+
+export type ResultImageVO = {
+  id: number;
+  url: string;
+  designId: number;
+  status: string;
+};
+
 export function isValidImage(fileData: string) {
   const pattern =
     /^data:(image\/(png|jpeg|jpg|gif|webp));base64,([A-Za-z0-9+/=]+)$/;
