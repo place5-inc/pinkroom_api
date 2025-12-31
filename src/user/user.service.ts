@@ -11,7 +11,7 @@ export class UserService {
       .where('phone', '=', phone)
       .executeTakeFirst();
   }
-  async createUser(phone: string) {
+  async createUser(phone: string, sampleType?: string) {
     const id = randomUUID();
     const name = phone.slice(-4); // 마지막 4글자
     await this.db
@@ -21,6 +21,7 @@ export class UserService {
         phone,
         created_at: new Date(),
         name,
+        sample_type: sampleType ?? null,
       })
       .executeTakeFirst();
 

@@ -17,13 +17,13 @@ export class AuthService {
     return await this.messageService.requestVerifyCode(phone, code);
   }
 
-  async confirmCode(phone: string, code: string) {
+  async confirmCode(phone: string, code: string, sampleType?: string) {
     await this.verificationService.verifyCode(phone, code);
 
     let isNew = false;
     let user = await this.userService.findByPhone(phone);
     if (!user) {
-      user = await this.userService.createUser(phone);
+      user = await this.userService.createUser(phone, sampleType);
       isNew = true;
     }
 

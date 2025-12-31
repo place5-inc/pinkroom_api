@@ -38,6 +38,10 @@ export class AuthController {
     if (isEmpty(body.code)) {
       throw new BadRequestException('code is required.');
     }
-    return await this.authService.confirmCode(body.phone, body.code);
+    return await this.authService.confirmCode(
+      body.phone,
+      body.code,
+      body.sampleType,
+    );
   }
 }

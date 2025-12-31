@@ -23,9 +23,15 @@ export class PhotoService {
   async getPhotoList(userId: string) {
     try {
       const results = await this.photoRepository.getPhotosByUserId(userId);
+      const user = await this.db
+        .selectFrom('users')
+        .where('id', '=', userId)
+        .selectAll()
+        .executeTakeFirst();
       return {
         status: HttpStatus.OK,
         results,
+        sampleType: user.sample_type,
       };
     } catch (e) {
       return {

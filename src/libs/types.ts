@@ -56,6 +56,7 @@ export type AdminBody = {
 export type AuthBody = {
   phone?: string;
   code?: string;
+  sampleType?: string;
 };
 export type UploadPhotoBody = {
   userId?: string;

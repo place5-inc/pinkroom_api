@@ -70,6 +70,7 @@ model users {
   name              String?  @db.NVarChar(50)
   use_code_id       String?  @db.NVarChar(50)
   use_code_photo_id Int?
+  sample_type       String?  @db.NVarChar(50)
 }
 
 model user_certification {
@@ -78,15 +79,6 @@ model user_certification {
   code         String   @db.NVarChar(50)
   required_at  DateTime @db.DateTime
   expire_time  DateTime @db.DateTime
-}
-
-model users {
-  id                String   @id(map: "PK_users_1") @db.UniqueIdentifier
-  phone             String   @db.NVarChar(50)
-  created_at        DateTime @db.DateTime
-  name              String?  @db.NVarChar(50)
-  use_code_id       String?  @db.NVarChar(50)
-  use_code_photo_id Int?
 }
 
 model payments {
