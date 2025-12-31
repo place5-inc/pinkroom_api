@@ -10,6 +10,7 @@ export class PhotoRepository {
       .selectFrom('photos as p')
       .leftJoin('upload_file as uf', 'uf.id', 'p.upload_file_id')
       .where('p.user_id', '=', userId)
+      .orderBy('p.id desc')
       .select([
         'p.id as photoId',
         'p.payment_id as paymentId',
