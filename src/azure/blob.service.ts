@@ -8,15 +8,15 @@ import { v4 } from 'uuid';
 import { DateTime } from 'luxon';
 import { Image, isValidImage } from 'src/libs/types';
 
-export type ContainerName = 'business-images';
-export type TableName = 'business_member' | 'business_images';
+export type ContainerName = 'photo';
+export type TableName = 'upload_file';
 
 @Injectable()
 export class AzureBlobService {
   private blobServiceClient: BlobServiceClient;
 
   constructor(private readonly db: DatabaseProvider) {
-    const account = process.env.AZURE_STORAGE_ACCOUNT_NAME ?? 'koreanbridge';
+    const account = process.env.AZURE_STORAGE_ACCOUNT_NAME ?? 'pinkroom';
     const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY;
 
     const sharedKeyCredential = new StorageSharedKeyCredential(
