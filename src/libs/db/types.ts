@@ -71,6 +71,13 @@ export type prompt = {
     ment: string | null;
     upload_file_id: string | null;
 };
+export type token = {
+    id: Generated<number>;
+    user_id: string | null;
+    token: string | null;
+    created_at: Timestamp | null;
+    expired_at: Timestamp | null;
+};
 export type upload_file = {
     id: string;
     file_name: string | null;
@@ -111,6 +118,7 @@ export type DB = {
     photo_share_code: photo_share_code;
     photos: photos;
     prompt: prompt;
+    token: token;
     upload_file: upload_file;
     user_certification: user_certification;
     users: users;

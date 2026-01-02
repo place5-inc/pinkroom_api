@@ -125,3 +125,11 @@ model worldcup_votes {
   user_id    String?   @db.UniqueIdentifier
   created_at DateTime? @db.DateTime
 }
+
+model token {
+  id         Int       @id(map: "PK_token") @default(autoincrement())
+  user_id    String?   @db.UniqueIdentifier
+  token      String?   @db.NVarChar(50)
+  created_at DateTime? @db.DateTime
+  expired_at DateTime? @db.DateTime
+}
