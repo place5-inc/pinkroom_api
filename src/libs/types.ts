@@ -80,6 +80,7 @@ export type PhotoVO = {
   id: number;
   paymentId: number;
   sourceImageUrl: string;
+  thumbnailUrl?: string;
   resultImages: ResultImageVO[];
   createdAt: string;
   selectedDesignId?: number;

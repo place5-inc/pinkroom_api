@@ -79,6 +79,7 @@ export type photos = {
     payment_id: number | null;
     created_at: Timestamp | null;
     selected_design_id: number | null;
+    thumbnail_url: string | null;
 };
 export type prompt = {
     design_id: number;

@@ -11,6 +11,7 @@ import { Image, PhotoVO } from 'src/libs/types';
 import { PhotoWorkerService } from './photo-worker.service';
 import { PhotoRepository } from './photo.repository';
 import { sql } from 'kysely';
+import { ThumbnailService } from './thumbnail.service';
 @Injectable()
 export class PhotoService {
   constructor(
@@ -18,7 +19,8 @@ export class PhotoService {
     private readonly azureBlobService: AzureBlobService,
     private readonly workerService: PhotoWorkerService,
     private readonly photoRepository: PhotoRepository,
-  ) {}
+    private readonly thumbnailService: ThumbnailService,
+  ) { }
 
   async getPhotoList(userId: string) {
     try {
@@ -172,6 +174,43 @@ export class PhotoService {
         prompt.imageUrl,
       );
       if (result) {
+        // --- 썸네일 생성 로직 추가 ---
+        const itemBeforeThumbnail =
+          await this.photoRepository.getPhotoById(photo.id);
+        const resultImage = itemBeforeThumbnail.resultImages.find(
+          (img) => img.designId === designId,
+        );
+
+        if (resultImage) {
+          try {
+            const thumbnailBuffer =
+              await this.thumbnailService.generateBeforeAfter(
+                uploadedFile.url,
+                resultImage.url,
+              );
+
+            const thumbnailBase64 = `data:image/jpeg;base64,${thumbnailBuffer.toString(
+              'base64',
+            )}`;
+            const thumbnailUpload =
+              await this.azureBlobService.uploadFileImageBase64(
+                thumbnailBase64,
+              );
+
+            if (thumbnailUpload) {
+              await this.db
+                .updateTable('photos')
+                .set({ thumbnail_url: thumbnailUpload.url })
+                .where('id', '=', photo.id)
+                .execute();
+            }
+          } catch (error) {
+            console.error('[PhotoService] 썸네일 생성 실패:', error);
+            // 썸네일 생성 실패해도 원본 결과는 반환
+          }
+        }
+        // -----------------------
+
         const item = await this.photoRepository.getPhotoById(photo.id);
 
         if (paymentId) {

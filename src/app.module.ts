@@ -29,6 +29,7 @@ import { PhotoRepository } from './photo/photo.repository';
 import { WorldcupController } from './worldcup/worldcup.controller';
 import { WorldcupService } from './worldcup/worldcup.service';
 import { KakaoService } from './kakao/kakao.service';
+import { ThumbnailService } from './photo/thumbnail.service';
 const modules: ModuleMetadata = {
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -64,6 +65,7 @@ const modules: ModuleMetadata = {
     ShareService,
     WorldcupService,
     KakaoService,
+    ThumbnailService,
   ],
 };
 
@@ -79,4 +81,4 @@ if (
 }
 
 @Module(modules)
-export class AppModule {}
+export class AppModule { }

@@ -4,7 +4,7 @@ import { PhotoVO } from 'src/libs/types';
 
 @Injectable()
 export class PhotoRepository {
-  constructor(private readonly db: DatabaseProvider) {}
+  constructor(private readonly db: DatabaseProvider) { }
   async getPhotosByUserId(userId: string): Promise<PhotoVO[]> {
     const photos = await this.db
       .selectFrom('photos as p')
@@ -15,6 +15,7 @@ export class PhotoRepository {
         'p.id as photoId',
         'p.payment_id as paymentId',
         'p.selected_design_id as selectedDesignId',
+        'p.thumbnail_url as thumbnailUrl',
         'uf.url as sourceImageUrl',
         'p.created_at',
       ])
@@ -41,6 +42,7 @@ export class PhotoRepository {
       paymentId: p.paymentId,
       selectedDesignId: p.selectedDesignId,
       sourceImageUrl: p.sourceImageUrl,
+      thumbnailUrl: p.thumbnailUrl,
       createdAt: p.created_at.toISOString(),
       resultImages: photoResults
         .filter((r) => r.photoId === p.photoId)
@@ -61,6 +63,7 @@ export class PhotoRepository {
         'p.id as photoId',
         'p.payment_id as paymentId',
         'p.selected_design_id as selectedDesignId',
+        'p.thumbnail_url as thumbnailUrl',
         'uf.url as sourceImageUrl',
         'p.created_at',
       ])
@@ -84,6 +87,7 @@ export class PhotoRepository {
       id: photo.photoId,
       paymentId: photo.paymentId,
       sourceImageUrl: photo.sourceImageUrl,
+      thumbnailUrl: photo.thumbnailUrl,
       selectedDesignId: photo.selectedDesignId,
       createdAt: photo.created_at.toISOString(),
       resultImages: photoResults.map((r) => ({
