@@ -35,7 +35,7 @@ export class AuthService {
     };
   }
   async verify(_token: string) {
-    let token = await this.db
+    const token = await this.db
       .selectFrom('token')
       .where('token', '=', _token)
       .where('expired_at', '>', new Date())
@@ -44,9 +44,15 @@ export class AuthService {
     if (!token) {
       throw new NotFoundException('token not found');
     }
+
+    const user = this.db
+      .selectFrom('users')
+      .selectAll()
+      .where('phone', '=', token.user_id)
+      .executeTakeFirst();
     return {
       status: HttpStatus.OK,
-      userId: token.user_id,
+      user,
     };
   }
 }
