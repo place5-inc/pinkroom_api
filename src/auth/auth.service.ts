@@ -48,7 +48,7 @@ export class AuthService {
     const user = this.db
       .selectFrom('users')
       .selectAll()
-      .where('phone', '=', token.user_id)
+      .where('id', '=', token.user_id)
       .executeTakeFirst();
     return {
       status: HttpStatus.OK,
