@@ -45,7 +45,7 @@ export class AuthService {
       throw new NotFoundException('token not found');
     }
 
-    const user = this.db
+    const user = await this.db
       .selectFrom('users')
       .selectAll()
       .where('id', '=', token.user_id)
