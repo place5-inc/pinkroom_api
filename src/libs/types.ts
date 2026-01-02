@@ -64,7 +64,7 @@ export type UploadPhotoBody = {
   paymentId?: number;
   code?: string;
   designId?: number;
-  originalPhotoId?: number;
+  photoId?: number;
 };
 export type WorldcupBody = {
   photoId?: number;

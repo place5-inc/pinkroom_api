@@ -190,6 +190,33 @@ export class PhotoService {
       };
     }
   }
+
+  async remainingPhoto(userId: string, photoId: number, paymentId: number) {
+    try {
+      const result = await this.db
+        .updateTable('photos')
+        .where('id', '=', photoId)
+        .where('user_id', '=', userId)
+        .where('payment_id', '=', null)
+        .set({
+          payment_id: paymentId,
+        })
+        .executeTakeFirst();
+
+      if (result.numUpdatedRows === 0n) {
+        throw new NotFoundException('사진을 찾을 수 없습니다.');
+      }
+      this.workerService.makeAllPhotos(photoId);
+      return {
+        status: HttpStatus.OK,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
   /*
   이미 원본 있을 때, 하나의 디자인 만들기
    */
