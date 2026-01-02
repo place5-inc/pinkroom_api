@@ -40,7 +40,7 @@ export class PhotoWorkerService {
       ])
       .execute();
     const totalCount = await this.db
-      .selectFrom('users')
+      .selectFrom('prompt')
       .select(sql<number>`count(*)`.as('count'))
       .executeTakeFirst();
 
