@@ -14,6 +14,7 @@ export class WorldcupService {
         .selectFrom('photos as p')
         .leftJoin('upload_file as uf', 'uf.id', 'p.upload_file_id')
         .where('p.user_id', '=', userId)
+        .orderBy('p.id desc')
         .select([
           'p.id as photoId',
           'p.payment_id as paymentId',
@@ -189,7 +190,7 @@ export class WorldcupService {
           HttpStatus.NOT_FOUND,
         );
       }
-      await this.db
+      const vote = await this.db
         .insertInto('worldcup_votes')
         .values({
           photo_id: photo.id,
@@ -198,7 +199,29 @@ export class WorldcupService {
           name: name ?? null,
           user_id: userId ?? null,
         })
-        .execute();
+        .output(['inserted.id'])
+        .executeTakeFirst();
+
+      return {
+        status: HttpStatus.OK,
+        voteId: vote.id,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async changeName(voteId?: number, name?: string) {
+    try {
+      const vote = await this.db
+        .updateTable('worldcup_votes')
+        .where('id', '=', voteId)
+        .set({
+          name: name,
+        })
+        .executeTakeFirst();
 
       return {
         status: HttpStatus.OK,

@@ -27,6 +27,13 @@ export type kakao_log = {
     result_code: string | null;
     exception_message: string | null;
 };
+export type log_gemini_error = {
+    id: Generated<number>;
+    created_at: Timestamp | null;
+    photo_id: number | null;
+    design_id: number | null;
+    error: string | null;
+};
 export type payments = {
     id: Generated<number>;
     user_id: string | null;
@@ -121,6 +128,7 @@ export type DB = {
     code_hair_design: code_hair_design;
     code_hair_style: code_hair_style;
     kakao_log: kakao_log;
+    log_gemini_error: log_gemini_error;
     payments: payments;
     photo_code_log: photo_code_log;
     photo_results: photo_results;

@@ -56,4 +56,16 @@ export class WorldcupController {
       body.userId,
     );
   }
+  @Post('changeName')
+  async changeNickname(@Body() body: WorldcupBody) {
+    if (isEmpty(body.voteId)) {
+      throw new BadRequestException('voteId is required.');
+    }
+    if (isEmpty(body.name)) {
+      if (isEmpty(body.userId)) {
+        throw new BadRequestException('name or userId is need.');
+      }
+    }
+    return await this.worldcupService.changeName(body.voteId, body.name);
+  }
 }

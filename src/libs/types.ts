@@ -68,6 +68,7 @@ export type UploadPhotoBody = {
   photoId?: number;
 };
 export type WorldcupBody = {
+  voteId?: number;
   photoId?: number;
   code?: string;
   resultId: number;

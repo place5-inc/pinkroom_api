@@ -47,6 +47,7 @@ export function parseNumberArray(val?: string[] | string): number[] {
 }
 
 import * as crypto from 'crypto';
+import { HttpException } from '@nestjs/common';
 
 export function encrypt(
   text: string,
@@ -91,4 +92,39 @@ export function generateCode(length: number = 10): string {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+}
+
+export function normalizeError(e: unknown) {
+  // Nest HttpException
+  if (e instanceof HttpException) {
+    const res = e.getResponse(); // string | object
+    return {
+      name: e.name,
+      message:
+        typeof res === 'string' ? res : ((res as any).message ?? e.message),
+      status: e.getStatus(),
+      response: typeof res === 'string' ? null : res,
+      stack: e.stack ?? null,
+    };
+  }
+
+  // 일반 Error
+  if (e instanceof Error) {
+    return {
+      name: e.name,
+      message: e.message,
+      status: null,
+      response: null,
+      stack: e.stack ?? null,
+    };
+  }
+
+  // 그 외(문자열/객체)
+  return {
+    name: 'UnknownError',
+    message: typeof e === 'string' ? e : JSON.stringify(e),
+    status: null,
+    response: null,
+    stack: null,
+  };
 }
