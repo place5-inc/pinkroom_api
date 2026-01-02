@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
+import { generateCode } from 'src/libs/helpers';
 import { PhotoRepository } from 'src/photo/photo.repository';
 
 @Injectable()
@@ -62,7 +63,7 @@ export class ShareService {
       let exists = true;
 
       while (exists) {
-        code = await this.generateCode();
+        code = await generateCode();
 
         const found = await this.db
           .selectFrom('photo_share_code')
@@ -96,15 +97,5 @@ export class ShareService {
         message: e.message,
       };
     }
-  }
-  async generateCode(length: number = 10): Promise<string> {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; // 대문자 + 숫자
-    let result = '';
-
-    for (let i = 0; i < length; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-
-    return result;
   }
 }

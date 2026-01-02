@@ -84,3 +84,11 @@ export function getMimeTypeFromUri(uri: string): string {
       throw new Error(`Unsupported image extension: ${ext}`);
   }
 }
+export function generateCode(length: number = 10): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; // 대문자 + 숫자
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}

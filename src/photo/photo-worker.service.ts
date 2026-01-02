@@ -4,6 +4,7 @@ import { AzureBlobService } from 'src/azure/blob.service';
 import { DatabaseProvider } from 'src/libs/db';
 import { KakaoService } from 'src/kakao/kakao.service';
 import { sql } from 'kysely';
+import { generateCode } from 'src/libs/helpers';
 @Injectable()
 export class PhotoWorkerService {
   constructor(
@@ -100,6 +101,33 @@ export class PhotoWorkerService {
     if (!user) {
       return;
     }
+    let token: string;
+    let exists = true;
+
+    while (exists) {
+      token = await generateCode(12);
+
+      const found = await this.db
+        .selectFrom('token')
+        .select('id')
+        .where('token', '=', token)
+        .executeTakeFirst();
+
+      exists = !!found;
+    }
+    const now = new Date();
+    const expireTime = new Date(now.getTime() + 24 * 60 * 60000);
+
+    await this.db
+      .insertInto('token')
+      .values({
+        user_id: user.user_id,
+        token,
+        created_at: now,
+        expired_at: expireTime,
+      })
+      .executeTakeFirst();
+
     await this.kakaoService.sendKakaoNotification(
       user.user_id,
       'pr_cplt_hr_smln_test', //테스트용 템플릿 임시 추가
