@@ -1,8 +1,27 @@
-import { Injectable } from '@nestjs/common';
-import { createCanvas, loadImage } from 'canvas';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { createCanvas, loadImage, registerFont } from 'canvas';
+import { join } from 'path';
 
 @Injectable()
-export class ThumbnailService {
+export class ThumbnailService implements OnModuleInit {
+    onModuleInit() {
+        try {
+            const fontPathBold = join(process.cwd(), 'resources', 'fonts', 'Pretendard-Bold.woff2');
+            const fontPathRegular = join(process.cwd(), 'resources', 'fonts', 'Pretendard-Regular.woff2');
+
+            console.log('[ThumbnailService] 폰트 경로 확인:', fontPathBold);
+
+            // canvas 라이브러리는 woff2를 직접 지원하지 않을 수 있으므로, 
+            // 만약 렌더링이 안된다면 나중에 .ttf로 교체해야 할 수도 있습니다.
+            registerFont(fontPathBold, { family: 'Pretendard', weight: 'bold' });
+            registerFont(fontPathRegular, { family: 'Pretendard', weight: 'normal' });
+
+            console.log('[ThumbnailService] 폰트 등록 시도 완료 (Pretendard)');
+        } catch (error) {
+            console.error('[ThumbnailService] 폰트 등록 중 예외 발생:', error);
+        }
+    }
+
     /**
      * Generates a composite image (Before/After) for sharing
      */
@@ -54,13 +73,13 @@ export class ThumbnailService {
         ctx.restore();
 
         // Draw Badges
-        ctx.font = 'bold 20px sans-serif';
+        ctx.font = 'bold 20px Pretendard, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
         const badgeW = 84;
         const badgeH = 32;
-        const margin = 12;
+        const margin = 12; // 사용자 요청 마진
         const badgeY = margin;
 
         // Before Badge (Left Half - Top Left)

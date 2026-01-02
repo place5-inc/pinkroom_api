@@ -182,31 +182,38 @@ export class PhotoService {
         );
 
         if (resultImage) {
-          try {
-            const thumbnailBuffer =
-              await this.thumbnailService.generateBeforeAfter(
-                uploadedFile.url,
-                resultImage.url,
-              );
+          const MAX_THUMBNAIL_RETRY = 2;
+          for (let i = 0; i < MAX_THUMBNAIL_RETRY; i++) {
+            try {
+              const thumbnailBuffer =
+                await this.thumbnailService.generateBeforeAfter(
+                  uploadedFile.url,
+                  resultImage.url,
+                );
 
-            const thumbnailBase64 = `data:image/jpeg;base64,${thumbnailBuffer.toString(
-              'base64',
-            )}`;
-            const thumbnailUpload =
-              await this.azureBlobService.uploadFileImageBase64(
-                thumbnailBase64,
-              );
+              const thumbnailBase64 = `data:image/jpeg;base64,${thumbnailBuffer.toString(
+                'base64',
+              )}`;
+              const thumbnailUpload =
+                await this.azureBlobService.uploadFileImageBase64(
+                  thumbnailBase64,
+                );
 
-            if (thumbnailUpload) {
-              await this.db
-                .updateTable('photos')
-                .set({ thumbnail_url: thumbnailUpload.url })
-                .where('id', '=', photo.id)
-                .execute();
+              if (thumbnailUpload) {
+                await this.db
+                  .updateTable('photos')
+                  .set({ thumbnail_url: thumbnailUpload.url })
+                  .where('id', '=', photo.id)
+                  .execute();
+                console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
+                break; // 성공 시 루프 탈출
+              }
+            } catch (error) {
+              console.error(`[PhotoService] 썸네일 생성 실패 (${i + 1}번째 시도):`, error);
+              if (i === MAX_THUMBNAIL_RETRY - 1) {
+                console.error('[PhotoService] 썸네일 최종 생성 실패');
+              }
             }
-          } catch (error) {
-            console.error('[PhotoService] 썸네일 생성 실패:', error);
-            // 썸네일 생성 실패해도 원본 결과는 반환
           }
         }
         // -----------------------
