@@ -6,17 +6,20 @@ import { join } from 'path';
 export class ThumbnailService implements OnModuleInit {
     onModuleInit() {
         try {
-            const fontPathBold = join(process.cwd(), 'resources', 'fonts', 'Pretendard-Bold.woff2');
-            const fontPathRegular = join(process.cwd(), 'resources', 'fonts', 'Pretendard-Regular.woff2');
+            const fontDir = join(process.cwd(), 'resources', 'fonts');
+            const fontPathBold = join(fontDir, 'Pretendard-Bold.ttf');
+            const fontPathRegular = join(fontDir, 'Pretendard-Regular.ttf');
 
             console.log('[ThumbnailService] 폰트 경로 확인:', fontPathBold);
 
-            // canvas 라이브러리는 woff2를 직접 지원하지 않을 수 있으므로, 
-            // 만약 렌더링이 안된다면 나중에 .ttf로 교체해야 할 수도 있습니다.
-            registerFont(fontPathBold, { family: 'Pretendard', weight: 'bold' });
-            registerFont(fontPathRegular, { family: 'Pretendard', weight: 'normal' });
-
-            console.log('[ThumbnailService] 폰트 등록 시도 완료 (Pretendard)');
+            const fs = require('fs');
+            if (fs.existsSync(fontPathBold)) {
+                registerFont(fontPathBold, { family: 'PretendardBold' });
+                registerFont(fontPathRegular, { family: 'PretendardRegular' });
+                console.log('[ThumbnailService] Pretendard 폰트 등록 완료 (PretendardBold, PretendardRegular)');
+            } else {
+                console.warn('[ThumbnailService] Pretendard TTF 파일을 찾을 수 없습니다. 기본 폰트를 사용합니다.');
+            }
         } catch (error) {
             console.error('[ThumbnailService] 폰트 등록 중 예외 발생:', error);
         }
@@ -73,7 +76,8 @@ export class ThumbnailService implements OnModuleInit {
         ctx.restore();
 
         // Draw Badges
-        ctx.font = 'bold 20px Pretendard, sans-serif';
+        // 폰트 설정: 개별 등록한 PretendardBold를 우선 사용합니다.
+        ctx.font = '20px PretendardBold, Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
