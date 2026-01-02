@@ -99,8 +99,6 @@ export function isValidImage(fileData: string) {
 }
 
 export type KakaoJson = {
-  i?: string | null; // userId 암호화 진행한 후 iv 값
-  k?: string | null; // userId 암호화 결과값
   templeteCode?: string | null;
   account: string;
   refkey: string;

@@ -50,11 +50,6 @@ export class KakaoService {
       to = user.phone;
     }
 
-    let [i, k] = [null, null];
-    if (user.id) {
-      [i, k] = encrypt(user.id);
-    }
-
     let message: string;
     let buttonList: KakaoContentButtonJson[] = [];
     let type: string;
@@ -73,8 +68,6 @@ export class KakaoService {
       templateCode,
       values,
       params,
-      i,
-      k,
     );
     message = _message;
     buttonList = _buttonList;
@@ -113,8 +106,6 @@ export class KakaoService {
     templateCode: string,
     values: string[] = [],
     params: string[] = [],
-    i: string | null,
-    k: string | null,
   ): Promise<{
     message: string;
     buttonList: KakaoContentButtonJson[];
@@ -125,8 +116,6 @@ export class KakaoService {
       values,
       params,
       templateCode,
-      i,
-      k,
     )[templateCode];
 
     if (!templateInfo) {
@@ -157,17 +146,9 @@ export class KakaoService {
       button: buttonList,
     };
 
-    let [i, k] = [null, null];
-
-    if (userId) {
-      [i, k] = encrypt(userId);
-    }
-
     const kakaoJson: KakaoJson = {
       templeteCode: templateCode,
       to,
-      i,
-      k,
       type: type, //ai이미지 알림톡 , at텍스트 알림톡
       content: {},
       account: 'richard555',

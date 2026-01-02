@@ -133,7 +133,7 @@ export class PhotoWorkerService {
       'pr_cplt_hr_smln_test', //테스트용 템플릿 임시 추가
       null,
       [],
-      [],
+      [token, photoId.toString()],
     );
   }
 
