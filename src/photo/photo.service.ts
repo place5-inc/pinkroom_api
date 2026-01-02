@@ -197,7 +197,7 @@ export class PhotoService {
         .updateTable('photos')
         .where('id', '=', photoId)
         .where('user_id', '=', userId)
-        .where('payment_id', '=', null)
+        .where('payment_id', 'is', null)
         .set({
           payment_id: paymentId,
         })
