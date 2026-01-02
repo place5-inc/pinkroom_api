@@ -160,3 +160,10 @@ model worldcup_log {
   accessed_at   DateTime? @db.DateTime
   first_vote_at DateTime? @db.DateTime
 }
+
+model photo_thumbnails {
+  id             Int       @id(map: "PK_photo_thumbnails") @default(autoincrement())
+  photo_id       Int?
+  upload_file_id String?   @db.UniqueIdentifier
+  created_at     DateTime? @db.DateTime
+}

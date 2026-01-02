@@ -233,13 +233,121 @@ export class WorldcupService {
       };
     }
   }
-  // async setLogFirstVote(photoId?: number, userId?: string) {
-  //   try {
-  //   } catch (e) {
-  //     return {
-  //       status: HttpStatus.INTERNAL_SERVER_ERROR,
-  //       message: e.message,
-  //     };
-  //   }
-  // }
+  //월드컵 하기 위한 사진이 모두 만들어졌을 때 추가하기
+  async addWorldCupLog(photoId?: number, userId?: string) {
+    try {
+      const prevLog = await this.db
+        .selectFrom('worldcup_log')
+        .where('photo_id', '=', photoId)
+        .where('user_id', '=', userId)
+        .selectAll()
+        .executeTakeFirst();
+      if (!!prevLog) {
+        //이미 있으면 리턴
+        return {
+          status: HttpStatus.OK,
+        };
+      }
+      //없으면 추가
+      await this.db
+        .insertInto('worldcup_log')
+        .values({
+          photo_id: photoId,
+          user_id: userId,
+          created_at: new Date(),
+          accessed_at: new Date(),
+        })
+        .execute();
+      return {
+        status: HttpStatus.OK,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  //월드컵 투표했을 때, 추가하기
+  async setLogWorldCupVote(photoId?: number) {
+    try {
+      const log = await this.db
+        .selectFrom('worldcup_log')
+        .where('photo_id', '=', photoId)
+        .selectAll()
+        .executeTakeFirst();
+      if (!log) {
+        //없으면 리턴
+        return {
+          status: HttpStatus.OK,
+        };
+      }
+      if (log.first_vote_at !== null) {
+        //이미 처음 투표한 시간이 있으면 리턴
+        return {
+          status: HttpStatus.OK,
+        };
+      } else {
+        //처음 투표한 시간이 없으면 업데이트
+        await this.db
+          .updateTable('worldcup_log')
+          .where('id', '=', log.id)
+          .set({
+            first_vote_at: new Date(),
+          })
+          .execute();
+        return {
+          status: HttpStatus.OK,
+        };
+      }
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  //월드컵 결과 페이지에 접속했을 때, 추가하기
+  async accessWorldCupLog(photoId?: number, userId?: string) {
+    try {
+      const log = await this.db
+        .selectFrom('worldcup_log')
+        .where('photo_id', '=', photoId)
+        .where('user_id', '=', userId)
+        .selectAll()
+        .executeTakeFirst();
+      if (!!log) {
+        //있으면 시간 업데이트
+        await this.db
+          .updateTable('worldcup_log')
+          .where('id', '=', log.id)
+          .set({
+            accessed_at: new Date(),
+          })
+          .execute();
+        return {
+          status: HttpStatus.OK,
+        };
+      } else {
+        //만약 없으면 추가
+        await this.db
+          .insertInto('worldcup_log')
+          .values({
+            photo_id: photoId,
+            user_id: userId,
+            created_at: new Date(),
+            accessed_at: new Date(),
+          })
+          .execute();
+        return {
+          status: HttpStatus.OK,
+        };
+      }
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
 }

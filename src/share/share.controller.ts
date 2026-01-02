@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { ShareService } from './share.service';
+import { UploadPhotoBody } from 'src/libs/types';
 @Controller('share')
 export class ShareController {
   constructor(private shareService: ShareService) {}
@@ -31,5 +32,16 @@ export class ShareController {
     @Query('codeType') codeType: string,
   ) {
     return await this.shareService.makePhotoCode(userId, photoId, codeType);
+  }
+  @Post('photo/thumbnail')
+  async makePhotoThumbnail(@Body() body: UploadPhotoBody) {
+    return await this.shareService.uploadThumbnailPhoto(
+      body.photoId,
+      body.image,
+    );
+  }
+  @Get('photo/thumbnail')
+  async getPhotoThumbnail(@Query('photoId') photoId: number) {
+    return await this.shareService.getThumbnailPhoto(photoId);
   }
 }

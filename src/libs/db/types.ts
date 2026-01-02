@@ -66,6 +66,12 @@ export type photo_share_code = {
     expired_at: Timestamp | null;
     code_type: string | null;
 };
+export type photo_thumbnails = {
+    id: Generated<number>;
+    photo_id: number | null;
+    upload_file_id: string | null;
+    created_at: Timestamp | null;
+};
 export type photos = {
     id: Generated<number>;
     user_id: string;
@@ -141,6 +147,7 @@ export type DB = {
     photo_code_log: photo_code_log;
     photo_results: photo_results;
     photo_share_code: photo_share_code;
+    photo_thumbnails: photo_thumbnails;
     photos: photos;
     prompt: prompt;
     scheduler_log: scheduler_log;

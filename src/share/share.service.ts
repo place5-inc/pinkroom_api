@@ -2,12 +2,15 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
 import { generateCode } from 'src/libs/helpers';
 import { PhotoRepository } from 'src/photo/photo.repository';
+import { AzureBlobService } from 'src/azure/blob.service';
+import { Image } from 'src/libs/types';
 
 @Injectable()
 export class ShareService {
   constructor(
     private readonly db: DatabaseProvider,
     private readonly photoRepository: PhotoRepository,
+    private readonly azureBlobService: AzureBlobService,
   ) {}
 
   async getPhotoWithCode(_code: string) {
@@ -90,6 +93,82 @@ export class ShareService {
       return {
         status: HttpStatus.OK,
         code: code,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async uploadThumbnailPhoto(photoId: number, image: Image) {
+    try {
+      const prevPhoto = await this.db
+        .selectFrom('photo_thumbnails')
+        .where('photo_id', '=', photoId)
+        .selectAll()
+        .executeTakeFirst();
+      if (prevPhoto) {
+        throw new HttpException(
+          '이미 썸네일이 있습니다.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const uploadedFile = await this.azureBlobService.uploadFileImage(image);
+      if (uploadedFile) {
+        await this.db
+          .insertInto('photo_thumbnails')
+          .values({
+            photo_id: photoId,
+            upload_file_id: uploadedFile?.id ?? null,
+            created_at: new Date(),
+          })
+          .executeTakeFirst();
+      }
+      return {
+        status: HttpStatus.OK,
+        result: {
+          id: uploadedFile?.id,
+          url: uploadedFile?.url,
+        },
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async getThumbnailPhoto(photoId: number) {
+    try {
+      const photo = await this.db
+        .selectFrom('photo_thumbnails')
+        .leftJoin(
+          'upload_file',
+          'upload_file.id',
+          'photo_thumbnails.upload_file_id',
+        )
+        .where('photo_id', '=', photoId)
+        .select([
+          'photo_thumbnails.id as id',
+          'photo_thumbnails.upload_file_id as upload_file_id',
+          'upload_file.url as url',
+        ])
+        .executeTakeFirst();
+
+      if (!photo) {
+        throw new HttpException(
+          '썸네일이 존재하지 않습니다.',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      return {
+        status: HttpStatus.OK,
+        result: {
+          id: photo.upload_file_id,
+          url: photo.url,
+        },
       };
     } catch (e) {
       return {
