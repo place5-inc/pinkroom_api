@@ -81,6 +81,7 @@ export type PhotoVO = {
   sourceImageUrl: string;
   resultImages: ResultImageVO[];
   createdAt: string;
+  selectedDesignId?: number;
 };
 
 export type ResultImageVO = {

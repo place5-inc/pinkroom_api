@@ -48,12 +48,13 @@ model kakao_log {
 }
 
 model photos {
-  id             Int         @id(map: "PK_photos") @default(autoincrement())
-  user_id        String      @db.UniqueIdentifier
-  upload_file_id String      @db.UniqueIdentifier
-  payment_id     Int?
-  created_at     DateTime?   @db.DateTime
-  upload_file    upload_file @relation(fields: [upload_file_id], references: [id], onUpdate: NoAction, map: "FK_photos_upload_file")
+  id                 Int         @id(map: "PK_photos") @default(autoincrement())
+  user_id            String      @db.UniqueIdentifier
+  upload_file_id     String      @db.UniqueIdentifier
+  payment_id         Int?
+  created_at         DateTime?   @db.DateTime
+  selected_design_id Int?
+  upload_file        upload_file @relation(fields: [upload_file_id], references: [id], onUpdate: NoAction, map: "FK_photos_upload_file")
 }
 
 model prompt {

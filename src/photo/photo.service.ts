@@ -146,6 +146,7 @@ export class PhotoService {
           upload_file_id: uploadedFile?.id ?? null,
           created_at: new Date(),
           payment_id: paymentId,
+          selected_design_id: designId,
         })
         .output(['inserted.id'])
         .executeTakeFirst();

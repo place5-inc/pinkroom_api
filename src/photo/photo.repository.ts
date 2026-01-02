@@ -14,6 +14,7 @@ export class PhotoRepository {
       .select([
         'p.id as photoId',
         'p.payment_id as paymentId',
+        'p.selected_design_id as selectedDesignId',
         'uf.url as sourceImageUrl',
         'p.created_at',
       ])
@@ -38,6 +39,7 @@ export class PhotoRepository {
     return photos.map((p) => ({
       id: p.photoId,
       paymentId: p.paymentId,
+      selectedDesignId: p.selectedDesignId,
       sourceImageUrl: p.sourceImageUrl,
       createdAt: p.created_at.toISOString(),
       resultImages: photoResults
@@ -58,6 +60,7 @@ export class PhotoRepository {
       .select([
         'p.id as photoId',
         'p.payment_id as paymentId',
+        'p.selected_design_id as selectedDesignId',
         'uf.url as sourceImageUrl',
         'p.created_at',
       ])
@@ -81,6 +84,7 @@ export class PhotoRepository {
       id: photo.photoId,
       paymentId: photo.paymentId,
       sourceImageUrl: photo.sourceImageUrl,
+      selectedDesignId: photo.selectedDesignId,
       createdAt: photo.created_at.toISOString(),
       resultImages: photoResults.map((r) => ({
         id: r.resultId,

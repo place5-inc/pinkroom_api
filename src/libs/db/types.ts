@@ -65,6 +65,7 @@ export type photos = {
     upload_file_id: string;
     payment_id: number | null;
     created_at: Timestamp | null;
+    selected_design_id: number | null;
 };
 export type prompt = {
     design_id: number;
