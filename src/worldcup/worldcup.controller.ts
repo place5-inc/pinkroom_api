@@ -56,7 +56,7 @@ export class WorldcupController {
       body.userId,
     );
   }
-  @Post('changeNickname')
+  @Post('changeName')
   async changeNickname(@Body() body: WorldcupBody) {
     if (isEmpty(body.voteId)) {
       throw new BadRequestException('voteId is required.');
