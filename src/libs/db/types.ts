@@ -72,6 +72,14 @@ export type prompt = {
     ment: string | null;
     upload_file_id: string | null;
 };
+export type scheduler_log = {
+    id: Generated<number>;
+    type: string | null;
+    start_at: Timestamp | null;
+    success_at: Timestamp | null;
+    fail_at: Timestamp | null;
+    is_publish: boolean | null;
+};
 export type token = {
     id: Generated<number>;
     user_id: string | null;
@@ -119,6 +127,7 @@ export type DB = {
     photo_share_code: photo_share_code;
     photos: photos;
     prompt: prompt;
+    scheduler_log: scheduler_log;
     token: token;
     upload_file: upload_file;
     user_certification: user_certification;
