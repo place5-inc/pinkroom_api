@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
 import { VerificationService } from './verification.service';
 import { MessageService } from 'src/message/message.service';
@@ -10,6 +10,7 @@ export class AuthService {
     private verificationService: VerificationService,
     private messageService: MessageService,
     private userService: UserService,
+    private readonly db: DatabaseProvider,
   ) {}
 
   async sendCode(phone: string) {
@@ -31,6 +32,21 @@ export class AuthService {
       status: HttpStatus.OK,
       user,
       isNew,
+    };
+  }
+  async verify(_token: string) {
+    let token = await this.db
+      .selectFrom('token')
+      .where('token', '=', _token)
+      .where('expired_at', '>', new Date())
+      .selectAll()
+      .executeTakeFirst();
+    if (!token) {
+      throw new NotFoundException('token not found');
+    }
+    return {
+      status: HttpStatus.OK,
+      userId: token.user_id,
     };
   }
 }

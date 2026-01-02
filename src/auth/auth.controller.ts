@@ -44,4 +44,11 @@ export class AuthController {
       body.sampleType,
     );
   }
+  @Post('verify')
+  async verify(@Body() body: AuthBody) {
+    if (isEmpty(body.token)) {
+      throw new BadRequestException('toekn is required.');
+    }
+    return await this.authService.verify(body.token);
+  }
 }

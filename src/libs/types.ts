@@ -57,6 +57,7 @@ export type AuthBody = {
   phone?: string;
   code?: string;
   sampleType?: string;
+  token?: string;
 };
 export type UploadPhotoBody = {
   userId?: string;
