@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { GeminiService } from 'src/ai/gemini.service';
 import { AzureBlobService } from 'src/azure/blob.service';
 import { DatabaseProvider } from 'src/libs/db';
 import { KakaoService } from 'src/kakao/kakao.service';
 import { sql } from 'kysely';
-import { generateCode } from 'src/libs/helpers';
+import { generateCode, normalizeError } from 'src/libs/helpers';
 @Injectable()
 export class PhotoWorkerService {
   constructor(
@@ -77,7 +77,6 @@ export class PhotoWorkerService {
             designId,
             prompt.ment,
             prompt.imageUrl,
-            attempt, // 몇 번째 시도인지 넘겨도 좋음
           );
         } catch (e) {
           console.error(`❌ design ${designId} 실패 (attempt ${attempt})`, e);
@@ -192,27 +191,32 @@ export class PhotoWorkerService {
     designId: number,
     ment: string,
     sampleUrl?: string,
-    retry: number = 1,
   ) {
     try {
-      for (let i = 0; i <= retry; i++) {
-        const image = await this.geminiService.generatePhoto(
-          photoUrl,
-          ment,
-          sampleUrl,
-        );
-        if (image) {
-          const upload_file = await this.uploadToAzure(image);
-          if (upload_file) {
-            return await this.insertIntoPhoto(
-              photoId,
-              designId,
-              upload_file.id,
-            );
-          }
-          break;
-        }
+      const image = await this.geminiService.generatePhoto(
+        photoUrl,
+        ment,
+        sampleUrl,
+      );
+
+      const uploadFile = await this.uploadToAzure(image);
+      if (!uploadFile) {
+        throw new InternalServerErrorException('Azure 업로드 실패');
       }
-    } catch (e) {}
+
+      return await this.insertIntoPhoto(photoId, designId, uploadFile.id);
+    } catch (e) {
+      const err = normalizeError(e);
+      await this.insertIntoPhoto(photoId, designId, null);
+      await this.db
+        .insertInto('log_gemini_error')
+        .values({
+          created_at: new Date(),
+          photo_id: photoId,
+          design_id: designId,
+          error: err.message,
+        })
+        .execute();
+    }
   }
 }

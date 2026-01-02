@@ -134,3 +134,20 @@ model token {
   created_at DateTime? @db.DateTime
   expired_at DateTime? @db.DateTime
 }
+
+model log_gemini_error {
+  id         Int       @id(map: "PK_log_gemini_error") @default(autoincrement())
+  created_at DateTime? @db.DateTime
+  photo_id   Int?
+  design_id  Int?
+  error      String?   @db.NVarChar(Max)
+}
+
+model scheduler_log {
+  id         Int       @id(map: "PK_scheduler_log") @default(autoincrement())
+  type       String?   @db.NVarChar(100)
+  start_at   DateTime? @db.DateTime
+  success_at DateTime? @db.DateTime
+  fail_at    DateTime? @db.DateTime
+  is_publish Boolean?
+}

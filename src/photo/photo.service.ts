@@ -170,7 +170,6 @@ export class PhotoService {
         designId,
         prompt.ment,
         prompt.imageUrl,
-        5,
       );
       if (result) {
         const item = await this.photoRepository.getPhotoById(photo.id);
@@ -248,7 +247,6 @@ export class PhotoService {
       designId,
       prompt.ment,
       prompt.imageUrl,
-      1,
     );
 
     if (result) {

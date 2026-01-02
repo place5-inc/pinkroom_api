@@ -27,6 +27,13 @@ export type kakao_log = {
     result_code: string | null;
     exception_message: string | null;
 };
+export type log_gemini_error = {
+    id: Generated<number>;
+    created_at: Timestamp | null;
+    photo_id: number | null;
+    design_id: number | null;
+    error: string | null;
+};
 export type payments = {
     id: Generated<number>;
     user_id: string | null;
@@ -72,6 +79,14 @@ export type prompt = {
     ment: string | null;
     upload_file_id: string | null;
 };
+export type scheduler_log = {
+    id: Generated<number>;
+    type: string | null;
+    start_at: Timestamp | null;
+    success_at: Timestamp | null;
+    fail_at: Timestamp | null;
+    is_publish: boolean | null;
+};
 export type token = {
     id: Generated<number>;
     user_id: string | null;
@@ -113,12 +128,14 @@ export type DB = {
     code_hair_design: code_hair_design;
     code_hair_style: code_hair_style;
     kakao_log: kakao_log;
+    log_gemini_error: log_gemini_error;
     payments: payments;
     photo_code_log: photo_code_log;
     photo_results: photo_results;
     photo_share_code: photo_share_code;
     photos: photos;
     prompt: prompt;
+    scheduler_log: scheduler_log;
     token: token;
     upload_file: upload_file;
     user_certification: user_certification;
