@@ -116,6 +116,14 @@ export type users = {
     use_code_photo_id: number | null;
     sample_type: string | null;
 };
+export type worldcup_log = {
+    id: Generated<number>;
+    photo_id: number | null;
+    user_id: string | null;
+    created_at: Timestamp | null;
+    accessed_at: Timestamp | null;
+    first_vote_at: Timestamp | null;
+};
 export type worldcup_votes = {
     id: Generated<number>;
     photo_id: number | null;
@@ -140,5 +148,6 @@ export type DB = {
     upload_file: upload_file;
     user_certification: user_certification;
     users: users;
+    worldcup_log: worldcup_log;
     worldcup_votes: worldcup_votes;
 };

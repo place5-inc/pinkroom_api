@@ -233,4 +233,13 @@ export class WorldcupService {
       };
     }
   }
+  // async setLogFirstVote(photoId?: number, userId?: string) {
+  //   try {
+  //   } catch (e) {
+  //     return {
+  //       status: HttpStatus.INTERNAL_SERVER_ERROR,
+  //       message: e.message,
+  //     };
+  //   }
+  // }
 }

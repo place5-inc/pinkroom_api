@@ -17,16 +17,19 @@ export class SchedulerService {
   private readonly messageService = new MessageService();
 
   @CronForENV(['production', 'staging', 'development'], '0 16 * * *') //매일 16시에 동작
-  public async completeVoteWorldcupRemind() {
+  public async completeVoteWorldcupRemindWeek() {
     try {
       const isPublish = await this.checkSchedulerPublishState(
-        'complete_vote_worldcup_remind',
+        'complete_vote_worldcup_remind_week',
       );
       if (!isPublish) {
         return;
       }
       //스케줄러 로그에 시작 시간 업데이트 하고 실행
-      await this.writeSchedulerLog('complete_vote_worldcup_remind', 'start');
+      await this.writeSchedulerLog(
+        'complete_vote_worldcup_remind_week',
+        'start',
+      );
 
       //
 
@@ -41,19 +44,79 @@ export class SchedulerService {
       );
 
       //스케줄러 로그에 성공 시간 업데이트 하고 실행
-      await this.writeSchedulerLog('complete_vote_worldcup_remind', 'success');
+      await this.writeSchedulerLog(
+        'complete_vote_worldcup_remind_week',
+        'success',
+      );
     } catch (error) {
-      await this.writeSchedulerLog('complete_vote_worldcup_remind', 'fail');
+      await this.writeSchedulerLog(
+        'complete_vote_worldcup_remind_week',
+        'fail',
+      );
       const errorText =
         error instanceof Error
           ? `${error.name}: ${error.message}\n${error.stack}`
           : JSON.stringify(error);
       await this.sendMMSMessageForDeveloper(
-        `핑크룸 - type : complete_vote_worldcup_remind\n 스케줄러 오류 발생\n${errorText.slice(0, 500)}`,
-        'complete_vote_worldcup_remind',
+        `핑크룸 - type : complete_vote_worldcup_remind_week\n 스케줄러 오류 발생\n${errorText.slice(0, 500)}`,
+        'complete_vote_worldcup_remind_week',
       );
     } finally {
-      console.log('type : complete_vote_worldcup_remind - 스케줄러 실행 완료');
+      console.log(
+        'type : complete_vote_worldcup_remind_week - 스케줄러 실행 완료',
+      );
+    }
+  }
+
+  @CronForENV(['production', 'staging', 'development'], '0 16 * * *') //매일 16시에 동작
+  public async completeVoteWorldcupRemindMonth() {
+    try {
+      const isPublish = await this.checkSchedulerPublishState(
+        'complete_vote_worldcup_remind_month',
+      );
+      if (!isPublish) {
+        return;
+      }
+      //스케줄러 로그에 시작 시간 업데이트 하고 실행
+      await this.writeSchedulerLog(
+        'complete_vote_worldcup_remind_month',
+        'start',
+      );
+
+      //
+
+      //임시로 테스트용 템플릿 추가
+      await KakaoSchedulerService.sendKakaoNotificationForScheduler(
+        this.db,
+        '815EFCDF-116E-4680-95DA-1689AB85386C',
+        'test_01', //테스트용 템플릿 임시 추가
+        null,
+        [],
+        [],
+      );
+
+      //스케줄러 로그에 성공 시간 업데이트 하고 실행
+      await this.writeSchedulerLog(
+        'complete_vote_worldcup_remind_month',
+        'success',
+      );
+    } catch (error) {
+      await this.writeSchedulerLog(
+        'complete_vote_worldcup_remind_month',
+        'fail',
+      );
+      const errorText =
+        error instanceof Error
+          ? `${error.name}: ${error.message}\n${error.stack}`
+          : JSON.stringify(error);
+      await this.sendMMSMessageForDeveloper(
+        `핑크룸 - type : complete_vote_worldcup_remind_month\n 스케줄러 오류 발생\n${errorText.slice(0, 500)}`,
+        'complete_vote_worldcup_remind_month',
+      );
+    } finally {
+      console.log(
+        'type : complete_vote_worldcup_remind_month - 스케줄러 실행 완료',
+      );
     }
   }
   public async checkSchedulerPublishState(type: string) {

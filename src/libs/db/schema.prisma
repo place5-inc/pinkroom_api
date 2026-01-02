@@ -151,3 +151,12 @@ model scheduler_log {
   fail_at    DateTime? @db.DateTime
   is_publish Boolean?
 }
+
+model worldcup_log {
+  id            Int       @id(map: "PK_worldcup_log") @default(autoincrement())
+  photo_id      Int?
+  user_id       String?   @db.UniqueIdentifier
+  created_at    DateTime? @db.DateTime
+  accessed_at   DateTime? @db.DateTime
+  first_vote_at DateTime? @db.DateTime
+}
