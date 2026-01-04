@@ -10,19 +10,9 @@ export class WorldcupService {
   ) {}
   async getWorldcupList(userId: string) {
     try {
-      const photos = await this.db
-        .selectFrom('photos as p')
-        .leftJoin('upload_file as uf', 'uf.id', 'p.upload_file_id')
-        .where('p.user_id', '=', userId)
-        .orderBy('p.id desc')
-        .select([
-          'p.id as photoId',
-          'p.payment_id as paymentId',
-          'uf.url as sourceImageUrl',
-          'p.created_at',
-        ])
-        .execute();
-      const photoIds = photos.map((p) => p.photoId);
+      const results = await this.photoRepository.getPhotosByUserId(userId);
+
+      const photoIds = results.map((p) => p.id);
       const votes = await this.db
         .selectFrom('worldcup_votes')
         .where('name', 'is not', null)
@@ -36,9 +26,9 @@ export class WorldcupService {
         },
         {},
       );
-      const photosWithVoteCount = photos.map((photo) => ({
+      const photosWithVoteCount = results.map((photo) => ({
         ...photo,
-        voteCount: voteCountByPhotoId[photo.photoId] ?? 0,
+        voteCount: voteCountByPhotoId[photo.id] ?? 0,
       }));
       return {
         status: HttpStatus.OK,

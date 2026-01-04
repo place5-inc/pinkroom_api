@@ -35,9 +35,21 @@ export class ShareService {
         throw new HttpException('만료된 코드입니다.', HttpStatus.FORBIDDEN);
       }
       const result = await this.photoRepository.getPhotoById(code.photo_id);
+      const photo = await this.db
+        .selectFrom('photos')
+        .where('id', '=', code.photo_id)
+        .select('user_id')
+        .executeTakeFirst();
+
+      const user = await this.db
+        .selectFrom('users')
+        .where('id', '=', photo.user_id)
+        .selectAll()
+        .executeTakeFirst();
       return {
         status: HttpStatus.OK,
         result,
+        user,
       };
     } catch (e) {
       return {
