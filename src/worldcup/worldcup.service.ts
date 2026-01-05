@@ -3,12 +3,14 @@ import { DatabaseProvider } from 'src/libs/db';
 import { PhotoRepository } from 'src/photo/photo.repository';
 import { KakaoService } from 'src/kakao/kakao.service';
 import { generateCode } from 'src/libs/helpers';
+import { UserRepository } from 'src/user/user.repository';
 @Injectable()
 export class WorldcupService {
   constructor(
     private readonly db: DatabaseProvider,
     private readonly photoRepository: PhotoRepository,
     private readonly kakaoService: KakaoService,
+    private readonly userRepository: UserRepository,
   ) {}
   async getWorldcupList(userId: string) {
     try {
@@ -32,9 +34,12 @@ export class WorldcupService {
         ...photo,
         voteCount: voteCountByPhotoId[photo.id] ?? 0,
       }));
+      const user = await this.userRepository.getUser(userId);
+
       return {
         status: HttpStatus.OK,
         results: photosWithVoteCount,
+        user,
       };
     } catch (e) {
       return {

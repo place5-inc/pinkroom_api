@@ -77,10 +77,17 @@ export type WorldcupBody = {
   userId?: string;
   name?: string;
 };
+export type UserVO = {
+  id?: string;
+  phone?: string;
+  name?: string;
+  sampleType?: string;
+  didShareWorldcup?: boolean;
+};
 
 export type PhotoVO = {
   id: number;
-  paymentId: number;
+  paymentId?: number;
   sourceImageUrl: string;
   thumbnailUrl?: string;
   thumbnailBeforeAfterUrl?: string;

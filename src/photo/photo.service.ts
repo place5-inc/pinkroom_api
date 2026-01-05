@@ -12,6 +12,7 @@ import { PhotoWorkerService } from './photo-worker.service';
 import { PhotoRepository } from './photo.repository';
 import { sql } from 'kysely';
 import { ThumbnailService } from './thumbnail.service';
+import { UserRepository } from 'src/user/user.repository';
 @Injectable()
 export class PhotoService {
   constructor(
@@ -20,6 +21,7 @@ export class PhotoService {
     private readonly workerService: PhotoWorkerService,
     private readonly photoRepository: PhotoRepository,
     private readonly thumbnailService: ThumbnailService,
+    private readonly userRepository: UserRepository,
   ) {}
 
   /*
@@ -28,15 +30,12 @@ export class PhotoService {
   async getPhotoList(userId: string) {
     try {
       const results = await this.photoRepository.getPhotosByUserId(userId);
-      const user = await this.db
-        .selectFrom('users')
-        .where('id', '=', userId)
-        .selectAll()
-        .executeTakeFirst();
+      const user = await this.userRepository.getUser(userId);
+
       return {
         status: HttpStatus.OK,
         results,
-        sampleType: user.sample_type,
+        user,
       };
     } catch (e) {
       return {
