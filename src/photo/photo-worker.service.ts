@@ -59,7 +59,7 @@ export class PhotoWorkerService {
 
       if (completedSet.size === totalCount.count) {
         console.log(`🎉 ${attempt}번째 시도에서 전부 완료`);
-        this.sendKakao(originalPhotoId);
+        this.sendKakaoCompleteGeneratePhotos(originalPhotoId);
         return;
       }
 
@@ -90,7 +90,7 @@ export class PhotoWorkerService {
     console.error('🚨 최대 재시도 초과, 일부 실패');
   }
 
-  async sendKakao(photoId: number) {
+  async sendKakaoCompleteGeneratePhotos(photoId: number) {
     //todo kakaoRepo 호출
     const user = await this.db
       .selectFrom('photos')

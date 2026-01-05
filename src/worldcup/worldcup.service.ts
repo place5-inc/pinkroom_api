@@ -1,12 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
 import { PhotoRepository } from 'src/photo/photo.repository';
-
+import { KakaoService } from 'src/kakao/kakao.service';
+import { generateCode } from 'src/libs/helpers';
 @Injectable()
 export class WorldcupService {
   constructor(
     private readonly db: DatabaseProvider,
     private readonly photoRepository: PhotoRepository,
+    private readonly kakaoService: KakaoService,
   ) {}
   async getWorldcupList(userId: string) {
     try {
@@ -261,6 +263,8 @@ export class WorldcupService {
             last_vote_at: new Date(),
           })
           .execute();
+        //해당 월드컵에 처음 투표하는 경우라면 알림톡 발송
+        this.sendKakaoFirstVote(photoId);
       } else if (log != null && log.first_vote_at !== null) {
         //로그가 있는 상태
         //n번째 투표한 사람이라면
@@ -311,5 +315,49 @@ export class WorldcupService {
         message: e.message,
       };
     }
+  }
+  async sendKakaoFirstVote(photoId: number) {
+    const user = await this.db
+      .selectFrom('photos')
+      .where('id', '=', photoId)
+      .select('user_id')
+      .executeTakeFirst();
+    if (!user) {
+      return;
+    }
+    let token: string;
+    let exists = true;
+
+    while (exists) {
+      token = await generateCode(12);
+
+      const found = await this.db
+        .selectFrom('token')
+        .select('id')
+        .where('token', '=', token)
+        .executeTakeFirst();
+
+      exists = !!found;
+    }
+    const now = new Date();
+    const expireTime = new Date(now.getTime() + 24 * 60 * 60000);
+
+    await this.db
+      .insertInto('token')
+      .values({
+        user_id: user.user_id,
+        token,
+        created_at: now,
+        expired_at: expireTime,
+      })
+      .executeTakeFirst();
+
+    await this.kakaoService.sendKakaoNotification(
+      user.user_id,
+      'pr_cplt_wrc_test', //테스트용 템플릿 임시 추가
+      null,
+      [],
+      [token, photoId.toString()],
+    );
   }
 }
