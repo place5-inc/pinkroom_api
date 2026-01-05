@@ -34,7 +34,6 @@ export class GeminiService {
       }
 
       const ai = new GoogleGenAI({ apiKey });
-      const userMimeType = getMimeTypeFromUri(fileUri);
 
       // parts를 동적으로 구성
       const parts: any[] = [];
