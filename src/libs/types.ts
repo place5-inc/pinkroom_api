@@ -81,6 +81,8 @@ export type PhotoVO = {
   paymentId: number;
   sourceImageUrl: string;
   thumbnailUrl?: string;
+  thumbnailBeforeAfterUrl?: string;
+  thumbnailWorldcupUrl?: string;
   resultImages: ResultImageVO[];
   createdAt: string;
   selectedDesignId?: number;

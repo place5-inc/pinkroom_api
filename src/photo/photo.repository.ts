@@ -4,11 +4,13 @@ import { PhotoVO } from 'src/libs/types';
 
 @Injectable()
 export class PhotoRepository {
-  constructor(private readonly db: DatabaseProvider) { }
+  constructor(private readonly db: DatabaseProvider) {}
   async getPhotosByUserId(userId: string): Promise<PhotoVO[]> {
     const photos = await this.db
       .selectFrom('photos as p')
       .leftJoin('upload_file as uf', 'uf.id', 'p.upload_file_id')
+      .leftJoin('upload_file as bf', 'bf.id', 'p.thumbnail_before_after_id')
+      .leftJoin('upload_file as w', 'w.id', 'p.thumbnail_worldcup_id')
       .where('p.user_id', '=', userId)
       .orderBy('p.id desc')
       .select([
@@ -17,6 +19,8 @@ export class PhotoRepository {
         'p.selected_design_id as selectedDesignId',
         'p.thumbnail_url as thumbnailUrl',
         'uf.url as sourceImageUrl',
+        'bf.url as thumbnailBeforeAfterUrl',
+        'w.url as thumbnailWorldcupUrl',
         'p.created_at',
       ])
       .execute();
@@ -43,6 +47,8 @@ export class PhotoRepository {
       selectedDesignId: p.selectedDesignId,
       sourceImageUrl: p.sourceImageUrl,
       thumbnailUrl: p.thumbnailUrl,
+      thumbnailBeforeAfterUrl: p.thumbnailBeforeAfterUrl,
+      thumbnailWorldcupUrl: p.thumbnailWorldcupUrl,
       createdAt: p.created_at.toISOString(),
       resultImages: photoResults
         .filter((r) => r.photoId === p.photoId)
@@ -58,6 +64,8 @@ export class PhotoRepository {
     const photo = await this.db
       .selectFrom('photos as p')
       .leftJoin('upload_file as uf', 'uf.id', 'p.upload_file_id')
+      .leftJoin('upload_file as bf', 'bf.id', 'p.thumbnail_before_after_id')
+      .leftJoin('upload_file as w', 'w.id', 'p.thumbnail_worldcup_id')
       .where('p.id', '=', photoId)
       .select([
         'p.id as photoId',
@@ -65,6 +73,8 @@ export class PhotoRepository {
         'p.selected_design_id as selectedDesignId',
         'p.thumbnail_url as thumbnailUrl',
         'uf.url as sourceImageUrl',
+        'bf.url as thumbnailBeforeAfterUrl',
+        'w.url as thumbnailWorldcupUrl',
         'p.created_at',
       ])
       .executeTakeFirst();
@@ -88,6 +98,8 @@ export class PhotoRepository {
       paymentId: photo.paymentId,
       sourceImageUrl: photo.sourceImageUrl,
       thumbnailUrl: photo.thumbnailUrl,
+      thumbnailBeforeAfterUrl: photo.thumbnailBeforeAfterUrl,
+      thumbnailWorldcupUrl: photo.thumbnailWorldcupUrl,
       selectedDesignId: photo.selectedDesignId,
       createdAt: photo.created_at.toISOString(),
       resultImages: photoResults.map((r) => ({

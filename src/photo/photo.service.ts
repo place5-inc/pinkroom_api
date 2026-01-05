@@ -20,8 +20,11 @@ export class PhotoService {
     private readonly workerService: PhotoWorkerService,
     private readonly photoRepository: PhotoRepository,
     private readonly thumbnailService: ThumbnailService,
-  ) { }
+  ) {}
 
+  /*
+  유저의 사진 리스트
+   */
   async getPhotoList(userId: string) {
     try {
       const results = await this.photoRepository.getPhotosByUserId(userId);
@@ -42,6 +45,9 @@ export class PhotoService {
       };
     }
   }
+  /*
+  사진 리스트
+   */
   async getResultPhotoList(photoId: number) {
     try {
       const result = await this.photoRepository.getPhotoById(photoId);
@@ -174,49 +180,8 @@ export class PhotoService {
         prompt.imageUrl,
       );
       if (result) {
-        // --- 썸네일 생성 로직 추가 ---
-        const itemBeforeThumbnail =
-          await this.photoRepository.getPhotoById(photo.id);
-        const resultImage = itemBeforeThumbnail.resultImages.find(
-          (img) => img.designId === designId,
-        );
-
-        if (resultImage) {
-          const MAX_THUMBNAIL_RETRY = 2;
-          for (let i = 0; i < MAX_THUMBNAIL_RETRY; i++) {
-            try {
-              const thumbnailBuffer =
-                await this.thumbnailService.generateBeforeAfter(
-                  uploadedFile.url,
-                  resultImage.url,
-                );
-
-              const thumbnailBase64 = `data:image/jpeg;base64,${thumbnailBuffer.toString(
-                'base64',
-              )}`;
-              const thumbnailUpload =
-                await this.azureBlobService.uploadFileImageBase64(
-                  thumbnailBase64,
-                );
-
-              if (thumbnailUpload) {
-                await this.db
-                  .updateTable('photos')
-                  .set({ thumbnail_url: thumbnailUpload.url })
-                  .where('id', '=', photo.id)
-                  .execute();
-                console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
-                break; // 성공 시 루프 탈출
-              }
-            } catch (error) {
-              console.error(`[PhotoService] 썸네일 생성 실패 (${i + 1}번째 시도):`, error);
-              if (i === MAX_THUMBNAIL_RETRY - 1) {
-                console.error('[PhotoService] 썸네일 최종 생성 실패');
-              }
-            }
-          }
-        }
-        // -----------------------
+        //before After Thumbnail 생성
+        await this.generateBeforeAfterThumbnail(photo.id);
 
         const item = await this.photoRepository.getPhotoById(photo.id);
 
@@ -237,6 +202,9 @@ export class PhotoService {
     }
   }
 
+  /*
+  전체 사진 생성
+   */
   async remainingPhoto(userId: string, photoId: number, paymentId: number) {
     try {
       const result = await this.db
@@ -315,6 +283,64 @@ export class PhotoService {
           designId: designId,
         },
       };
+    }
+  }
+
+  async generateBeforeAfterThumbnail(photoId: number) {
+    const photo = await this.db
+      .selectFrom('photos as p')
+      .leftJoin('upload_file as uf', 'uf.id', 'p.upload_file_id')
+      .where('p.id', '=', photoId)
+      .select([
+        'p.id as photoId',
+        'p.thumbnail_before_after_id as thumbnail_before_after_id',
+        'p.selected_design_id as selected_design_id',
+        'uf.url as beforeUrl',
+      ])
+      .executeTakeFirst();
+    if (!photo) {
+      return;
+    }
+    const after = await this.db
+      .selectFrom('photo_results as pf')
+      .leftJoin('upload_file as uf', 'uf.id', 'pf.result_image_id')
+      .where('original_photo_id', '=', photoId)
+      .where('hair_design_id', '=', photo.selected_design_id)
+      .select(['uf.url as afterUrl'])
+      .executeTakeFirst();
+
+    const MAX_THUMBNAIL_RETRY = 2;
+    for (let i = 0; i < MAX_THUMBNAIL_RETRY; i++) {
+      try {
+        const thumbnailBuffer = await this.thumbnailService.generateBeforeAfter(
+          photo.beforeUrl,
+          after.afterUrl,
+        );
+
+        const thumbnailBase64 = `data:image/jpeg;base64,${thumbnailBuffer.toString(
+          'base64',
+        )}`;
+        const thumbnailUpload =
+          await this.azureBlobService.uploadFileImageBase64(thumbnailBase64);
+
+        if (thumbnailUpload) {
+          await this.db
+            .updateTable('photos')
+            .set({ thumbnail_before_after_id: thumbnailUpload.id })
+            .where('id', '=', photoId)
+            .execute();
+          console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
+          break; // 성공 시 루프 탈출
+        }
+      } catch (error) {
+        console.error(
+          `[PhotoService] 썸네일 생성 실패 (${i + 1}번째 시도):`,
+          error,
+        );
+        if (i === MAX_THUMBNAIL_RETRY - 1) {
+          console.error('[PhotoService] 썸네일 최종 생성 실패');
+        }
+      }
     }
   }
 }
