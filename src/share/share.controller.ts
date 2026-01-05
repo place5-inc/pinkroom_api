@@ -34,17 +34,6 @@ export class ShareController {
   ) {
     return await this.shareService.makePhotoCode(userId, photoId, codeType);
   }
-  @Post('photo/thumbnail')
-  async makePhotoThumbnail(@Body() body: UploadPhotoBody) {
-    return await this.shareService.uploadThumbnailPhoto(
-      body.photoId,
-      body.image,
-    );
-  }
-  @Get('photo/thumbnail')
-  async getPhotoThumbnail(@Query('photoId') photoId: number) {
-    return await this.shareService.getThumbnailPhoto(photoId);
-  }
   @Get('randomName')
   async getRandomName(@Query('photoId') photoId: number) {
     if (isNull(photoId)) {

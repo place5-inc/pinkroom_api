@@ -107,6 +107,8 @@ export class WorldcupService {
       const mySelect = votes.find(
         (vote) => vote.name == null && vote.user_id == userId,
       );
+      //내가 월드컵 결과 페이지에 접속했을 때, 추가하기
+      await this.accessWorldCupLog(photoId, userId);
       if (mySelect) {
         const mySelectPhoto = photoResults.find(
           (result) => result.resultId == mySelect.result_id,
@@ -207,7 +209,7 @@ export class WorldcupService {
         .executeTakeFirst();
 
       //월드컵 결과 투표할 때. LOG 추가
-      await this.setLogWorldCupVote(photo.id);
+      await this.setLogWorldCupVote(photo.id, photo.user_id);
 
       return {
         status: HttpStatus.OK,
@@ -240,42 +242,8 @@ export class WorldcupService {
       };
     }
   }
-  //월드컵 하기 위한 사진이 모두 만들어졌을 때 추가하기
-  async addWorldCupLog(photoId?: number, userId?: string) {
-    try {
-      const prevLog = await this.db
-        .selectFrom('worldcup_log')
-        .where('photo_id', '=', photoId)
-        .where('user_id', '=', userId)
-        .selectAll()
-        .executeTakeFirst();
-      if (!!prevLog) {
-        //이미 있으면 리턴
-        return {
-          status: HttpStatus.OK,
-        };
-      }
-      //없으면 추가
-      await this.db
-        .insertInto('worldcup_log')
-        .values({
-          photo_id: photoId,
-          user_id: userId,
-          accessed_at: new Date(),
-        })
-        .execute();
-      return {
-        status: HttpStatus.OK,
-      };
-    } catch (e) {
-      return {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: e.message,
-      };
-    }
-  }
   //월드컵 투표했을 때, 추가하기
-  async setLogWorldCupVote(photoId?: number) {
+  async setLogWorldCupVote(photoId?: number, userId?: string) {
     try {
       const log = await this.db
         .selectFrom('worldcup_log')
@@ -283,28 +251,36 @@ export class WorldcupService {
         .selectAll()
         .executeTakeFirst();
       if (!log) {
-        //없으면 리턴
-        return {
-          status: HttpStatus.OK,
-        };
-      }
-      if (log.first_vote_at !== null) {
-        //이미 처음 투표한 시간이 있으면 리턴
-        return {
-          status: HttpStatus.OK,
-        };
-      } else {
-        //처음 투표한 시간이 없으면 업데이트
+        //없으면 추가
         await this.db
-          .updateTable('worldcup_log')
-          .where('id', '=', log.id)
-          .set({
+          .insertInto('worldcup_log')
+          .values({
+            photo_id: photoId,
+            user_id: userId,
             first_vote_at: new Date(),
           })
           .execute();
-        return {
-          status: HttpStatus.OK,
-        };
+      } else {
+        //로그가 있는 상태
+        if (log.first_vote_at == null) {
+          //처음 투표한 시간이 없으면 업데이트
+          await this.db
+            .updateTable('worldcup_log')
+            .where('id', '=', log.id)
+            .set({
+              first_vote_at: new Date(),
+            })
+            .execute();
+        } else {
+          //n번째 투표한 사람이라면
+          await this.db
+            .updateTable('worldcup_log')
+            .where('id', '=', log.id)
+            .set({
+              last_vote_at: new Date(),
+            })
+            .execute();
+        }
       }
     } catch (e) {
       return {
@@ -335,15 +311,6 @@ export class WorldcupService {
           status: HttpStatus.OK,
         };
       } else {
-        //만약 없으면 추가
-        await this.db
-          .insertInto('worldcup_log')
-          .values({
-            photo_id: photoId,
-            user_id: userId,
-            accessed_at: new Date(),
-          })
-          .execute();
         return {
           status: HttpStatus.OK,
         };

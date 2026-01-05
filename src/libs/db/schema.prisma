@@ -1,8 +1,8 @@
 generator kysely {
   provider     = "prisma-kysely"
   output       = "./"
-  fileName     = "types.ts"
   enumFileName = "enums.ts"
+  fileName     = "types.ts"
 }
 
 datasource db {
@@ -11,12 +11,11 @@ datasource db {
 }
 
 model upload_file {
-  id               String             @id(map: "PK_upload_file") @db.UniqueIdentifier
-  file_name        String?            @db.NVarChar(100)
-  url              String?            @db.NVarChar(500)
-  created_at       DateTime?          @db.DateTime
-  photo_thumbnails photo_thumbnails[]
-  photos           photos[]
+  id         String    @id(map: "PK_upload_file") @db.UniqueIdentifier
+  file_name  String?   @db.NVarChar(100)
+  url        String?   @db.NVarChar(500)
+  created_at DateTime? @db.DateTime
+  photos     photos[]
 }
 
 model code_hair_design {
@@ -161,12 +160,4 @@ model worldcup_log {
   accessed_at   DateTime? @db.DateTime
   first_vote_at DateTime? @db.DateTime
   last_vote_at  DateTime? @db.DateTime
-}
-
-model photo_thumbnails {
-  id             Int          @id(map: "PK_photo_thumbnails") @default(autoincrement())
-  photo_id       Int?
-  upload_file_id String?      @db.UniqueIdentifier
-  created_at     DateTime?    @db.DateTime
-  upload_file    upload_file? @relation(fields: [upload_file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_photo_thumbnails_upload_file")
 }
