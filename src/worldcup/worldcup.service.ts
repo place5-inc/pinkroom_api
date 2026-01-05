@@ -61,6 +61,28 @@ export class WorldcupService {
           'uf.url as url',
         ])
         .execute();
+      const nullNameCount = votes.filter((v) => v.name === null).length;
+      if (nullNameCount === 0) {
+        const mySelect = votes.find(
+          (vote) => vote.name == null && vote.user_id == userId,
+        );
+        if (mySelect) {
+          const mySelectPhoto = photoResults.find(
+            (result) => result.resultId == mySelect.result_id,
+          );
+          if (mySelectPhoto != null) {
+            return {
+              status: HttpStatus.OK,
+              results: null,
+              my: mySelectPhoto,
+            };
+          }
+        }
+        return {
+          status: HttpStatus.OK,
+          results: null,
+        };
+      }
       const votesByResultId = votes.reduce<Record<number, string[]>>(
         (acc, vote) => {
           // ✅ name이 없는 경우(user_id만 있는 경우 포함) 제외
