@@ -150,6 +150,6 @@ export class AdminController {
   }
   @Get('scheduler/test')
   async testScheduler() {
-    return await this.schedulerService.testScheduler();
+    return await this.schedulerService.completeVoteWorldcupRemindWeek();
   }
 }

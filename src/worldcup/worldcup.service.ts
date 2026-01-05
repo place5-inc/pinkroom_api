@@ -258,29 +258,19 @@ export class WorldcupService {
             photo_id: photoId,
             user_id: userId,
             first_vote_at: new Date(),
+            last_vote_at: new Date(),
           })
           .execute();
-      } else {
+      } else if (log != null && log.first_vote_at !== null) {
         //로그가 있는 상태
-        if (log.first_vote_at == null) {
-          //처음 투표한 시간이 없으면 업데이트
-          await this.db
-            .updateTable('worldcup_log')
-            .where('id', '=', log.id)
-            .set({
-              first_vote_at: new Date(),
-            })
-            .execute();
-        } else {
-          //n번째 투표한 사람이라면
-          await this.db
-            .updateTable('worldcup_log')
-            .where('id', '=', log.id)
-            .set({
-              last_vote_at: new Date(),
-            })
-            .execute();
-        }
+        //n번째 투표한 사람이라면
+        await this.db
+          .updateTable('worldcup_log')
+          .where('id', '=', log.id)
+          .set({
+            last_vote_at: new Date(),
+          })
+          .execute();
       }
     } catch (e) {
       return {

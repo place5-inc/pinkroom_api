@@ -17,29 +17,6 @@ export class SchedulerService {
   private readonly isKakaoProduction = DEV_CONFIG.isKakaoProduction;
   private readonly messageService = new MessageService();
 
-  @CronForENV(['production', 'staging', 'development'], '*/3 * * * *') //매일 16시에 동작
-  public async testScheduler() {
-    console.log('testScheduler start');
-    try {
-      const isPublish = await this.checkSchedulerPublishState(
-        'complete_vote_worldcup_remind_week',
-      );
-      if (!isPublish) {
-        return;
-      }
-      await KakaoSchedulerService.sendKakaoNotificationForScheduler(
-        this.db,
-        '815EFCDF-116E-4680-95DA-1689AB85386C',
-        'test_01', //테스트용 템플릿 임시 추가
-        null,
-        [],
-        [],
-      );
-    } catch (error) {
-    } finally {
-    }
-  }
-
   @CronForENV(['production', 'staging', 'development'], '0 16 * * *') //매일 16시에 동작
   public async completeVoteWorldcupRemindWeek() {
     try {
@@ -68,19 +45,17 @@ export class SchedulerService {
         .where((qb) =>
           qb.or([
             qb('accessed_at', 'is', null),
-            qb('accessed_at', '<', qb.ref('first_vote_at')),
+            qb('last_vote_at', '>', qb.ref('accessed_at')),
           ]),
         )
-        .select('user_id')
-        .distinct()
+        .select(['user_id', 'photo_id'])
         .execute();
       if (targetWorldcupLogs.length > 0) {
-        const targetUserIds = targetWorldcupLogs.map((log) => log.user_id);
-        for (const targetUserId of targetUserIds) {
+        for (const target of targetWorldcupLogs) {
           try {
             await KakaoSchedulerService.sendKakaoNotificationForScheduler(
               this.db,
-              targetUserId,
+              target.user_id,
               'test_01', //테스트용 템플릿 임시 추가
               null,
               [],
@@ -157,19 +132,17 @@ export class SchedulerService {
         .where((qb) =>
           qb.or([
             qb('accessed_at', 'is', null),
-            qb('accessed_at', '<', qb.ref('first_vote_at')),
+            qb('last_vote_at', '>', qb.ref('accessed_at')),
           ]),
         )
-        .select('user_id')
-        .distinct()
+        .select(['user_id', 'photo_id'])
         .execute();
       if (targetWorldcupLogs.length > 0) {
-        const targetUserIds = targetWorldcupLogs.map((log) => log.user_id);
-        for (const targetUserId of targetUserIds) {
+        for (const target of targetWorldcupLogs) {
           try {
             await KakaoSchedulerService.sendKakaoNotificationForScheduler(
               this.db,
-              targetUserId,
+              target.user_id,
               'test_01', //테스트용 템플릿 임시 추가
               null,
               [],
