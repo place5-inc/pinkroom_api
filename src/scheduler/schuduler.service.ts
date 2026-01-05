@@ -19,6 +19,7 @@ export class SchedulerService {
 
   @CronForENV(['production', 'staging', 'development'], '*/3 * * * *') //매일 16시에 동작
   public async testScheduler() {
+    console.log('testScheduler start');
     try {
       const isPublish = await this.checkSchedulerPublishState(
         'complete_vote_worldcup_remind_week',

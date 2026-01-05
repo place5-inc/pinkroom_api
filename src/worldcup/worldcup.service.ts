@@ -261,7 +261,6 @@ export class WorldcupService {
         .values({
           photo_id: photoId,
           user_id: userId,
-          created_at: new Date(),
           accessed_at: new Date(),
         })
         .execute();
@@ -342,7 +341,6 @@ export class WorldcupService {
           .values({
             photo_id: photoId,
             user_id: userId,
-            created_at: new Date(),
             accessed_at: new Date(),
           })
           .execute();
