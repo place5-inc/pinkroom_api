@@ -84,7 +84,21 @@ export class WorldcupService {
           voteCount: names.length,
         };
       });
-      const sortedPhotoResults = [...photoResultsWithNames].sort((a, b) => {
+      const totalVoteCount = photoResultsWithNames.reduce(
+        (sum, r) => sum + r.voteCount,
+        0,
+      );
+
+      const photoResultsWithPercent = photoResultsWithNames.map((r) => {
+        const percent =
+          totalVoteCount === 0 ? 0 : (r.voteCount / totalVoteCount) * 100;
+
+        return {
+          ...r,
+          percent,
+        };
+      });
+      const sortedPhotoResults = [...photoResultsWithPercent].sort((a, b) => {
         if (b.voteCount !== a.voteCount) {
           return b.voteCount - a.voteCount;
         }
