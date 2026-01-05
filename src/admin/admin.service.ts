@@ -255,11 +255,12 @@ export class AdminService {
       };
     }
   }
-  async generatePhotoAdminTest(image: Image, ment: string) {
+  async generatePhotoAdminTest(image: Image, ment: string, ai: string) {
     try {
       const url = await this.workerService.generatePhotoAdminTest(
         image.data,
         ment,
+        ai,
       );
       return {
         status: HttpStatus.OK,

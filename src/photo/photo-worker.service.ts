@@ -274,14 +274,25 @@ export class PhotoWorkerService {
     }
   }
 
-  async generatePhotoAdminTest(base64: string, ment: string) {
-    const image = await this.geminiService.generatePhoto(
-      null,
-      base64,
-      ment,
-      null,
-    );
-    const uploadFile = await this.uploadToAzure(image);
-    return uploadFile.url;
+  async generatePhotoAdminTest(base64: string, ment: string, ai: string) {
+    if (ai == 'gemini') {
+      const image = await this.geminiService.generatePhoto(
+        null,
+        base64,
+        ment,
+        null,
+      );
+      const uploadFile = await this.uploadToAzure(image);
+      return uploadFile.url;
+    } else if (ai == 'seedream') {
+      const image = await this.geminiService.generatePhotoSeedream(
+        null,
+        base64,
+        ment,
+        null,
+      );
+      const uploadFile = await this.uploadToAzure(image);
+      return uploadFile.url;
+    }
   }
 }

@@ -146,6 +146,7 @@ export class AdminController {
     return await this.adminService.generatePhotoAdminTest(
       body.image,
       body.ment,
+      body.ai ?? 'gemini',
     );
   }
   @Get('scheduler/test')
