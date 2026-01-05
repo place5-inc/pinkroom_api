@@ -5,6 +5,7 @@ import { DatabaseProvider } from 'src/libs/db';
 import { KakaoService } from 'src/kakao/kakao.service';
 import { sql } from 'kysely';
 import { generateCode, normalizeError } from 'src/libs/helpers';
+import { ThumbnailService } from './thumbnail.service';
 @Injectable()
 export class PhotoWorkerService {
   constructor(
@@ -12,6 +13,7 @@ export class PhotoWorkerService {
     private readonly azureBlobService: AzureBlobService,
     private readonly geminiService: GeminiService,
     private readonly kakaoService: KakaoService,
+    private readonly thumbnailService: ThumbnailService,
   ) {}
 
   async makeAllPhotos(originalPhotoId: number) {
@@ -59,7 +61,7 @@ export class PhotoWorkerService {
 
       if (completedSet.size === totalCount.count) {
         console.log(`🎉 ${attempt}번째 시도에서 전부 완료`);
-        this.sendKakao(originalPhotoId);
+        this.afterMakeAllPHoto(originalPhotoId);
         return;
       }
 
@@ -88,6 +90,10 @@ export class PhotoWorkerService {
     }
 
     console.error('🚨 최대 재시도 초과, 일부 실패');
+  }
+  async afterMakeAllPHoto(photoId: number) {
+    this.sendKakao(photoId);
+    this.generateWorldcupThumbnail(photoId);
   }
 
   async sendKakao(photoId: number) {
@@ -136,6 +142,53 @@ export class PhotoWorkerService {
     );
   }
 
+  //TODO 꿀배포 현진
+  async generateWorldcupThumbnail(photoId: number) {
+    const photos = await this.db
+      .selectFrom('photo_results as pf')
+      .leftJoin('upload_file as uf', 'uf.id', 'pf.result_image_id')
+      .where('original_photo_id', '=', photoId)
+      .select(['uf.url as url'])
+      .execute();
+    const imageUrls = photos
+      .map((r) => r.url)
+      .filter(
+        (url): url is string => typeof url === 'string' && url.length > 0,
+      );
+    const MAX_THUMBNAIL_RETRY = 2;
+    for (let i = 0; i < MAX_THUMBNAIL_RETRY; i++) {
+      try {
+        const thumbnailBuffer =
+          await this.thumbnailService.generateWorldcup(imageUrls);
+        /* 꿀배포 
+
+        const thumbnailBase64 = `data:image/jpeg;base64,${thumbnailBuffer.toString(
+          'base64',
+        )}`;
+        const thumbnailUpload =
+          await this.azureBlobService.uploadFileImageBase64(thumbnailBase64);
+
+        if (thumbnailUpload) {
+          await this.db
+            .updateTable('photos')
+            .set({ thumbnail_worldcup_id: thumbnailUpload.id })
+            .where('id', '=', photoId)
+            .execute();
+          console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
+          break; // 성공 시 루프 탈출
+        }
+        */
+      } catch (error) {
+        console.error(
+          `[PhotoService] 썸네일 생성 실패 (${i + 1}번째 시도):`,
+          error,
+        );
+        if (i === MAX_THUMBNAIL_RETRY - 1) {
+          console.error('[PhotoService] 썸네일 최종 생성 실패');
+        }
+      }
+    }
+  }
   /*
 애저에 올리기 
 */
