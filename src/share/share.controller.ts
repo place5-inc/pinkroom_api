@@ -17,6 +17,7 @@ import {
 import { UserService } from 'src/user/user.service';
 import { ShareService } from './share.service';
 import { UploadPhotoBody } from 'src/libs/types';
+import { isNull } from 'src/libs/helpers';
 @Controller('share')
 export class ShareController {
   constructor(private shareService: ShareService) {}
@@ -45,7 +46,10 @@ export class ShareController {
     return await this.shareService.getThumbnailPhoto(photoId);
   }
   @Get('randomName')
-  async getRandomName() {
-    return await this.shareService.getRandomName();
+  async getRandomName(@Query('photoId') photoId: number) {
+    if (isNull(photoId)) {
+      throw new BadRequestException('photoId is required.');
+    }
+    return await this.shareService.getRandomName(photoId);
   }
 }

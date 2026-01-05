@@ -190,10 +190,22 @@ export class ShareService {
       };
     }
   }
-  async getRandomName() {
+  async getRandomName(photoId: number) {
     let name: string;
     try {
-      name = getRandomName();
+      while (!name) {
+        name = getRandomName();
+
+        const row = await this.db
+          .selectFrom('worldcup_votes')
+          .where('photo_id', '=', photoId)
+          .where('name', '=', name)
+          .executeTakeFirst();
+
+        if (row) {
+          name = null;
+        }
+      }
       return {
         status: HttpStatus.OK,
         name: name,
