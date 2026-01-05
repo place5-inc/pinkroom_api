@@ -16,6 +16,8 @@ import {
 import { SendKaKaoNewGetTokenModel } from 'src/libs/types';
 import { NIL } from 'uuid';
 import { KakaoHelper } from './kakao.helper';
+import e from 'express';
+import { generateCode } from 'src/libs/helpers';
 
 @Injectable()
 export class KakaoSchedulerService {
@@ -282,5 +284,48 @@ export class KakaoSchedulerService {
         expired: '',
       },
     };
+  }
+
+  static async setTokenByScheduler(
+    db: DatabaseProvider,
+    userId: string,
+  ): Promise<{ token: string }> {
+    try {
+      let token: string;
+      let exists = true;
+
+      while (exists) {
+        token = await generateCode(12);
+
+        const found = await db
+          .selectFrom('token')
+          .select('id')
+          .where('token', '=', token)
+          .executeTakeFirst();
+
+        exists = !!found;
+      }
+      const now = new Date();
+      const expireTime = new Date(now.getTime() + 24 * 60 * 60000);
+
+      await db
+        .insertInto('token')
+        .values({
+          user_id: userId,
+          token,
+          created_at: now,
+          expired_at: expireTime,
+        })
+        .executeTakeFirst();
+
+      return {
+        token: token,
+      };
+    } catch (error) {
+      throw new HttpException(
+        `알림톡 토큰 설정 실패: ${error.message || 'Unknown error'}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

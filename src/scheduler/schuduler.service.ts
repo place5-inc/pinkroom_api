@@ -53,13 +53,17 @@ export class SchedulerService {
       if (targetWorldcupLogs.length > 0) {
         for (const target of targetWorldcupLogs) {
           try {
+            const { token } = await KakaoSchedulerService.setTokenByScheduler(
+              this.db,
+              target.user_id,
+            );
             await KakaoSchedulerService.sendKakaoNotificationForScheduler(
               this.db,
               target.user_id,
               'pr_cplt_wrc_rmd_week_test', //테스트용 템플릿 임시 추가
               null,
               [],
-              [],
+              [token, target.photo_id.toString()],
             );
           } catch (userError) {
             await this.writeSchedulerLog(
@@ -140,13 +144,17 @@ export class SchedulerService {
       if (targetWorldcupLogs.length > 0) {
         for (const target of targetWorldcupLogs) {
           try {
+            const { token } = await KakaoSchedulerService.setTokenByScheduler(
+              this.db,
+              target.user_id,
+            );
             await KakaoSchedulerService.sendKakaoNotificationForScheduler(
               this.db,
               target.user_id,
               'pr_cplt_wrc_rmd_month_test',
               null,
               [],
-              [],
+              [token, target.photo_id.toString()],
             );
           } catch (userError) {
             await this.writeSchedulerLog(
