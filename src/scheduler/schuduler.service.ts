@@ -9,12 +9,35 @@ import { DEV_CONFIG } from 'src/libs/types';
 import { NODE_ENV } from 'src/app.module';
 import { MessageService } from 'src/message/message.service';
 import { KakaoSchedulerService } from 'src/kakao/kakao.scheduler.service';
+import { sql, RawBuilder } from 'kysely';
 
 @Injectable()
 export class SchedulerService {
   private readonly db = new DatabaseProvider();
   private readonly isKakaoProduction = DEV_CONFIG.isKakaoProduction;
   private readonly messageService = new MessageService();
+
+  @CronForENV(['production', 'staging', 'development'], '*/3 * * * *') //매일 16시에 동작
+  public async testScheduler() {
+    try {
+      const isPublish = await this.checkSchedulerPublishState(
+        'complete_vote_worldcup_remind_week',
+      );
+      if (!isPublish) {
+        return;
+      }
+      await KakaoSchedulerService.sendKakaoNotificationForScheduler(
+        this.db,
+        '815EFCDF-116E-4680-95DA-1689AB85386C',
+        'test_01', //테스트용 템플릿 임시 추가
+        null,
+        [],
+        [],
+      );
+    } catch (error) {
+    } finally {
+    }
+  }
 
   @CronForENV(['production', 'staging', 'development'], '0 16 * * *') //매일 16시에 동작
   public async completeVoteWorldcupRemindWeek() {
@@ -31,17 +54,54 @@ export class SchedulerService {
         'start',
       );
 
-      //
-
-      //임시로 테스트용 템플릿 추가
-      await KakaoSchedulerService.sendKakaoNotificationForScheduler(
-        this.db,
-        '815EFCDF-116E-4680-95DA-1689AB85386C',
-        'test_01', //테스트용 템플릿 임시 추가
-        null,
-        [],
-        [],
-      );
+      const targetWorldcupLogs = await this.db
+        .selectFrom('worldcup_log')
+        .where('first_vote_at', 'is not', null)
+        .where(({ eb }) =>
+          eb(
+            sql`CAST(DATEADD(day, 7, first_vote_at) AS DATE)`,
+            '=',
+            sql`CAST(GETDATE() AS DATE)`,
+          ),
+        )
+        .where((qb) =>
+          qb.or([
+            qb('accessed_at', 'is', null),
+            qb('accessed_at', '<', qb.ref('first_vote_at')),
+          ]),
+        )
+        .select('user_id')
+        .distinct()
+        .execute();
+      if (targetWorldcupLogs.length > 0) {
+        const targetUserIds = targetWorldcupLogs.map((log) => log.user_id);
+        for (const targetUserId of targetUserIds) {
+          try {
+            await KakaoSchedulerService.sendKakaoNotificationForScheduler(
+              this.db,
+              targetUserId,
+              'test_01', //테스트용 템플릿 임시 추가
+              null,
+              [],
+              [],
+            );
+          } catch (userError) {
+            await this.writeSchedulerLog(
+              'complete_vote_worldcup_remind_week',
+              'fail',
+            );
+            const errorText =
+              userError instanceof Error
+                ? `${userError.name}: ${userError.message}\n${userError.stack}`
+                : JSON.stringify(userError);
+            await this.sendMMSMessageForDeveloper(
+              `핑크룸 - type : complete_vote_worldcup_remind_week\n 스케줄러 오류 발생\n${errorText.slice(0, 500)}`,
+              'complete_vote_worldcup_remind_week',
+            );
+            continue;
+          }
+        }
+      }
 
       //스케줄러 로그에 성공 시간 업데이트 하고 실행
       await this.writeSchedulerLog(
@@ -83,17 +143,54 @@ export class SchedulerService {
         'start',
       );
 
-      //
-
-      //임시로 테스트용 템플릿 추가
-      await KakaoSchedulerService.sendKakaoNotificationForScheduler(
-        this.db,
-        '815EFCDF-116E-4680-95DA-1689AB85386C',
-        'test_01', //테스트용 템플릿 임시 추가
-        null,
-        [],
-        [],
-      );
+      const targetWorldcupLogs = await this.db
+        .selectFrom('worldcup_log')
+        .where('first_vote_at', 'is not', null)
+        .where(({ eb }) =>
+          eb(
+            sql`CAST(DATEADD(day, 30, first_vote_at) AS DATE)`,
+            '=',
+            sql`CAST(GETDATE() AS DATE)`,
+          ),
+        )
+        .where((qb) =>
+          qb.or([
+            qb('accessed_at', 'is', null),
+            qb('accessed_at', '<', qb.ref('first_vote_at')),
+          ]),
+        )
+        .select('user_id')
+        .distinct()
+        .execute();
+      if (targetWorldcupLogs.length > 0) {
+        const targetUserIds = targetWorldcupLogs.map((log) => log.user_id);
+        for (const targetUserId of targetUserIds) {
+          try {
+            await KakaoSchedulerService.sendKakaoNotificationForScheduler(
+              this.db,
+              targetUserId,
+              'test_01', //테스트용 템플릿 임시 추가
+              null,
+              [],
+              [],
+            );
+          } catch (userError) {
+            await this.writeSchedulerLog(
+              'complete_vote_worldcup_remind_month',
+              'fail',
+            );
+            const errorText =
+              userError instanceof Error
+                ? `${userError.name}: ${userError.message}\n${userError.stack}`
+                : JSON.stringify(userError);
+            await this.sendMMSMessageForDeveloper(
+              `핑크룸 - type : complete_vote_worldcup_remind_month\n 스케줄러 오류 발생\n${errorText.slice(0, 500)}`,
+              'complete_vote_worldcup_remind_month',
+            );
+            continue;
+          }
+        }
+      }
 
       //스케줄러 로그에 성공 시간 업데이트 하고 실행
       await this.writeSchedulerLog(

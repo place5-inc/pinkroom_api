@@ -73,7 +73,8 @@ export type NODE_ENV = 'production' | 'staging' | 'development';
 
 if (
   process.env.NODE_ENV === 'production' ||
-  process.env.NODE_ENV === 'staging'
+  process.env.NODE_ENV === 'staging' ||
+  process.env.NODE_ENV === 'development'
 ) {
   if (process.env.CRON_SCHEDULER_ENABLED === 'on') {
     modules.imports.push(ScheduleModule.forRoot());
@@ -81,4 +82,4 @@ if (
 }
 
 @Module(modules)
-export class AppModule { }
+export class AppModule {}
