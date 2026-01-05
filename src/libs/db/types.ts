@@ -127,9 +127,9 @@ export type worldcup_log = {
     id: Generated<number>;
     photo_id: number | null;
     user_id: string | null;
-    created_at: Timestamp | null;
     accessed_at: Timestamp | null;
     first_vote_at: Timestamp | null;
+    last_vote_at: Timestamp | null;
 };
 export type worldcup_votes = {
     id: Generated<number>;

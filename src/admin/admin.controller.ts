@@ -18,13 +18,14 @@ import { AdminService } from './admin.service';
 import { parseNumberArray } from 'src/libs/helpers';
 import { CommonService } from 'src/common/common.service';
 import { AdminBody } from 'src/libs/types';
-//
+import { SchedulerService } from 'src/scheduler/schuduler.service';
 
 @Controller('admin')
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly commonService: CommonService,
+    private readonly schedulerService: SchedulerService,
   ) {}
   @Get('test')
   async test() {
