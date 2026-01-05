@@ -44,4 +44,8 @@ export class ShareController {
   async getPhotoThumbnail(@Query('photoId') photoId: number) {
     return await this.shareService.getThumbnailPhoto(photoId);
   }
+  @Get('randomName')
+  async getRandomName() {
+    return await this.shareService.getRandomName();
+  }
 }

@@ -4,6 +4,7 @@ import { generateCode } from 'src/libs/helpers';
 import { PhotoRepository } from 'src/photo/photo.repository';
 import { AzureBlobService } from 'src/azure/blob.service';
 import { Image } from 'src/libs/types';
+import { getRandomName } from 'src/libs/helpers';
 
 @Injectable()
 export class ShareService {
@@ -181,6 +182,21 @@ export class ShareService {
           id: photo.upload_file_id,
           url: photo.url,
         },
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async getRandomName() {
+    let name: string;
+    try {
+      name = getRandomName();
+      return {
+        status: HttpStatus.OK,
+        name: name,
       };
     } catch (e) {
       return {
