@@ -16,6 +16,7 @@ import { AllSelection } from 'kysely/dist/cjs/parser/select-parser';
 import { DateTime } from 'luxon';
 import { AzureBlobService } from 'src/azure/blob.service';
 import { KakaoService } from 'src/kakao/kakao.service';
+import { PhotoWorkerService } from 'src/photo/photo-worker.service';
 @Injectable()
 export class AdminService {
   constructor(
@@ -23,6 +24,7 @@ export class AdminService {
     private readonly adminRepository: AdminRepository,
     private readonly azureBlobService: AzureBlobService,
     private readonly kakaoService: KakaoService,
+    private readonly workerService: PhotoWorkerService,
   ) {}
   async test() {
     try {
@@ -246,6 +248,23 @@ export class AdminService {
         [],
         [],
       );
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async generatePhotoAdminTest(image: Image, ment: string) {
+    try {
+      const url = await this.workerService.generatePhotoAdminTest(
+        image.data,
+        ment,
+      );
+      return {
+        status: HttpStatus.OK,
+        url,
+      };
     } catch (e) {
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,

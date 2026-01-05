@@ -134,4 +134,17 @@ export class AdminController {
     }
     return await this.adminService.testKakao(userId, templateCode);
   }
+  @Post('prompt/test')
+  async generatePhotoAdminTest(@Body() body: AdminBody) {
+    if (isEmpty(body.image)) {
+      throw new BadRequestException('image is required.');
+    }
+    if (isEmpty(body.ment)) {
+      throw new BadRequestException('ment is required.');
+    }
+    return await this.adminService.generatePhotoAdminTest(
+      body.image,
+      body.ment,
+    );
+  }
 }

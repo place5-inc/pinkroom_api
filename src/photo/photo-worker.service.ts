@@ -5,7 +5,6 @@ import { DatabaseProvider } from 'src/libs/db';
 import { KakaoService } from 'src/kakao/kakao.service';
 import { sql } from 'kysely';
 import { generateCode, normalizeError } from 'src/libs/helpers';
-import { WorldcupService } from 'src/worldcup/worldcup.service';
 @Injectable()
 export class PhotoWorkerService {
   constructor(
@@ -13,7 +12,6 @@ export class PhotoWorkerService {
     private readonly azureBlobService: AzureBlobService,
     private readonly geminiService: GeminiService,
     private readonly kakaoService: KakaoService,
-    private readonly worldcupService: WorldcupService,
   ) {}
 
   async makeAllPhotos(originalPhotoId: number) {
@@ -61,19 +59,7 @@ export class PhotoWorkerService {
 
       if (completedSet.size === totalCount.count) {
         console.log(`🎉 ${attempt}번째 시도에서 전부 완료`);
-        const user = await this.db
-          .selectFrom('photos')
-          .where('id', '=', originalPhotoId)
-          .select('user_id')
-          .executeTakeFirst();
-        if (!user) {
-          return;
-        }
-        await this.worldcupService.addWorldCupLog(
-          originalPhotoId,
-          user.user_id,
-        );
-        this.sendKakao(originalPhotoId, user.user_id);
+        this.sendKakao(originalPhotoId);
         return;
       }
 
@@ -104,9 +90,16 @@ export class PhotoWorkerService {
     console.error('🚨 최대 재시도 초과, 일부 실패');
   }
 
-  async sendKakao(photoId: number, userId: string) {
+  async sendKakao(photoId: number) {
     //todo kakaoRepo 호출
-
+    const user = await this.db
+      .selectFrom('photos')
+      .where('id', '=', photoId)
+      .select('user_id')
+      .executeTakeFirst();
+    if (!user) {
+      return;
+    }
     let token: string;
     let exists = true;
 
@@ -127,7 +120,7 @@ export class PhotoWorkerService {
     await this.db
       .insertInto('token')
       .values({
-        user_id: userId,
+        user_id: user.user_id,
         token,
         created_at: now,
         expired_at: expireTime,
@@ -135,7 +128,7 @@ export class PhotoWorkerService {
       .executeTakeFirst();
 
     await this.kakaoService.sendKakaoNotification(
-      userId,
+      user.user_id,
       'pr_cplt_hr_smln_test', //테스트용 템플릿 임시 추가
       null,
       [],
@@ -202,6 +195,7 @@ export class PhotoWorkerService {
     try {
       const image = await this.geminiService.generatePhoto(
         photoUrl,
+        null,
         ment,
         sampleUrl,
       );
@@ -225,5 +219,16 @@ export class PhotoWorkerService {
         })
         .execute();
     }
+  }
+
+  async generatePhotoAdminTest(base64: string, ment: string) {
+    const image = await this.geminiService.generatePhoto(
+      null,
+      base64,
+      ment,
+      null,
+    );
+    const uploadFile = await this.uploadToAzure(image);
+    return uploadFile.url;
   }
 }

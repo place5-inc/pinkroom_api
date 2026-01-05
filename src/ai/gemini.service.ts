@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpStatus,
   Injectable,
   InternalServerErrorException,
@@ -16,8 +17,9 @@ export class GeminiService {
     //private readonly photoService: PhotoService,
   ) {}
   async generatePhoto(
-    fileUri: string,
-    ment: string,
+    fileUri?: string,
+    fileBase64?: string,
+    ment?: string,
     sampleUrl?: string,
   ): Promise<string> {
     try {
@@ -25,20 +27,43 @@ export class GeminiService {
       if (!apiKey) {
         throw new InternalServerErrorException('GEMINI_API_KEY is missing');
       }
+      if (!fileUri && !fileBase64) {
+        throw new BadRequestException(
+          'fileUri 또는 fileBase64 중 하나는 필수입니다.',
+        );
+      }
 
       const ai = new GoogleGenAI({ apiKey });
       const userMimeType = getMimeTypeFromUri(fileUri);
 
       // parts를 동적으로 구성
-      const parts: any[] = [
-        // 1️⃣ 사용자 얼굴 이미지
-        {
+      const parts: any[] = [];
+      // 1) 사용자 얼굴 이미지: fileUri 우선, 없으면 base64
+      if (fileUri) {
+        const userMimeType = getMimeTypeFromUri(fileUri);
+        parts.push({
           fileData: {
             mimeType: userMimeType,
             fileUri,
           },
-        },
-      ];
+        });
+      } else if (fileBase64) {
+        // Base64 파싱 (data URL 형태 기대)
+        const base64Match = fileBase64.match(/^data:(image\/\w+);base64,(.+)$/);
+        if (!base64Match) {
+          throw new BadRequestException('올바른 이미지 형식이 아닙니다.');
+        }
+
+        const mimeType = base64Match[1]; // ex) image/png
+        const base64Data = base64Match[2];
+
+        parts.push({
+          inlineData: {
+            mimeType,
+            data: base64Data,
+          },
+        });
+      }
 
       // 2️⃣ sampleUrl이 있으면 참고 이미지 추가
       if (sampleUrl) {
