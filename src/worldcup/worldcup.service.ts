@@ -61,7 +61,7 @@ export class WorldcupService {
           'uf.url as url',
         ])
         .execute();
-      const nullNameCount = votes.filter((v) => v.name === null).length;
+      const nullNameCount = votes.filter((v) => v.name != null).length;
       if (nullNameCount === 0) {
         const mySelect = votes.find(
           (vote) => vote.name == null && vote.user_id == userId,
