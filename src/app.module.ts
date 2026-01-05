@@ -30,6 +30,7 @@ import { WorldcupController } from './worldcup/worldcup.controller';
 import { WorldcupService } from './worldcup/worldcup.service';
 import { KakaoService } from './kakao/kakao.service';
 import { ThumbnailService } from './photo/thumbnail.service';
+import { SchedulerService } from './scheduler/schuduler.service';
 const modules: ModuleMetadata = {
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -66,6 +67,7 @@ const modules: ModuleMetadata = {
     WorldcupService,
     KakaoService,
     ThumbnailService,
+    SchedulerService,
   ],
 };
 
@@ -73,7 +75,6 @@ export type NODE_ENV = 'production' | 'staging' | 'development';
 
 if (
   process.env.NODE_ENV === 'production' ||
-  process.env.NODE_ENV === 'staging' ||
   process.env.NODE_ENV === 'development'
 ) {
   if (process.env.CRON_SCHEDULER_ENABLED === 'on') {
