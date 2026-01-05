@@ -9,12 +9,12 @@ import { DEV_CONFIG } from 'src/libs/types';
 
 @Injectable()
 export class VerificationService {
-  private readonly isKakaoProduction = DEV_CONFIG.isKakaoProduction;
+  private readonly _isProduction = DEV_CONFIG.isProduction;
   constructor(private readonly db: DatabaseProvider) {}
   async createdCode(phone: string): Promise<string> {
     const randomNumber = Math.floor(Math.random() * 9000) + 1000;
     let code = randomNumber.toString();
-    if (!this.isKakaoProduction) {
+    if (!this._isProduction) {
       //테스트서버에서는 0000 코드로 고정
       code = '0000';
     }

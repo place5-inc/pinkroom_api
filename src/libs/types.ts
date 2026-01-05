@@ -2,6 +2,7 @@ import { HttpStatus } from '@nestjs/common';
 
 export const DEV_CONFIG = {
   isKakaoProduction: process.env.IS_KAKAO_PRODUCTION === 'on',
+  isProduction: process.env.NODE_ENV === 'production',
   devPhoneNumberList: [
     '01053095304',
     '01027175360',
