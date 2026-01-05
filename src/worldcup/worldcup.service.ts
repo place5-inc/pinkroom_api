@@ -192,6 +192,9 @@ export class WorldcupService {
         .output(['inserted.id'])
         .executeTakeFirst();
 
+      //월드컵 결과 투표할 때. LOG 추가
+      await this.setLogWorldCupVote(photo.id);
+
       return {
         status: HttpStatus.OK,
         voteId: vote.id,
