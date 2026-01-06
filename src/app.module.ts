@@ -19,7 +19,7 @@ import { VerificationService } from './auth/verification.service';
 import { InicisController } from './inicis/inicis.controller';
 import { InicisService } from './inicis/inicis.service';
 import { PaymentService } from './payment/payment.service';
-import { GeminiService } from './ai/gemini.service';
+import { AiService } from './ai/ai.service';
 import { PhotoService } from './photo/photo.service';
 import { PhotoWorkerService } from './photo/photo-worker.service';
 import { UserController } from './user/user.controller';
@@ -61,7 +61,7 @@ const modules: ModuleMetadata = {
     PhotoRepository,
     InicisService,
     PaymentService,
-    GeminiService,
+    AiService,
     PhotoWorkerService,
     ShareService,
     WorldcupService,

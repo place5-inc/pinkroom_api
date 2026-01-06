@@ -9,14 +9,14 @@ import { AzureBlobService } from 'src/azure/blob.service';
 import { HttpService } from '@nestjs/axios';
 import { GoogleGenAI } from '@google/genai';
 @Injectable()
-export class GeminiService {
+export class AiService {
   constructor(
     //private readonly db: DatabaseProvider,
     private readonly azureBlobService: AzureBlobService,
     private readonly httpService: HttpService,
     //private readonly photoService: PhotoService,
   ) {}
-  async generatePhoto(
+  async generatePhotoGemini(
     fileUri?: string,
     fileBase64?: string,
     ment?: string,

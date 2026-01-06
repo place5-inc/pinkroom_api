@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { GeminiService } from 'src/ai/gemini.service';
+import { AiService } from 'src/ai/ai.service';
 import { AzureBlobService } from 'src/azure/blob.service';
 import { DatabaseProvider } from 'src/libs/db';
 import { KakaoService } from 'src/kakao/kakao.service';
@@ -11,7 +11,7 @@ export class PhotoWorkerService {
   constructor(
     private readonly db: DatabaseProvider,
     private readonly azureBlobService: AzureBlobService,
-    private readonly geminiService: GeminiService,
+    private readonly aiService: AiService,
     private readonly kakaoService: KakaoService,
     private readonly thumbnailService: ThumbnailService,
   ) {}
@@ -246,7 +246,7 @@ export class PhotoWorkerService {
     sampleUrl?: string,
   ) {
     try {
-      const image = await this.geminiService.generatePhoto(
+      const image = await this.aiService.generatePhotoGemini(
         photoUrl,
         null,
         ment,
@@ -276,7 +276,7 @@ export class PhotoWorkerService {
 
   async generatePhotoAdminTest(base64: string, ment: string, ai: string) {
     if (ai == 'gemini') {
-      const image = await this.geminiService.generatePhoto(
+      const image = await this.aiService.generatePhotoGemini(
         null,
         base64,
         ment,
@@ -285,7 +285,7 @@ export class PhotoWorkerService {
       const uploadFile = await this.uploadToAzure(image);
       return uploadFile.url;
     } else if (ai == 'seedream') {
-      const image = await this.geminiService.generatePhotoSeedream(
+      const image = await this.aiService.generatePhotoSeedream(
         null,
         base64,
         ment,
