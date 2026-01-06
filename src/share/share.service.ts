@@ -1,21 +1,29 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
 import { generateCode } from 'src/libs/helpers';
 import { PhotoRepository } from 'src/photo/photo.repository';
-import { AzureBlobService } from 'src/azure/blob.service';
-import { Image } from 'src/libs/types';
 import { getRandomName } from 'src/libs/helpers';
+import { sql } from 'kysely';
+import { UserRepository } from 'src/user/user.repository';
 
 @Injectable()
 export class ShareService {
   constructor(
     private readonly db: DatabaseProvider,
     private readonly photoRepository: PhotoRepository,
-    private readonly azureBlobService: AzureBlobService,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async getPhotoWithCode(_code: string) {
     try {
+      let canUseFree = false;
       const code = await this.db
         .selectFrom('photo_share_code')
         .where('code', '=', _code)
@@ -42,15 +50,34 @@ export class ShareService {
         .select('user_id')
         .executeTakeFirst();
 
-      const user = await this.db
-        .selectFrom('users')
-        .where('id', '=', photo.user_id)
+      const user = await this.userRepository.getUser(photo.user_id, {
+        includeDidShareWorldcup: false,
+      });
+
+      const codePhoto = await this.db
+        .selectFrom('photos')
+        .where('id', '=', code.photo_id)
         .selectAll()
         .executeTakeFirst();
+      if (codePhoto.payment_id) {
+        canUseFree = true;
+      }
+
+      const row = await this.db
+        .selectFrom('users')
+        .where('use_code_photo_id', '=', code.photo_id)
+        .select(sql<number>`count(*)`.as('count'))
+        .executeTakeFirst();
+
+      const useCount = row?.count ?? 0;
+      if (useCount > 15) {
+        canUseFree = false;
+      }
       return {
         status: HttpStatus.OK,
         result,
         user,
+        canUseFree,
       };
     } catch (e) {
       return {
