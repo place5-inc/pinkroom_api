@@ -151,6 +151,7 @@ export class ShareService {
           .selectFrom('worldcup_votes')
           .where('photo_id', '=', photoId)
           .where('name', '=', name)
+          .selectAll()
           .executeTakeFirst();
 
         if (row) {
