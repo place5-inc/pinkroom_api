@@ -82,7 +82,6 @@ export type UserVO = {
   phone?: string;
   name?: string;
   sampleType?: string;
-  didShareWorldcup?: boolean;
 };
 
 export type PhotoVO = {
@@ -95,6 +94,7 @@ export type PhotoVO = {
   resultImages: ResultImageVO[];
   createdAt: string;
   selectedDesignId?: number;
+  didShareWorldcup?: boolean;
 };
 
 export type ResultImageVO = {

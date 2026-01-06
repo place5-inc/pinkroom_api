@@ -50,9 +50,7 @@ export class ShareService {
         .select('user_id')
         .executeTakeFirst();
 
-      const user = await this.userRepository.getUser(photo.user_id, {
-        includeDidShareWorldcup: false,
-      });
+      const user = await this.userRepository.getUser(photo.user_id);
 
       const codePhoto = await this.db
         .selectFrom('photos')

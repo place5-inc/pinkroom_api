@@ -17,12 +17,15 @@ export class WorldcupService {
       const results = await this.photoRepository.getPhotosByUserId(userId);
 
       const photoIds = results.map((p) => p.id);
+
+      // 1) 투표 수
       const votes = await this.db
         .selectFrom('worldcup_votes')
         .where('name', 'is not', null)
         .where('photo_id', 'in', photoIds)
-        .selectAll()
+        .select(['photo_id'])
         .execute();
+
       const voteCountByPhotoId = votes.reduce<Record<number, number>>(
         (acc, vote) => {
           acc[vote.photo_id] = (acc[vote.photo_id] ?? 0) + 1;
@@ -30,10 +33,30 @@ export class WorldcupService {
         },
         {},
       );
+
+      // 2) 공유 여부 ✅ (존재 여부만 필요하니 photo_id만 뽑아서 Set으로)
+      let sharedPhotoIdSet = new Set<number>();
+
+      if (photoIds.length > 0) {
+        const shareRows = await this.db
+          .selectFrom('photo_share_code as psc')
+          // ✅ 이 컬럼이 “공유된 원본 사진 id”인지 확인 필요
+          .where('psc.photo_id', 'in', photoIds)
+          // (선택) 만약 공유 기록이 유저별이면 아래도 추가
+          // .where('psc.user_id', '=', userId)
+          .select(['psc.photo_id'])
+          .execute();
+
+        sharedPhotoIdSet = new Set(shareRows.map((r) => r.photo_id));
+      }
+
+      // 3) 합치기: voteCount + didShareWorldcup
       const photosWithVoteCount = results.map((photo) => ({
         ...photo,
         voteCount: voteCountByPhotoId[photo.id] ?? 0,
+        didShareWorldcup: sharedPhotoIdSet.has(photo.id),
       }));
+
       const user = await this.userRepository.getUser(userId);
 
       return {
@@ -66,6 +89,7 @@ export class WorldcupService {
           'uf.url as url',
         ])
         .execute();
+
       const nullNameCount = votes.filter((v) => v.name != null).length;
       if (nullNameCount === 0) {
         const mySelect = votes.find(
@@ -150,6 +174,7 @@ export class WorldcupService {
           };
         }
       }
+
       return {
         status: HttpStatus.OK,
         results: sortedPhotoResults,
