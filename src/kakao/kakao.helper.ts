@@ -1,5 +1,5 @@
 export const KakaoConstants = {
-  BASE_URL: process.env.WEB_HOST ?? 'https://www.pinkroom.ai',
+  BASE_URL: process.env.WEB_HOST ?? 'https://pinkroom.ai',
   TEST_URL:
     'https://pinkroom-web-development-h3e5gjf7h6fpedfh.koreacentral-01.azurewebsites.net',
 };
