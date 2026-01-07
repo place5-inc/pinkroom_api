@@ -99,6 +99,8 @@ export class AiService {
           imageConfig: {
             imageSize: process.env.GEMINI_IMAGE_SIZE ?? '2K',
           },
+          // ✅ 60초 타임아웃
+          httpOptions: { timeout: 60_000 },
         },
       });
 

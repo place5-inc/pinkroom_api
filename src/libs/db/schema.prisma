@@ -1,8 +1,8 @@
 generator kysely {
   provider     = "prisma-kysely"
   output       = "./"
-  enumFileName = "enums.ts"
   fileName     = "types.ts"
+  enumFileName = "enums.ts"
 }
 
 datasource db {
@@ -162,4 +162,13 @@ model worldcup_log {
   accessed_at   DateTime? @db.DateTime
   first_vote_at DateTime? @db.DateTime
   last_vote_at  DateTime? @db.DateTime
+}
+
+model log_generate_photo {
+  id        Int     @id(map: "PK_log_generate_photo") @default(autoincrement())
+  photo_id  Int?
+  design_id Int?
+  step      String? @db.NVarChar(50)
+  state     String? @db.NVarChar(50)
+  error     String? @db.NVarChar(Max)
 }

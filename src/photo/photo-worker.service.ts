@@ -200,6 +200,7 @@ export class PhotoWorkerService {
     originalPhotoId: number,
     hairDesignId: number,
     resultImageId?: string,
+    status?: string,
   ) {
     const before = await this.db
       .selectFrom('photo_results')
@@ -246,6 +247,7 @@ export class PhotoWorkerService {
     sampleUrl?: string,
   ) {
     try {
+      await this.insertIntoPhoto(photoId, designId, null, 'waiting');
       const image = await this.aiService.generatePhotoGemini(
         photoUrl,
         null,
@@ -258,10 +260,15 @@ export class PhotoWorkerService {
         throw new InternalServerErrorException('Azure 업로드 실패');
       }
 
-      return await this.insertIntoPhoto(photoId, designId, uploadFile.id);
+      return await this.insertIntoPhoto(
+        photoId,
+        designId,
+        uploadFile.id,
+        'complete',
+      );
     } catch (e) {
       const err = normalizeError(e);
-      await this.insertIntoPhoto(photoId, designId, null);
+      await this.insertIntoPhoto(photoId, designId, null, 'fail');
       await this.db
         .insertInto('log_gemini_error')
         .values({
