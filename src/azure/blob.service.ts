@@ -101,6 +101,7 @@ export class AzureBlobService {
 
     // ✅ 옵션이 true일 때만 webp 변환
     let mimeType = originalMimeType;
+    /*
     if (toWebp) {
       buffer = await sharp(buffer)
         .resize({ width: 800, withoutEnlargement: true }) // 필요 없으면 이 줄 제거 가능
@@ -109,6 +110,7 @@ export class AzureBlobService {
 
       mimeType = 'image/webp';
     }
+    */
 
     const fileId = v4();
 
