@@ -4,6 +4,7 @@ import {
 } from '@azure/storage-blob';
 import { Injectable } from '@nestjs/common';
 import { DatabaseProvider } from '../libs/db';
+import sharp from 'sharp';
 import { v4 } from 'uuid';
 import { DateTime } from 'luxon';
 import { Image, isValidImage } from 'src/libs/types';
@@ -78,15 +79,15 @@ export class AzureBlobService {
     }
     return;
   }
-  async uploadFileImageBase64(image?: string) {
+  async uploadFileImageBase64(image?: string, toWebp = false) {
     if (image != null) {
       if (isValidImage(image)) {
-        return await this.uploadFileForAdmin(image);
+        return await this.uploadFileForAdmin(image, toWebp);
       }
     }
     return;
   }
-  async uploadFileForAdmin(fileData: string) {
+  async uploadFileForAdmin(fileData: string, toWebp = false) {
     const containerClient =
       this.blobServiceClient.getContainerClient('pinkroom');
 
@@ -95,23 +96,38 @@ export class AzureBlobService {
       throw new Error('Invalid base64 string');
     }
 
-    const mimeType = matches[1];
-    const buffer = Buffer.from(matches[2], 'base64');
+    const originalMimeType = matches[1]; // ex) image/png
+    let buffer = Buffer.from(matches[2], 'base64');
+
+    // ✅ 옵션이 true일 때만 webp 변환
+    let mimeType = originalMimeType;
+    if (toWebp) {
+      buffer = await sharp(buffer)
+        .resize({ width: 800, withoutEnlargement: true }) // 필요 없으면 이 줄 제거 가능
+        .webp({ quality: 80 })
+        .toBuffer();
+
+      mimeType = 'image/webp';
+    }
 
     const fileId = v4();
-    const fileName = `${fileId}.${mimeType.split('/')[1]}`;
 
-    // todo: insert files
+    // ✅ 확장자: webp면 webp로, 아니면 원래 mimeType 기반
+    const ext = toWebp ? 'webp' : (mimeType.split('/')[1] ?? 'bin');
+    const fileName = `${fileId}.${ext}`;
+
     const blockBlobClient = containerClient.getBlockBlobClient(fileName);
 
     const result = await blockBlobClient.uploadData(buffer, {
       blobHTTPHeaders: {
         blobContentType: mimeType,
+        // 필요하면 캐싱
+        // blobCacheControl: 'public, max-age=31536000, immutable',
       },
     });
 
-    if (result.errorCode) {
-      throw new Error(result.errorCode);
+    if ((result as any).errorCode) {
+      throw new Error((result as any).errorCode);
     }
 
     return await this.db

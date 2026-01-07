@@ -192,8 +192,8 @@ export class PhotoWorkerService {
   /*
 애저에 올리기 
 */
-  async uploadToAzure(base64: string) {
-    return await this.azureBlobService.uploadFileImageBase64(base64);
+  async uploadToAzure(base64: string, toWebp = false) {
+    return await this.azureBlobService.uploadFileImageBase64(base64, toWebp);
   }
 
   async insertIntoPhoto(
@@ -253,7 +253,7 @@ export class PhotoWorkerService {
         sampleUrl,
       );
 
-      const uploadFile = await this.uploadToAzure(image);
+      const uploadFile = await this.uploadToAzure(image, true);
       if (!uploadFile) {
         throw new InternalServerErrorException('Azure 업로드 실패');
       }
@@ -282,7 +282,7 @@ export class PhotoWorkerService {
         ment,
         null,
       );
-      const uploadFile = await this.uploadToAzure(image);
+      const uploadFile = await this.uploadToAzure(image, true);
       return uploadFile.url;
     } else if (ai == 'seedream') {
       const image = await this.aiService.generatePhotoSeedream(
