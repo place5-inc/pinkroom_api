@@ -263,7 +263,11 @@ export class WorldcupService {
         .executeTakeFirst();
 
       //월드컵 결과 투표할 때. LOG 추가
-      await this.setLogWorldCupVote(photo.id, photo.user_id);
+      //내 사진이 아닌 경우에만 log 추가
+      //내 사진인 경우에는 log 추가하지 않음.
+      if (photo.user_id !== userId) {
+        await this.setLogWorldCupVote(photo.id, photo.user_id);
+      }
 
       return {
         status: HttpStatus.OK,
