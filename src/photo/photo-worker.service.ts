@@ -6,6 +6,7 @@ import { KakaoService } from 'src/kakao/kakao.service';
 import { sql } from 'kysely';
 import { generateCode, normalizeError } from 'src/libs/helpers';
 import { ThumbnailService } from './thumbnail.service';
+import { MessageService } from 'src/message/message.service';
 @Injectable()
 export class PhotoWorkerService {
   constructor(
@@ -14,6 +15,7 @@ export class PhotoWorkerService {
     private readonly aiService: AiService,
     private readonly kakaoService: KakaoService,
     private readonly thumbnailService: ThumbnailService,
+    private readonly messageService: MessageService,
   ) {}
 
   async makeAllPhotos(originalPhotoId: number) {
@@ -278,6 +280,9 @@ export class PhotoWorkerService {
           error: err.message,
         })
         .execute();
+      //TODO 에러일때 문자쏘기
+      const ment = await this.extractGeminiErrorMessage(err.message);
+      this.messageService.sendErrorToManager(ment ?? '사진 생성 에러');
     }
   }
 
@@ -301,5 +306,39 @@ export class PhotoWorkerService {
       const uploadFile = await this.uploadToAzure(image);
       return uploadFile.url;
     }
+  }
+
+  async extractGeminiErrorMessage(err: unknown) {
+    // 1) err가 문자열(JSON)인 경우
+    if (typeof err === 'string') {
+      try {
+        const parsed = JSON.parse(err);
+        return parsed?.error?.message ?? err;
+      } catch {
+        return err;
+      }
+    }
+
+    // 2) err가 객체인 경우 (ApiError 등)
+    if (err && typeof err === 'object') {
+      const anyErr = err as any;
+
+      // 이미 error.message 형태로 들어있는 경우
+      const direct = anyErr?.error?.message;
+      if (typeof direct === 'string') return direct;
+
+      // Gemini SDK ApiError의 message가 JSON 문자열인 경우가 많음
+      if (typeof anyErr?.message === 'string') {
+        const msg = anyErr.message;
+        try {
+          const parsed = JSON.parse(msg);
+          return parsed?.error?.message ?? msg;
+        } catch {
+          return msg;
+        }
+      }
+    }
+
+    return 'Unknown error';
   }
 }
