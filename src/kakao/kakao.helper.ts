@@ -120,15 +120,15 @@ export class KakaoHelper {
         message: `처음으로 친구가 내 헤어스타일 월드컵에 참여했어요!
 친구가 뽑아준 나의 베스트 헤어스타일을 확인해보세요.
 
-앞으로도 친구들이 뽑은 내 16개 헤어스타일 랭킹은 [헤어 월드컵 결과보기] 버튼을 눌러 확인하실 수 있어요.`,
+앞으로도 친구들이 뽑은 내 16개 헤어스타일 랭킹은 [헤어스타일 월드컵 결과보기] 버튼을 눌러 확인하실 수 있어요.`,
         buttonList: [
           {
             ...OBJ_BUTTON_URL_DEFAULT,
-            name: '헤어 월드컵 결과보기',
+            name: '헤어스타일 월드컵 결과보기',
           },
           {
             ...OBJ_BUTTON_URL_2,
-            name: '헤어 월드컵 공유하기',
+            name: '헤어스타일 월드컵 공유하기',
           },
         ],
         type: 'ai',
@@ -179,11 +179,11 @@ export class KakaoHelper {
         buttonList: [
           {
             ...OBJ_BUTTON_URL_DEFAULT,
-            name: '헤어 월드컵 결과보기',
+            name: '헤어스타일 월드컵 결과보기',
           },
           {
             ...OBJ_BUTTON_URL_2,
-            name: '헤어 월드컵 공유하기',
+            name: '헤어스타일 월드컵 공유하기',
           },
         ],
         type: 'ai',
@@ -196,11 +196,11 @@ export class KakaoHelper {
         buttonList: [
           {
             ...OBJ_BUTTON_URL_DEFAULT,
-            name: '헤어 월드컵 결과보기',
+            name: '헤어스타일 월드컵 결과보기',
           },
           {
             ...OBJ_BUTTON_URL_2,
-            name: '헤어 월드컵 공유하기',
+            name: '헤어스타일 월드컵 공유하기',
           },
         ],
         type: 'ai',
