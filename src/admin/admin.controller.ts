@@ -163,4 +163,17 @@ export class AdminController {
     }
     return await this.photoWorkerService.generateWorldcupThumbnail(photoId);
   }
+  @Get('change/phone')
+  async changePhone(
+    @Query('before') before: string,
+    @Query('after') after: string,
+  ) {
+    if (isEmpty(before)) {
+      throw new BadRequestException('before is required.');
+    }
+    if (isEmpty(after)) {
+      throw new BadRequestException('after is required.');
+    }
+    return await this.adminService.changePhone(before, after);
+  }
 }

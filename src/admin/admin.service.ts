@@ -273,4 +273,38 @@ export class AdminService {
       };
     }
   }
+  async changePhone(before: string, after: string) {
+    try {
+      const beforeUser = await this.db
+        .selectFrom('users')
+        .where('phone', '=', before)
+        .selectAll()
+        .executeTakeFirst();
+      if (!beforeUser) {
+        throw new NotFoundException('before user not found');
+      }
+      const afterUser = await this.db
+        .selectFrom('users')
+        .where('phone', '=', after)
+        .selectAll()
+        .executeTakeFirst();
+      if (afterUser) {
+        throw new BadRequestException('after user already exists');
+      }
+      await this.db
+        .updateTable('users')
+        .set({ phone: after })
+        .where('id', '=', beforeUser.id)
+        .execute();
+      return {
+        status: HttpStatus.OK,
+        message: 'phone changed successfully',
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
 }
