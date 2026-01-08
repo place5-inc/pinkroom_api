@@ -212,19 +212,17 @@ export class PhotoWorkerService {
       .select('id')
       .executeTakeFirst();
     if (before) {
-      if (resultImageId) {
-        await this.db
-          .updateTable('photo_results')
-          .set({
-            created_at: new Date(),
-            result_image_id: resultImageId,
-            status: status,
-          })
-          .where('original_photo_id', '=', originalPhotoId)
-          .where('hair_design_id', '=', hairDesignId)
-          .output(['inserted.id'])
-          .executeTakeFirst();
-      }
+      await this.db
+        .updateTable('photo_results')
+        .set({
+          created_at: new Date(),
+          result_image_id: resultImageId,
+          status: status,
+        })
+        .where('original_photo_id', '=', originalPhotoId)
+        .where('hair_design_id', '=', hairDesignId)
+        .output(['inserted.id'])
+        .executeTakeFirst();
       return before;
     }
     return await this.db
