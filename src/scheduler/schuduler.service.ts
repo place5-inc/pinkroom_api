@@ -60,7 +60,7 @@ export class SchedulerService {
             await KakaoSchedulerService.sendKakaoNotificationForScheduler(
               this.db,
               target.user_id,
-              'pr_cplt_wrc_rmd_week_test', //테스트용 템플릿 임시 추가
+              'pr_cplt_wrc_rmd_week_v1',
               null,
               [],
               [token, target.photo_id.toString()],
@@ -151,7 +151,7 @@ export class SchedulerService {
             await KakaoSchedulerService.sendKakaoNotificationForScheduler(
               this.db,
               target.user_id,
-              'pr_cplt_wrc_rmd_month_test',
+              'pr_cplt_wrc_rmd_month_v1',
               null,
               [],
               [token, target.photo_id.toString()],

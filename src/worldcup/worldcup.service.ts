@@ -410,7 +410,7 @@ export class WorldcupService {
 
     await this.kakaoService.sendKakaoNotification(
       user.user_id,
-      'pr_cplt_wrc_test', //테스트용 템플릿 임시 추가
+      'pr_cplt_wrc_v1', //테스트용 템플릿 임시 추가
       null,
       [],
       [token, photoId.toString()],

@@ -178,7 +178,7 @@ export class PhotoWorkerService {
             .set({ thumbnail_worldcup_id: mergedImageUpload.id })
             .where('id', '=', photoId)
             .execute();
-          console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
+          //console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
           break; // 성공 시 루프 탈출
         }
       } catch (error) {
