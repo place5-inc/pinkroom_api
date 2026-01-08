@@ -7,9 +7,6 @@ import { sql } from 'kysely';
 import { generateCode, normalizeError } from 'src/libs/helpers';
 import { ThumbnailService } from './thumbnail.service';
 import { MessageService } from 'src/message/message.service';
-import { PhotoService } from './photo.service';
-import { PhotoRepository } from './photo.repository';
-import { createCanvas, loadImage, registerFont } from 'canvas';
 @Injectable()
 export class PhotoWorkerService {
   constructor(
@@ -19,11 +16,9 @@ export class PhotoWorkerService {
     private readonly kakaoService: KakaoService,
     private readonly thumbnailService: ThumbnailService,
     private readonly messageService: MessageService,
-    private readonly photoService: PhotoService,
-    private readonly photoRepository: PhotoRepository,
   ) {}
 
-  async makeAllPhotos(originalPhotoId: number): Promise<string | null> {
+  async makeAllPhotos(originalPhotoId: number) {
     const MAX_RETRY = 5;
     let attempt = 0;
     // 2️⃣ 원본 사진
@@ -68,10 +63,7 @@ export class PhotoWorkerService {
 
       if (completedSet.size === totalCount.count) {
         console.log(`🎉 ${attempt}번째 시도에서 전부 완료`);
-        const mergedImageUrl = this.afterMakeAllPHoto(originalPhotoId);
-        if (mergedImageUrl) {
-          return mergedImageUrl;
-        }
+        this.afterMakeAllPHoto(originalPhotoId);
       }
 
       // 4️⃣ 미완료 design만 재요청
@@ -100,13 +92,9 @@ export class PhotoWorkerService {
 
     console.error('🚨 최대 재시도 초과, 일부 실패');
   }
-  async afterMakeAllPHoto(photoId: number): Promise<string | null> {
+  async afterMakeAllPHoto(photoId: number) {
     this.sendKakao(photoId);
     this.generateWorldcupThumbnail(photoId);
-    const mergedImageUrl = await this.makeMergeWorldCupShareImage(photoId);
-    if (mergedImageUrl) {
-      return mergedImageUrl;
-    }
   }
 
   async sendKakao(photoId: number) {
@@ -171,250 +159,37 @@ export class PhotoWorkerService {
     const MAX_THUMBNAIL_RETRY = 2;
     for (let i = 0; i < MAX_THUMBNAIL_RETRY; i++) {
       try {
-        const thumbnailBuffer =
+        const mergedImageBuffer =
           await this.thumbnailService.generateWorldcup(imageUrls);
-        /* 꿀배포 
-
-        const thumbnailBase64 = `data:image/jpeg;base64,${thumbnailBuffer.toString(
+        //꿀배포
+        if (!mergedImageBuffer) {
+          throw new Error('Thumbnail buffer is empty (generated failed)');
+        }
+        const mergedImageBase64 = `data:image/jpeg;base64,${mergedImageBuffer.toString(
           'base64',
         )}`;
-        const thumbnailUpload =
-          await this.azureBlobService.uploadFileImageBase64(thumbnailBase64);
+        const mergedImageUpload =
+          await this.azureBlobService.uploadFileImageBase64(mergedImageBase64);
 
-        if (thumbnailUpload) {
+        if (mergedImageUpload) {
           await this.db
             .updateTable('photos')
-            .set({ thumbnail_worldcup_id: thumbnailUpload.id })
+            .set({ thumbnail_worldcup_id: mergedImageUpload.id })
             .where('id', '=', photoId)
             .execute();
           console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
           break; // 성공 시 루프 탈출
         }
-        */
       } catch (error) {
         console.error(
           `[PhotoService] 썸네일 생성 실패 (${i + 1}번째 시도):`,
           error,
         );
         if (i === MAX_THUMBNAIL_RETRY - 1) {
-          console.error('[PhotoService] 썸네일 최종 생성 실패');
+          console.error('[PhotoService] Worldcup thumbnail generation failed');
         }
       }
     }
-  }
-  async makeMergeWorldCupShareImage(photoId: number): Promise<string | null> {
-    const photos = await this.db
-      .selectFrom('photo_results as pf')
-      .leftJoin('upload_file as uf', 'uf.id', 'pf.result_image_id')
-      .where('original_photo_id', '=', photoId)
-      .select(['uf.url as url'])
-      .execute();
-    const imageUrls = photos
-      .map((r) => r.url)
-      .filter(
-        (url): url is string => typeof url === 'string' && url.length > 0,
-      );
-    // 이미지가 16개가 안되면 생성 불가 처리 혹은 예외 처리
-    if (imageUrls.length < 16) {
-      console.warn(`[MergeImage] Not enough images for photoId: ${photoId}`);
-      return null;
-    }
-
-    const MAX_RETRY = 2;
-    for (let i = 0; i < MAX_RETRY; i++) {
-      try {
-        // 2. 캔버스 생성 및 이미지 병합
-        const mergedImageBuffer = await this.generateMergedCanvas(imageUrls);
-
-        if (!mergedImageBuffer) {
-          throw new Error('Canvas generation failed');
-        }
-
-        // 3. Azure 업로드를 위한 Base64 변환
-        const base64String = `data:image/jpeg;base64,${mergedImageBuffer.toString('base64')}`;
-
-        // 4. Azure Blob Storage 업로드
-        const uploadResult = await this.azureBlobService.uploadFileImageBase64(
-          base64String,
-          false,
-        ); // webp 변환 필요시 true
-
-        if (uploadResult) {
-          return uploadResult.url;
-          break; // 성공 시 루프 탈출
-        }
-      } catch (error) {
-        console.error(
-          `[PhotoService] 월드컵 공유 이미지 생성 실패 (${i + 1}번째 시도):`,
-          error,
-        );
-        if (i === MAX_RETRY - 1) {
-          console.error('[PhotoService] 월드컵 공유 이미지 최종 생성 실패');
-        }
-      }
-    }
-    return null;
-  }
-
-  // 캔버스 드로잉 로직 분리
-  private async generateMergedCanvas(
-    imageUrls: string[],
-  ): Promise<Buffer | null> {
-    const width = 440;
-    const scale = 2;
-    const cols = 4;
-    const rows = 4;
-    const gap = 6;
-    const paddingX = 12;
-    const paddingY = 40;
-    const labelWidth = 105;
-    const labelHeight = 30;
-    const labelMarginTop = 0;
-    const titleMarginTop = 16;
-    const titleFontSize = 28;
-    const titleLineHeight = 38;
-    const gridMarginTop = 32;
-    const cellRadius = 8;
-
-    // 셀 크기 계산
-    const gridWidth = width - paddingX * 2;
-    const cellWidth = (gridWidth - gap * (cols - 1)) / cols;
-    const cellHeight = (cellWidth / 83) * 100;
-    const gridHeight = cellHeight * rows + gap * (rows - 1);
-
-    const titleBlockHeight = titleLineHeight * 2;
-    const totalHeight =
-      paddingY +
-      labelMarginTop +
-      labelHeight +
-      titleMarginTop +
-      titleBlockHeight +
-      gridMarginTop +
-      gridHeight +
-      paddingY;
-
-    try {
-      const canvas = createCanvas(
-        Math.round(width * scale),
-        Math.round(totalHeight * scale),
-      );
-      const ctx = canvas.getContext('2d');
-      ctx.scale(scale, scale);
-
-      // 이미지 병렬 로딩
-      const targetUrls = imageUrls.slice(0, cols * rows);
-      const loadedImages = await Promise.all(
-        targetUrls.map(async (url) => {
-          try {
-            return await loadImage(url);
-          } catch (e) {
-            return null; // 로드 실패 시 빈 칸 처리
-          }
-        }),
-      );
-
-      // 배경
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, width, totalHeight);
-
-      // 상단 라벨 (Pink Label)
-      const labelX = (width - labelWidth) / 2;
-      let currentY = paddingY + labelMarginTop;
-
-      ctx.fillStyle = '#e9407a';
-      ctx.fillRect(labelX, currentY, labelWidth, labelHeight);
-
-      ctx.fillStyle = '#ffffff';
-      // 폰트 폴백 설정 (Pretendard -> Apple SD -> System)
-      ctx.font = `800 15px "Pretendard", "Apple SD Gothic Neo", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('PINK ROOM', width / 2, currentY + labelHeight / 2);
-
-      // 타이틀
-      currentY += labelHeight + titleMarginTop;
-      ctx.fillStyle = '#444444';
-      ctx.font = `800 ${titleFontSize}px "Pretendard", "Apple SD Gothic Neo", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillText('저에게 가장 잘 어울리는', width / 2, currentY);
-      ctx.fillText(
-        '헤어스타일을 골라주세요!',
-        width / 2,
-        currentY + titleLineHeight,
-      );
-
-      // 그리드 그리기
-      const gridStartY = currentY + titleBlockHeight + gridMarginTop;
-      const cellRatio = 83 / 100;
-
-      for (let index = 0; index < cols * rows; index += 1) {
-        const row = Math.floor(index / cols);
-        const col = index % cols;
-        const x = paddingX + col * (cellWidth + gap);
-        const y = gridStartY + row * (cellHeight + gap);
-
-        // 셀 배경 (이미지 없을 경우 보임)
-        ctx.fillStyle = '#f8f8f8';
-        this.drawRoundedRectPath(ctx, x, y, cellWidth, cellHeight, cellRadius);
-        ctx.fill();
-
-        const img = loadedImages[index];
-        if (!img) continue;
-
-        // Cover fit 계산
-        const imgRatio = (img.width as number) / (img.height as number);
-        let drawWidth: number;
-        let drawHeight: number;
-        let offsetX: number;
-        let offsetY: number;
-
-        if (imgRatio > cellRatio) {
-          drawHeight = cellHeight;
-          drawWidth = cellHeight * imgRatio;
-          offsetX = (cellWidth - drawWidth) / 2;
-          offsetY = 0;
-        } else {
-          drawWidth = cellWidth;
-          drawHeight = cellWidth / imgRatio;
-          offsetX = 0;
-          offsetY = (cellHeight - drawHeight) / 2;
-        }
-
-        ctx.save();
-        this.drawRoundedRectPath(ctx, x, y, cellWidth, cellHeight, cellRadius);
-        ctx.clip();
-        ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
-        ctx.restore();
-      }
-
-      return canvas.toBuffer('image/jpeg', { quality: 0.95 });
-    } catch (e) {
-      console.error('[generateMergedCanvas] Error:', e);
-      return null;
-    }
-  }
-
-  // 헬퍼 함수: 둥근 사각형 그리기
-  private drawRoundedRectPath(
-    ctx: any,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    radius: number,
-  ) {
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + width - radius, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-    ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-    ctx.lineTo(x + radius, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
-    ctx.closePath();
   }
 
   /*

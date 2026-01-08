@@ -19,13 +19,14 @@ import { parseNumberArray } from 'src/libs/helpers';
 import { CommonService } from 'src/common/common.service';
 import { AdminBody } from 'src/libs/types';
 import { SchedulerService } from 'src/scheduler/schuduler.service';
-
+import { PhotoWorkerService } from 'src/photo/photo-worker.service';
 @Controller('admin')
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly commonService: CommonService,
     private readonly schedulerService: SchedulerService,
+    private readonly photoWorkerService: PhotoWorkerService,
   ) {}
   @Get('test')
   async test() {
@@ -152,5 +153,14 @@ export class AdminController {
   @Get('scheduler/test')
   async testScheduler() {
     return await this.schedulerService.completeVoteWorldcupRemindWeek();
+  }
+  @Get('make/worldcup/thumbnail')
+  async makeWorldcupThumbnail(
+    @Query('photoId', new ParseIntPipe()) photoId: number,
+  ) {
+    if (isEmpty(photoId)) {
+      throw new BadRequestException('photoId is required.');
+    }
+    return await this.photoWorkerService.generateWorldcupThumbnail(photoId);
   }
 }

@@ -187,12 +187,7 @@ export class PhotoService {
         const item = await this.photoRepository.getPhotoById(photo.id);
 
         if (paymentId) {
-          const _mergedImageUrl = await this.workerService.makeAllPhotos(
-            photo.id,
-          );
-          if (_mergedImageUrl) {
-            item.mergedImageUrl = _mergedImageUrl;
-          }
+          this.workerService.makeAllPhotos(photo.id);
         }
 
         return {
