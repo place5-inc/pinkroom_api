@@ -63,7 +63,7 @@ export class PhotoWorkerService {
 
       if (completedSet.size === totalCount.count) {
         console.log(`🎉 ${attempt}번째 시도에서 전부 완료`);
-        this.afterMakeAllPHoto(originalPhotoId);
+        this.afterMakeAllPhoto(originalPhotoId);
       }
 
       // 4️⃣ 미완료 design만 재요청
@@ -90,10 +90,14 @@ export class PhotoWorkerService {
       // 5️⃣ 외부 API 반영 시간 대비 약간 대기
       await new Promise((r) => setTimeout(r, 2000));
     }
-
+    this.failMakePhoto(originalPhotoId);
     console.error('🚨 최대 재시도 초과, 일부 실패');
   }
-  async afterMakeAllPHoto(photoId: number) {
+  async failMakePhoto(photoId: number) {
+    //TODO 꿀배포 실패시 알림톡 쏘기
+  }
+
+  async afterMakeAllPhoto(photoId: number) {
     this.sendKakao(photoId);
     this.generateWorldcupThumbnail(photoId);
   }
@@ -144,7 +148,6 @@ export class PhotoWorkerService {
     );
   }
 
-  //TODO 꿀배포 현진
   async generateWorldcupThumbnail(photoId: number) {
     const photos = await this.db
       .selectFrom('photo_results as pf')
@@ -162,7 +165,6 @@ export class PhotoWorkerService {
       try {
         const mergedImageBuffer =
           await this.thumbnailService.generateWorldcup(imageUrls);
-        //꿀배포
         if (!mergedImageBuffer) {
           throw new Error('Thumbnail buffer is empty (generated failed)');
         }
