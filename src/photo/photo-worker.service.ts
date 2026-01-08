@@ -90,10 +90,11 @@ export class PhotoWorkerService {
       // 5️⃣ 외부 API 반영 시간 대비 약간 대기
       await new Promise((r) => setTimeout(r, 2000));
     }
-    this.failMakePhoto(originalPhotoId);
+    this.failMakePhoto(originalPhotoId, 'all');
     console.error('🚨 최대 재시도 초과, 일부 실패');
   }
-  async failMakePhoto(photoId: number) {
+  async failMakePhoto(photoId: number, type: string) {
+    //first, all
     //TODO 꿀배포 실패시 알림톡 쏘기
   }
 
