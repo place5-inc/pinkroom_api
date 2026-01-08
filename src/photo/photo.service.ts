@@ -218,28 +218,36 @@ export class PhotoService {
       if (!prompt) {
         throw new NotFoundException('prompt를 찾을 수 없습니다.');
       }
-      const result = await this.workerService.generatePhoto(
-        photo.id,
-        uploadedFile.url,
-        designId,
-        prompt.ment,
-        prompt.imageUrl,
-      );
-      if (result) {
-        //before After Thumbnail 생성
-        await this.generateBeforeAfterThumbnail(photo.id);
+      let attempt = 0;
 
-        const item = await this.photoRepository.getPhotoById(photo.id);
+      while (attempt < 2) {
+        attempt++;
+        const result = await this.workerService.generatePhoto(
+          photo.id,
+          uploadedFile.url,
+          designId,
+          prompt.ment,
+          prompt.imageUrl,
+          attempt,
+        );
+        if (result) {
+          //before After Thumbnail 생성
+          await this.generateBeforeAfterThumbnail(photo.id);
 
-        if (paymentId) {
-          this.workerService.makeAllPhotos(photo.id);
+          const item = await this.photoRepository.getPhotoById(photo.id);
+
+          if (paymentId) {
+            this.workerService.makeAllPhotos(photo.id);
+          }
+          return {
+            status: HttpStatus.OK,
+            result: item,
+          };
         }
-
-        return {
-          status: HttpStatus.OK,
-          result: item,
-        };
       }
+      return {
+        status: HttpStatus.REQUEST_TIMEOUT,
+      };
     } catch (e) {
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,

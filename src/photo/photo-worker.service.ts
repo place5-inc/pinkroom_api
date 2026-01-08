@@ -19,7 +19,7 @@ export class PhotoWorkerService {
   ) {}
 
   async makeAllPhotos(originalPhotoId: number) {
-    const MAX_RETRY = 5;
+    const MAX_RETRY = 2;
     let attempt = 0;
     // 2️⃣ 원본 사진
     const originalPhoto = await this.db
@@ -80,6 +80,7 @@ export class PhotoWorkerService {
             designId,
             prompt.ment,
             prompt.imageUrl,
+            attempt,
           );
         } catch (e) {
           console.error(`❌ design ${designId} 실패 (attempt ${attempt})`, e);
@@ -204,6 +205,8 @@ export class PhotoWorkerService {
     hairDesignId: number,
     resultImageId?: string,
     status?: string,
+    tryCount?: number,
+    code?: string,
   ) {
     const before = await this.db
       .selectFrom('photo_results')
@@ -218,6 +221,8 @@ export class PhotoWorkerService {
           created_at: new Date(),
           result_image_id: resultImageId,
           status: status,
+          try_count: tryCount,
+          fail_code: code,
         })
         .where('original_photo_id', '=', originalPhotoId)
         .where('hair_design_id', '=', hairDesignId)
@@ -233,6 +238,8 @@ export class PhotoWorkerService {
         created_at: new Date(),
         result_image_id: resultImageId,
         status: status,
+        try_count: tryCount,
+        fail_code: code,
       })
       .output(['inserted.id'])
       .executeTakeFirst();
@@ -246,9 +253,10 @@ export class PhotoWorkerService {
     designId: number,
     ment: string,
     sampleUrl?: string,
+    tryCount?: number,
   ) {
     try {
-      await this.insertIntoPhoto(photoId, designId, null, 'waiting');
+      await this.insertIntoPhoto(photoId, designId, null, 'waiting', tryCount);
       const image = await this.aiService.generatePhotoGemini(
         photoUrl,
         null,
@@ -266,10 +274,19 @@ export class PhotoWorkerService {
         designId,
         uploadFile.id,
         'complete',
+        tryCount,
       );
     } catch (e) {
       const err = normalizeError(e);
-      await this.insertIntoPhoto(photoId, designId, null, 'fail');
+      const code = await this.extractGeminiErrorCode(err.message);
+      await this.insertIntoPhoto(
+        photoId,
+        designId,
+        null,
+        'fail',
+        tryCount,
+        code,
+      );
       await this.db
         .insertInto('log_gemini_error')
         .values({
@@ -332,6 +349,40 @@ export class PhotoWorkerService {
         try {
           const parsed = JSON.parse(msg);
           return parsed?.error?.message ?? msg;
+        } catch {
+          return msg;
+        }
+      }
+    }
+
+    return 'Unknown error';
+  }
+
+  async extractGeminiErrorCode(err: unknown) {
+    // 1) err가 문자열(JSON)인 경우
+    if (typeof err === 'string') {
+      try {
+        const parsed = JSON.parse(err);
+        return parsed?.error?.code ?? err;
+      } catch {
+        return err;
+      }
+    }
+
+    // 2) err가 객체인 경우 (ApiError 등)
+    if (err && typeof err === 'object') {
+      const anyErr = err as any;
+
+      // 이미 error.message 형태로 들어있는 경우
+      const direct = anyErr?.error?.code;
+      if (typeof direct === 'string') return direct;
+
+      // Gemini SDK ApiError의 message가 JSON 문자열인 경우가 많음
+      if (typeof anyErr?.code === 'string') {
+        const msg = anyErr.code;
+        try {
+          const parsed = JSON.parse(msg);
+          return parsed?.error?.code ?? msg;
         } catch {
           return msg;
         }
