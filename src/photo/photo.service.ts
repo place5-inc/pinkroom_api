@@ -50,6 +50,16 @@ export class PhotoService {
   async getResultPhotoList(photoId: number) {
     try {
       const result = await this.photoRepository.getPhotoById(photoId);
+      if (result.paymentId) {
+        const completeCount =
+          result?.resultImages?.reduce(
+            (acc, img) => acc + (img.status === 'complete' ? 1 : 0),
+            0,
+          ) ?? 0;
+        if (completeCount < 16) {
+          //TODO 꿃재포 - 다시 만들기를 해야함.
+        }
+      }
       return {
         status: HttpStatus.OK,
         result,

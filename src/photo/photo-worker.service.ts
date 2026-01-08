@@ -217,7 +217,7 @@ export class PhotoWorkerService {
           .set({
             created_at: new Date(),
             result_image_id: resultImageId,
-            status: resultImageId ? 'complete' : 'fail',
+            status: status,
           })
           .where('original_photo_id', '=', originalPhotoId)
           .where('hair_design_id', '=', hairDesignId)
@@ -233,7 +233,7 @@ export class PhotoWorkerService {
         hair_design_id: hairDesignId,
         created_at: new Date(),
         result_image_id: resultImageId,
-        status: resultImageId ? 'complete' : 'fail',
+        status: status,
       })
       .output(['inserted.id'])
       .executeTakeFirst();
