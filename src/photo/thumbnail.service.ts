@@ -218,16 +218,30 @@ export class ThumbnailService implements OnModuleInit {
 
       // 타이틀
       currentY += labelHeight + titleMarginTop;
+
+      const lines = ['저에게 가장 잘 어울리는', '헤어스타일을 골라주세요!'];
+
+      const fontSize = 27;
+      const lineHeight = Math.round(fontSize * 1.4);
+
       ctx.fillStyle = '#444444';
-      ctx.font = `800 ${titleFontSize}px "Pretendard", "Apple SD Gothic Neo", sans-serif`;
+      ctx.font = `900 ${fontSize}px Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillText('저에게 가장 잘 어울리는', width / 2, currentY);
-      ctx.fillText(
-        '헤어스타일을 골라주세요!',
-        width / 2,
-        currentY + titleLineHeight,
-      );
+
+      ctx.save();
+      ctx.scale(0.96, 1);
+
+      lines.forEach((line, i) => {
+        const y = currentY + i * lineHeight;
+
+        const x = width / 2 / 0.96; // scale 보정
+        ctx.fillText(line, x, y);
+        ctx.fillText(line, x + 0.4, y);
+        ctx.fillText(line, x, y + 0.4);
+      });
+
+      ctx.restore();
 
       // 그리드 그리기
       const gridStartY = currentY + titleBlockHeight + gridMarginTop;
