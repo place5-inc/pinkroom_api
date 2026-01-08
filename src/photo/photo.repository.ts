@@ -89,6 +89,7 @@ export class PhotoRepository {
         'pr.id as resultId',
         'pr.hair_design_id as designId',
         'pr.status',
+        'pr.created_at',
         'uf.url',
       ])
       .execute();
@@ -107,6 +108,7 @@ export class PhotoRepository {
         url: r.url,
         designId: r.designId,
         status: r.status,
+        createdAt: r.created_at.toISOString(),
       })),
     };
   }

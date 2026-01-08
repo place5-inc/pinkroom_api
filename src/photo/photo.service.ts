@@ -50,14 +50,49 @@ export class PhotoService {
   async getResultPhotoList(photoId: number) {
     try {
       const result = await this.photoRepository.getPhotoById(photoId);
-      if (result.paymentId) {
-        const completeCount =
-          result?.resultImages?.reduce(
-            (acc, img) => acc + (img.status === 'complete' ? 1 : 0),
-            0,
-          ) ?? 0;
+
+      if (result?.paymentId) {
+        const imgs = result.resultImages ?? [];
+
+        const completeCount = imgs.reduce(
+          (acc, img) => acc + (img.status === 'complete' ? 1 : 0),
+          0,
+        );
+
         if (completeCount < 16) {
-          //TODO 꿃재포 - 다시 만들기를 해야함.
+          const toTime = (s?: string) => (s ? new Date(s).getTime() : NaN);
+
+          // 1) complete 아닌 것 중 "가장 오래된" 1개
+          const oldestNotComplete = imgs
+            .filter((img) => img.status !== 'complete' && !!img.createdAt)
+            .reduce<(typeof imgs)[number] | null>((best, cur) => {
+              if (!best) return cur;
+              return toTime(cur.createdAt) < toTime(best.createdAt)
+                ? cur
+                : best; // 최소
+            }, null);
+
+          // 2) 없다면 complete 중 "가장 최신" 1개
+          const newestComplete = imgs
+            .filter((img) => img.status === 'complete' && !!img.createdAt)
+            .reduce<(typeof imgs)[number] | null>((best, cur) => {
+              if (!best) return cur;
+              return toTime(cur.createdAt) > toTime(best.createdAt)
+                ? cur
+                : best; // 최대
+            }, null);
+
+          const target = oldestNotComplete ?? newestComplete;
+
+          if (target) {
+            const oneMinuteAgo = Date.now() - 60_000;
+            const targetTime = toTime(target.createdAt);
+
+            const isOlderThan1Min = targetTime <= oneMinuteAgo;
+
+            // TODO: 비교 결과로 분기
+            // if (isOlderThan1Min) { ... }
+          }
         }
       }
       return {

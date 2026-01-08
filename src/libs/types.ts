@@ -102,6 +102,7 @@ export type ResultImageVO = {
   url: string;
   designId: number;
   status: string;
+  createdAt?: string;
 };
 
 export function isValidImage(fileData: string) {
