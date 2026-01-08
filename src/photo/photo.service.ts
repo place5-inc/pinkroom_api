@@ -13,6 +13,8 @@ import { PhotoRepository } from './photo.repository';
 import { sql } from 'kysely';
 import { ThumbnailService } from './thumbnail.service';
 import { UserRepository } from 'src/user/user.repository';
+import { createCanvas, loadImage } from 'canvas';
+import axios from 'axios';
 @Injectable()
 export class PhotoService {
   constructor(

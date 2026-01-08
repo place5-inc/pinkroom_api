@@ -64,7 +64,6 @@ export class PhotoWorkerService {
       if (completedSet.size === totalCount.count) {
         console.log(`🎉 ${attempt}번째 시도에서 전부 완료`);
         this.afterMakeAllPHoto(originalPhotoId);
-        return;
       }
 
       // 4️⃣ 미완료 design만 재요청
@@ -160,37 +159,39 @@ export class PhotoWorkerService {
     const MAX_THUMBNAIL_RETRY = 2;
     for (let i = 0; i < MAX_THUMBNAIL_RETRY; i++) {
       try {
-        const thumbnailBuffer =
+        const mergedImageBuffer =
           await this.thumbnailService.generateWorldcup(imageUrls);
-        /* 꿀배포 
-
-        const thumbnailBase64 = `data:image/jpeg;base64,${thumbnailBuffer.toString(
+        //꿀배포
+        if (!mergedImageBuffer) {
+          throw new Error('Thumbnail buffer is empty (generated failed)');
+        }
+        const mergedImageBase64 = `data:image/jpeg;base64,${mergedImageBuffer.toString(
           'base64',
         )}`;
-        const thumbnailUpload =
-          await this.azureBlobService.uploadFileImageBase64(thumbnailBase64);
+        const mergedImageUpload =
+          await this.azureBlobService.uploadFileImageBase64(mergedImageBase64);
 
-        if (thumbnailUpload) {
+        if (mergedImageUpload) {
           await this.db
             .updateTable('photos')
-            .set({ thumbnail_worldcup_id: thumbnailUpload.id })
+            .set({ thumbnail_worldcup_id: mergedImageUpload.id })
             .where('id', '=', photoId)
             .execute();
           console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
           break; // 성공 시 루프 탈출
         }
-        */
       } catch (error) {
         console.error(
           `[PhotoService] 썸네일 생성 실패 (${i + 1}번째 시도):`,
           error,
         );
         if (i === MAX_THUMBNAIL_RETRY - 1) {
-          console.error('[PhotoService] 썸네일 최종 생성 실패');
+          console.error('[PhotoService] Worldcup thumbnail generation failed');
         }
       }
     }
   }
+
   /*
 애저에 올리기 
 */

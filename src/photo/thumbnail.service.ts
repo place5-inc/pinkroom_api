@@ -1,9 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { createCanvas, loadImage, registerFont } from 'canvas';
 import { join } from 'path';
+import { AzureBlobService } from 'src/azure/blob.service';
 
 @Injectable()
 export class ThumbnailService implements OnModuleInit {
+  constructor(private readonly azureBlobService: AzureBlobService) {}
   onModuleInit() {
     try {
       const fontDir = join(process.cwd(), 'resources', 'fonts');
@@ -118,7 +120,164 @@ export class ThumbnailService implements OnModuleInit {
 
   //꿀현진
   async generateWorldcup(imageUrls: string[]) {
-    //: Promise<Buffer>
+    const MAX_RETRY = 2;
+    for (let i = 0; i < MAX_RETRY; i++) {
+      try {
+        // 2. 캔버스 생성 및 이미지 병합
+        const mergedImageBuffer = await this.generateMergedCanvas(imageUrls);
+
+        if (!mergedImageBuffer) {
+          throw new Error('Canvas generation failed');
+        }
+        return mergedImageBuffer;
+      } catch (error) {
+        console.error(
+          `[PhotoService] 월드컵 공유 이미지 생성 실패 (${i + 1}번째 시도):`,
+          error,
+        );
+        if (i === MAX_RETRY - 1) {
+          console.error('[PhotoService] 월드컵 공유 이미지 최종 생성 실패');
+        }
+      }
+    }
+  }
+  // 캔버스 드로잉 로직 분리
+  private async generateMergedCanvas(
+    imageUrls: string[],
+  ): Promise<Buffer | null> {
+    const width = 440;
+    const scale = 2;
+    const cols = 4;
+    const rows = 4;
+    const gap = 6;
+    const paddingX = 12;
+    const paddingY = 40;
+    const labelWidth = 105;
+    const labelHeight = 30;
+    const labelMarginTop = 0;
+    const titleMarginTop = 16;
+    const titleFontSize = 28;
+    const titleLineHeight = 38;
+    const gridMarginTop = 32;
+    const cellRadius = 8;
+
+    // 셀 크기 계산
+    const gridWidth = width - paddingX * 2;
+    const cellWidth = (gridWidth - gap * (cols - 1)) / cols;
+    const cellHeight = (cellWidth / 83) * 100;
+    const gridHeight = cellHeight * rows + gap * (rows - 1);
+
+    const titleBlockHeight = titleLineHeight * 2;
+    const totalHeight =
+      paddingY +
+      labelMarginTop +
+      labelHeight +
+      titleMarginTop +
+      titleBlockHeight +
+      gridMarginTop +
+      gridHeight +
+      paddingY;
+
+    try {
+      const canvas = createCanvas(
+        Math.round(width * scale),
+        Math.round(totalHeight * scale),
+      );
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+
+      // 이미지 병렬 로딩
+      const targetUrls = imageUrls.slice(0, cols * rows);
+      const loadedImages = await Promise.all(
+        targetUrls.map(async (url) => {
+          try {
+            return await loadImage(url);
+          } catch (e) {
+            return null; // 로드 실패 시 빈 칸 처리
+          }
+        }),
+      );
+
+      // 배경
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, totalHeight);
+
+      // 상단 라벨 (Pink Label)
+      const labelX = (width - labelWidth) / 2;
+      let currentY = paddingY + labelMarginTop;
+
+      ctx.fillStyle = '#e9407a';
+      ctx.fillRect(labelX, currentY, labelWidth, labelHeight);
+
+      ctx.fillStyle = '#ffffff';
+      // 폰트 폴백 설정 (Pretendard -> Apple SD -> System)
+      ctx.font = `800 15px "Pretendard", "Apple SD Gothic Neo", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('PINK ROOM', width / 2, currentY + labelHeight / 2);
+
+      // 타이틀
+      currentY += labelHeight + titleMarginTop;
+      ctx.fillStyle = '#444444';
+      ctx.font = `800 ${titleFontSize}px "Pretendard", "Apple SD Gothic Neo", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText('저에게 가장 잘 어울리는', width / 2, currentY);
+      ctx.fillText(
+        '헤어스타일을 골라주세요!',
+        width / 2,
+        currentY + titleLineHeight,
+      );
+
+      // 그리드 그리기
+      const gridStartY = currentY + titleBlockHeight + gridMarginTop;
+      const cellRatio = 83 / 100;
+
+      for (let index = 0; index < cols * rows; index += 1) {
+        const row = Math.floor(index / cols);
+        const col = index % cols;
+        const x = paddingX + col * (cellWidth + gap);
+        const y = gridStartY + row * (cellHeight + gap);
+
+        // 셀 배경 (이미지 없을 경우 보임)
+        ctx.fillStyle = '#f8f8f8';
+        this.drawRoundedRect(ctx, x, y, cellWidth, cellHeight, cellRadius);
+        ctx.fill();
+
+        const img = loadedImages[index];
+        if (!img) continue;
+
+        // Cover fit 계산
+        const imgRatio = (img.width as number) / (img.height as number);
+        let drawWidth: number;
+        let drawHeight: number;
+        let offsetX: number;
+        let offsetY: number;
+
+        if (imgRatio > cellRatio) {
+          drawHeight = cellHeight;
+          drawWidth = cellHeight * imgRatio;
+          offsetX = (cellWidth - drawWidth) / 2;
+          offsetY = 0;
+        } else {
+          drawWidth = cellWidth;
+          drawHeight = cellWidth / imgRatio;
+          offsetX = 0;
+          offsetY = (cellHeight - drawHeight) / 2;
+        }
+
+        ctx.save();
+        this.drawRoundedRect(ctx, x, y, cellWidth, cellHeight, cellRadius);
+        ctx.clip();
+        ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
+        ctx.restore();
+      }
+
+      return canvas.toBuffer('image/jpeg', { quality: 0.95 });
+    } catch (e) {
+      console.error('[generateMergedCanvas] Error:', e);
+      return null;
+    }
   }
 
   private drawRoundedRect(

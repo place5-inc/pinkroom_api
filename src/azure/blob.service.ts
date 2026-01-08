@@ -97,7 +97,7 @@ export class AzureBlobService {
     }
 
     const originalMimeType = matches[1]; // ex) image/png
-    let buffer = Buffer.from(matches[2], 'base64');
+    let buffer: Buffer = Buffer.from(matches[2], 'base64');
 
     // ✅ 옵션이 true일 때만 webp 변환
     let mimeType = originalMimeType;
