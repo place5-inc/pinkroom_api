@@ -245,7 +245,7 @@ export class PhotoService {
           };
         }
       }
-      this.workerService.failMakePhoto(photo.id, 'first');
+      this.workerService.failMakePhoto(userId, 'first');
       return {
         status: HttpStatus.REQUEST_TIMEOUT,
       };

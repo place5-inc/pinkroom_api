@@ -26,7 +26,7 @@ export class PhotoWorkerService {
       .selectFrom('photos as p')
       .innerJoin('upload_file as u', 'u.id', 'p.upload_file_id')
       .where('p.id', '=', originalPhotoId)
-      .select(['p.id as photo_id', 'u.url as url'])
+      .select(['p.id as photo_id', 'u.url as url', 'p.user_id as user_id'])
       .executeTakeFirst();
 
     if (!originalPhoto) {
@@ -90,12 +90,32 @@ export class PhotoWorkerService {
       // 5️⃣ 외부 API 반영 시간 대비 약간 대기
       await new Promise((r) => setTimeout(r, 2000));
     }
-    this.failMakePhoto(originalPhotoId, 'all');
+    this.failMakePhoto(originalPhoto.user_id, 'all');
     console.error('🚨 최대 재시도 초과, 일부 실패');
   }
-  async failMakePhoto(photoId: number, type: string) {
+  async failMakePhoto(userId: string, type: string) {
     //first, all
-    //TODO 꿀배포 실패시 알림톡 쏘기
+    if (!userId) {
+      return;
+    }
+    //꿀배포 실패시 알림톡 쏘기
+    if (type === 'first') {
+      await this.kakaoService.sendKakaoNotification(
+        userId,
+        'pr_fail_fst_pt',
+        null,
+        ['헤어스타일'],
+        [],
+      );
+    } else if (type === 'all') {
+      await this.kakaoService.sendKakaoNotification(
+        userId,
+        'pr_fail_any_pt',
+        null,
+        [],
+        [],
+      );
+    }
   }
 
   async afterMakeAllPhoto(photoId: number) {
