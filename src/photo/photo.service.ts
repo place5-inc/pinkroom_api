@@ -13,6 +13,8 @@ import { PhotoRepository } from './photo.repository';
 import { sql } from 'kysely';
 import { ThumbnailService } from './thumbnail.service';
 import { UserRepository } from 'src/user/user.repository';
+import { createCanvas, loadImage } from 'canvas';
+import axios from 'axios';
 @Injectable()
 export class PhotoService {
   constructor(
@@ -185,7 +187,12 @@ export class PhotoService {
         const item = await this.photoRepository.getPhotoById(photo.id);
 
         if (paymentId) {
-          this.workerService.makeAllPhotos(photo.id);
+          const _mergedImageUrl = await this.workerService.makeAllPhotos(
+            photo.id,
+          );
+          if (_mergedImageUrl) {
+            item.mergedImageUrl = _mergedImageUrl;
+          }
         }
 
         return {
