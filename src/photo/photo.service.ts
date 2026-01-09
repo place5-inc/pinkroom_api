@@ -112,7 +112,7 @@ export class PhotoService {
           .selectAll()
           .executeTakeFirst();
         if (!code) {
-          throw new NotFoundException('결제를 찾을 수 없습니다.');
+          throw new NotFoundException('코드를 찾을 수 없습니다.');
         }
         if (code.expired_at < new Date()) {
           throw new BadRequestException('이미 만료된 코드입니다.');

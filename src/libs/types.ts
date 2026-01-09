@@ -104,6 +104,7 @@ export type ResultImageVO = {
   designId: number;
   status: string;
   createdAt?: string;
+  failCode?: string;
 };
 
 export function isValidImage(fileData: string) {

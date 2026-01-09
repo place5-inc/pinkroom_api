@@ -38,6 +38,8 @@ export class PhotoRepository {
         'pr.original_photo_id as photoId',
         'pr.hair_design_id as designId',
         'pr.status',
+        'pr.created_at',
+        'pr.fail_code as failCode',
         'uf.url',
       ])
       .execute();
@@ -60,6 +62,8 @@ export class PhotoRepository {
           url: r.url,
           designId: r.designId,
           status: r.status,
+          createdAt: r.created_at.toISOString(),
+          failCode: r.failCode,
         })),
     }));
   }
@@ -92,9 +96,11 @@ export class PhotoRepository {
       .where('pr.original_photo_id', '=', photoId)
       .select([
         'pr.id as resultId',
+        'pr.original_photo_id as photoId',
         'pr.hair_design_id as designId',
         'pr.status',
         'pr.created_at',
+        'pr.fail_code as failCode',
         'uf.url',
       ])
       .execute();
@@ -115,6 +121,7 @@ export class PhotoRepository {
         designId: r.designId,
         status: r.status,
         createdAt: r.created_at.toISOString(),
+        failCode: r.failCode,
       })),
     };
   }
