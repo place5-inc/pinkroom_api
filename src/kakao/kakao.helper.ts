@@ -60,6 +60,19 @@ export class KakaoHelper {
         ],
         type: 'at',
       },
+      test_02: {
+        message: `(테스트)
+
+핑크룸입니다. ${values[0]}
+감사합니다.`,
+        buttonList: [
+          {
+            ...OBJ_BUTTON_URL_DEFAULT,
+            name: '바로가기',
+          },
+        ],
+        type: 'at',
+      },
       pr_cplt_hr_smln_test: {
         message: `(테스트)
 요청하신 헤어 시뮬레이션 15컷이 완성되었어요!

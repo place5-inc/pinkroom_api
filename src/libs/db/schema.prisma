@@ -54,7 +54,6 @@ model photos {
   payment_id                Int?
   created_at                DateTime?   @db.DateTime
   selected_design_id        Int?
-  thumbnail_url             String?     @db.NVarChar(500)
   thumbnail_before_after_id String?     @db.UniqueIdentifier
   thumbnail_worldcup_id     String?     @db.UniqueIdentifier
   upload_file               upload_file @relation(fields: [upload_file_id], references: [id], onUpdate: NoAction, map: "FK_photos_upload_file")

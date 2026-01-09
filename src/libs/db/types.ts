@@ -75,7 +75,6 @@ export type photos = {
     payment_id: number | null;
     created_at: Timestamp | null;
     selected_design_id: number | null;
-    thumbnail_url: string | null;
     thumbnail_before_after_id: string | null;
     thumbnail_worldcup_id: string | null;
 };
