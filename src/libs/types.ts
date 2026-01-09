@@ -58,7 +58,7 @@ export type AdminBody = {
 export type AuthBody = {
   phone?: string;
   code?: string;
-  sampleType?: string;
+  sampleType?: number;
   token?: string;
 };
 export type UploadPhotoBody = {

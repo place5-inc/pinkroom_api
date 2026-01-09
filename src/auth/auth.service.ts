@@ -18,7 +18,7 @@ export class AuthService {
     return await this.messageService.requestVerifyCode(phone, code);
   }
 
-  async confirmCode(phone: string, code: string, sampleType?: string) {
+  async confirmCode(phone: string, code: string, sampleType?: number) {
     await this.verificationService.verifyCode(phone, code);
 
     let isNew = false;

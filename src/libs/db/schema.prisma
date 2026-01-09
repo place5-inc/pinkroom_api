@@ -1,8 +1,8 @@
 generator kysely {
   provider     = "prisma-kysely"
   output       = "./"
-  enumFileName = "enums.ts"
   fileName     = "types.ts"
+  enumFileName = "enums.ts"
 }
 
 datasource db {
@@ -56,6 +56,7 @@ model photos {
   selected_design_id        Int?
   thumbnail_before_after_id String?     @db.UniqueIdentifier
   thumbnail_worldcup_id     String?     @db.UniqueIdentifier
+  merged_image_id           String?     @db.UniqueIdentifier
   upload_file               upload_file @relation(fields: [upload_file_id], references: [id], onUpdate: NoAction, map: "FK_photos_upload_file")
 }
 
