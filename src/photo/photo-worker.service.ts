@@ -301,15 +301,7 @@ export class PhotoWorkerService {
       );
     } catch (e) {
       const err = normalizeError(e);
-      const code = await this.extractGeminiErrorCode(err.message);
-      await this.insertIntoPhoto(
-        photoId,
-        designId,
-        null,
-        'fail',
-        tryCount,
-        code,
-      );
+
       await this.db
         .insertInto('log_gemini_error')
         .values({
@@ -319,9 +311,32 @@ export class PhotoWorkerService {
           error: err.message,
         })
         .execute();
+
       //TODO 에러일때 문자쏘기
       const ment = await this.extractGeminiErrorMessage(err.message);
       this.messageService.sendErrorToManager(ment ?? '사진 생성 에러');
+      await this.insertIntoPhoto(photoId, designId, null, 'fail', tryCount);
+      try {
+        const code = await this.extractGeminiErrorCode(err.message);
+        await this.insertIntoPhoto(
+          photoId,
+          designId,
+          null,
+          'fail',
+          tryCount,
+          code,
+        );
+      } catch (e2) {
+        await this.db
+          .insertInto('log_gemini_error')
+          .values({
+            created_at: new Date(),
+            photo_id: photoId,
+            design_id: designId,
+            error: 'error code 파싱 에러',
+          })
+          .execute();
+      }
     }
   }
 
