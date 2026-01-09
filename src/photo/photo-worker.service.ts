@@ -120,7 +120,7 @@ export class PhotoWorkerService {
 
   async afterMakeAllPhoto(photoId: number) {
     this.sendKakao(photoId);
-    this.generateWorldcupThumbnail(photoId);
+    this.generateMergedWorldcupImage(photoId);
   }
 
   async sendKakao(photoId: number) {
@@ -169,7 +169,7 @@ export class PhotoWorkerService {
     );
   }
 
-  async generateWorldcupThumbnail(photoId: number) {
+  async generateMergedWorldcupImage(photoId: number) {
     const photos = await this.db
       .selectFrom('photo_results as pf')
       .leftJoin('upload_file as uf', 'uf.id', 'pf.result_image_id')
@@ -185,7 +185,7 @@ export class PhotoWorkerService {
     for (let i = 0; i < MAX_THUMBNAIL_RETRY; i++) {
       try {
         const mergedImageBuffer =
-          await this.thumbnailService.generateWorldcup(imageUrls);
+          await this.thumbnailService.generateMergedWorldcupImage(imageUrls);
         if (!mergedImageBuffer) {
           throw new Error('Thumbnail buffer is empty (generated failed)');
         }
@@ -198,7 +198,7 @@ export class PhotoWorkerService {
         if (mergedImageUpload) {
           await this.db
             .updateTable('photos')
-            .set({ thumbnail_worldcup_id: mergedImageUpload.id })
+            .set({ merged_image_id: mergedImageUpload.id })
             .where('id', '=', photoId)
             .execute();
           //console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);

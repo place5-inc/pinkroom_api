@@ -151,7 +151,7 @@ export class ThumbnailService implements OnModuleInit {
     return canvas.toBuffer('image/jpeg', { quality: 0.9 });
   }
 
-  async generateWorldcup(imageUrls: string[]) {
+  async generateMergedWorldcupImage(imageUrls: string[]) {
     const MAX_RETRY = 2;
     for (let i = 0; i < MAX_RETRY; i++) {
       try {

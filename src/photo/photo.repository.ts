@@ -11,6 +11,7 @@ export class PhotoRepository {
       .leftJoin('upload_file as uf', 'uf.id', 'p.upload_file_id')
       .leftJoin('upload_file as bf', 'bf.id', 'p.thumbnail_before_after_id')
       .leftJoin('upload_file as w', 'w.id', 'p.thumbnail_worldcup_id')
+      .leftJoin('upload_file as mi', 'mi.id', 'p.merged_image_id')
       .where('p.user_id', '=', userId)
       .orderBy('p.id desc')
       .select([
@@ -20,6 +21,7 @@ export class PhotoRepository {
         'uf.url as sourceImageUrl',
         'bf.url as thumbnailBeforeAfterUrl',
         'w.url as thumbnailWorldcupUrl',
+        'mi.url as mergedImageUrl',
         'p.created_at',
       ])
       .execute();
@@ -47,6 +49,7 @@ export class PhotoRepository {
       sourceImageUrl: p.sourceImageUrl,
       thumbnailBeforeAfterUrl: p.thumbnailBeforeAfterUrl,
       thumbnailWorldcupUrl: p.thumbnailWorldcupUrl,
+      mergedImageUrl: p.mergedImageUrl,
       createdAt: p.created_at.toISOString(),
       resultImages: photoResults
         .filter((r) => r.photoId === p.photoId)
@@ -64,6 +67,7 @@ export class PhotoRepository {
       .leftJoin('upload_file as uf', 'uf.id', 'p.upload_file_id')
       .leftJoin('upload_file as bf', 'bf.id', 'p.thumbnail_before_after_id')
       .leftJoin('upload_file as w', 'w.id', 'p.thumbnail_worldcup_id')
+      .leftJoin('upload_file as mi', 'mi.id', 'p.merged_image_id')
       .where('p.id', '=', photoId)
       .select([
         'p.id as photoId',
@@ -72,6 +76,7 @@ export class PhotoRepository {
         'uf.url as sourceImageUrl',
         'bf.url as thumbnailBeforeAfterUrl',
         'w.url as thumbnailWorldcupUrl',
+        'mi.url as mergedImageUrl',
         'p.created_at',
       ])
       .executeTakeFirst();
@@ -97,6 +102,7 @@ export class PhotoRepository {
       sourceImageUrl: photo.sourceImageUrl,
       thumbnailBeforeAfterUrl: photo.thumbnailBeforeAfterUrl,
       thumbnailWorldcupUrl: photo.thumbnailWorldcupUrl,
+      mergedImageUrl: photo.mergedImageUrl,
       selectedDesignId: photo.selectedDesignId,
       createdAt: photo.created_at.toISOString(),
       resultImages: photoResults.map((r) => ({
