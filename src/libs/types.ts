@@ -81,7 +81,7 @@ export type UserVO = {
   id?: string;
   phone?: string;
   name?: string;
-  sampleType?: string;
+  sampleType?: number;
 };
 
 export type PhotoVO = {

@@ -118,7 +118,7 @@ export type users = {
     name: string | null;
     use_code_id: string | null;
     use_code_photo_id: number | null;
-    sample_type: string | null;
+    sample_type: number | null;
 };
 export type worldcup_log = {
     id: Generated<number>;
