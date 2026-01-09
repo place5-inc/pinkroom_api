@@ -134,7 +134,7 @@ export class PhotoWorkerService {
 
   async afterMakeAllPhoto(photoId: number) {
     this.sendKakao(photoId);
-    this.generateMergedWorldcupImage(photoId);
+    this.generateWorldcupImage(photoId);
   }
 
   async sendKakao(photoId: number) {
@@ -183,7 +183,7 @@ export class PhotoWorkerService {
     );
   }
 
-  async generateMergedWorldcupImage(photoId: number) {
+  async generateWorldcupImage(photoId: number) {
     const photos = await this.db
       .selectFrom('photo_results as pf')
       .leftJoin('upload_file as uf', 'uf.id', 'pf.result_image_id')
@@ -195,8 +195,8 @@ export class PhotoWorkerService {
       .filter(
         (url): url is string => typeof url === 'string' && url.length > 0,
       );
-    const MAX_THUMBNAIL_RETRY = 2;
-    for (let i = 0; i < MAX_THUMBNAIL_RETRY; i++) {
+    const MAX_MERGED_IMAGE_RETRY = 2;
+    for (let i = 0; i < MAX_MERGED_IMAGE_RETRY; i++) {
       try {
         const mergedImageBuffer =
           await this.thumbnailService.generateMergedWorldcupImage(imageUrls);
@@ -213,6 +213,41 @@ export class PhotoWorkerService {
           await this.db
             .updateTable('photos')
             .set({ merged_image_id: mergedImageUpload.id })
+            .where('id', '=', photoId)
+            .execute();
+          //console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
+          break; // 성공 시 루프 탈출
+        }
+      } catch (error) {
+        console.error(
+          `[PhotoService] 썸네일 생성 실패 (${i + 1}번째 시도):`,
+          error,
+        );
+        if (i === MAX_MERGED_IMAGE_RETRY - 1) {
+          console.error(
+            '[PhotoService] Worldcup merged image generation failed',
+          );
+        }
+      }
+    }
+    const MAX_THUMBNAIL_RETRY = 2;
+    for (let i = 0; i < MAX_THUMBNAIL_RETRY; i++) {
+      try {
+        const thumbnailBuffer =
+          await this.thumbnailService.generateWorldcupThumbnail(imageUrls);
+        if (!thumbnailBuffer) {
+          throw new Error('Thumbnail buffer is empty (generated failed)');
+        }
+        const thumbnailBase64 = `data:image/jpeg;base64,${thumbnailBuffer.toString(
+          'base64',
+        )}`;
+        const thumbnailUpload =
+          await this.azureBlobService.uploadFileImageBase64(thumbnailBase64);
+
+        if (thumbnailUpload) {
+          await this.db
+            .updateTable('photos')
+            .set({ thumbnail_worldcup_id: thumbnailUpload.id })
             .where('id', '=', photoId)
             .execute();
           //console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);

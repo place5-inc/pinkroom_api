@@ -161,7 +161,7 @@ export class AdminController {
     if (isEmpty(photoId)) {
       throw new BadRequestException('photoId is required.');
     }
-    return await this.photoWorkerService.generateMergedWorldcupImage(photoId);
+    return await this.photoWorkerService.generateWorldcupImage(photoId);
   }
   @Get('change/phone')
   async changePhone(

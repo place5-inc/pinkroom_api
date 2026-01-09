@@ -122,8 +122,7 @@ export class ThumbnailService implements OnModuleInit {
 
     // Draw Badges
     // 폰트 설정: 개별 등록한 PretendardBold를 우선 사용합니다.
-    ctx.font =
-      '20px PretendardBold, Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif';
+    ctx.font = `800 20px "Pretendard", "Apple SD Gothic Neo", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -162,6 +161,29 @@ export class ThumbnailService implements OnModuleInit {
           throw new Error('Canvas generation failed');
         }
         return mergedImageBuffer;
+      } catch (error) {
+        console.error(
+          `[PhotoService] 월드컵 공유 이미지 생성 실패 (${i + 1}번째 시도):`,
+          error,
+        );
+        if (i === MAX_RETRY - 1) {
+          console.error('[PhotoService] 월드컵 공유 이미지 최종 생성 실패');
+        }
+      }
+    }
+  }
+  async generateWorldcupThumbnail(imageUrls: string[]) {
+    const MAX_RETRY = 2;
+    for (let i = 0; i < MAX_RETRY; i++) {
+      try {
+        // 2. 캔버스 생성 및 이미지 병합
+        const thumbnailBuffer =
+          await this.generateWorldcupThumbnailCanvas(imageUrls);
+
+        if (!thumbnailBuffer) {
+          throw new Error('Canvas generation failed');
+        }
+        return thumbnailBuffer;
       } catch (error) {
         console.error(
           `[PhotoService] 월드컵 공유 이미지 생성 실패 (${i + 1}번째 시도):`,
@@ -324,6 +346,143 @@ export class ThumbnailService implements OnModuleInit {
       console.error('[generateMergedCanvas] Error:', e);
       return null;
     }
+  }
+  private async generateWorldcupThumbnailCanvas(
+    imageUrls: string[],
+  ): Promise<Buffer | null> {
+    const width = 300;
+    const height = 150;
+    const scale = 2;
+
+    const paddingX = 18;
+    const paddingTop = 16;
+    const titleFontSize = 12;
+    const titleLineHeight = 1.2;
+    const gapBetweenTitleAndGrid = 12;
+
+    const gridRowGap = 5;
+    const gridColGap = 5;
+    const cols = 4;
+    const rowAspect = 166 / 200;
+    const bottomGradientHeight = 44;
+    const cellRadius = 4;
+
+    const gridWidth = width - paddingX * 2;
+    const cellWidth = (gridWidth - gridColGap * (cols - 1)) / cols;
+    const cellHeight = cellWidth / rowAspect;
+
+    try {
+      const canvas = createCanvas(
+        Math.round(width * scale),
+        Math.round(height * scale),
+      );
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+
+      /** 이미지 로딩 */
+      const urls = imageUrls.slice(0, 8);
+      const images = await Promise.all(
+        urls.map(async (url) => {
+          try {
+            return await this.loadImageFromUrl(url);
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      /** 배경 그라데이션 */
+      const bgGradient = ctx.createLinearGradient(0, 0, width, height * 3);
+      bgGradient.addColorStop(0.202, '#F8DBE7');
+      bgGradient.addColorStop(1, '#D31154');
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, width, height);
+
+      /** 타이틀 */
+      let currentY = paddingTop;
+      ctx.fillStyle = '#e9407a';
+      ctx.font = `900 12px Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText('내 친구의 BEST 헤어스타일은?', width / 2, currentY - 2);
+
+      currentY += titleFontSize * titleLineHeight + gapBetweenTitleAndGrid;
+
+      /** 4x2 그리드 */
+      for (let row = 0; row < 2; row++) {
+        for (let col = 0; col < 4; col++) {
+          const index = row * 4 + col;
+          const img = images[index];
+
+          const x = paddingX + col * (cellWidth + gridColGap);
+          const y = currentY + row * (cellHeight + gridRowGap);
+
+          ctx.fillStyle = '#F3F4F6';
+          this.drawRoundedRect(ctx, x, y, cellWidth, cellHeight, cellRadius);
+          ctx.fill();
+
+          if (!img) continue;
+
+          ctx.save();
+          this.drawRoundedRect(ctx, x, y, cellWidth, cellHeight, cellRadius);
+          ctx.clip();
+
+          this.drawImageCover(ctx, img, x, y, cellWidth, cellHeight);
+
+          ctx.restore();
+        }
+      }
+
+      /** 하단 그라데이션 */
+      const bottomGradient = ctx.createLinearGradient(
+        0,
+        height - bottomGradientHeight,
+        0,
+        height,
+      );
+      bottomGradient.addColorStop(0, 'rgba(235,144,177,0)');
+      bottomGradient.addColorStop(1, '#EB90B1');
+      ctx.fillStyle = bottomGradient;
+      ctx.fillRect(
+        0,
+        height - bottomGradientHeight,
+        width,
+        bottomGradientHeight,
+      );
+
+      return canvas.toBuffer('image/jpeg', { quality: 0.95 });
+    } catch (e) {
+      console.error('[generateWorldcupThumbnailCanvas]', e);
+      return null;
+    }
+  }
+
+  private drawImageCover(
+    ctx: any,
+    img: any,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+  ) {
+    const imgRatio = img.width / img.height;
+    const targetRatio = w / h;
+
+    let sx: number, sy: number, sw: number, sh: number;
+
+    if (imgRatio > targetRatio) {
+      sh = img.height;
+      sw = img.height * targetRatio;
+      sx = (img.width - sw) / 2;
+      sy = 0;
+    } else {
+      sw = img.width;
+      sh = img.width / targetRatio;
+      sx = 0;
+      sy = (img.height - sh) / 2;
+    }
+
+    ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
   }
 
   private drawRoundedRect(
