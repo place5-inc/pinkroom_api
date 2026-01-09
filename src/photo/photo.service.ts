@@ -59,6 +59,7 @@ export class PhotoService {
       };
     }
   }
+
   /*
   사진 리스트
    */
@@ -66,50 +67,6 @@ export class PhotoService {
     try {
       const result = await this.photoRepository.getPhotoById(photoId);
 
-      if (result?.paymentId) {
-        const imgs = result.resultImages ?? [];
-
-        const completeCount = imgs.reduce(
-          (acc, img) => acc + (img.status === 'complete' ? 1 : 0),
-          0,
-        );
-
-        if (completeCount < 16) {
-          const toTime = (s?: string) => (s ? new Date(s).getTime() : NaN);
-
-          // 1) complete 아닌 것 중 "가장 오래된" 1개
-          const oldestNotComplete = imgs
-            .filter((img) => img.status !== 'complete' && !!img.createdAt)
-            .reduce<(typeof imgs)[number] | null>((best, cur) => {
-              if (!best) return cur;
-              return toTime(cur.createdAt) < toTime(best.createdAt)
-                ? cur
-                : best; // 최소
-            }, null);
-
-          // 2) 없다면 complete 중 "가장 최신" 1개
-          const newestComplete = imgs
-            .filter((img) => img.status === 'complete' && !!img.createdAt)
-            .reduce<(typeof imgs)[number] | null>((best, cur) => {
-              if (!best) return cur;
-              return toTime(cur.createdAt) > toTime(best.createdAt)
-                ? cur
-                : best; // 최대
-            }, null);
-
-          const target = oldestNotComplete ?? newestComplete;
-
-          if (target) {
-            const oneMinuteAgo = Date.now() - 60_000;
-            const targetTime = toTime(target.createdAt);
-
-            const isOlderThan1Min = targetTime <= oneMinuteAgo;
-
-            // TODO: 비교 결과로 분기
-            // if (isOlderThan1Min) { ... }
-          }
-        }
-      }
       return {
         status: HttpStatus.OK,
         result,
@@ -213,6 +170,7 @@ export class PhotoService {
           upload_file_id: uploadedFile?.id ?? null,
           created_at: new Date(),
           payment_id: paymentId,
+          code: _code,
           selected_design_id: designId,
         })
         .output(['inserted.id'])
@@ -272,6 +230,7 @@ export class PhotoService {
 
   /*
   전체 사진 생성
+  쿠폰으로 한개 만들고, 이후에 결제했을 떄
    */
   async remainingPhoto(userId: string, photoId: number, paymentId: number) {
     try {
@@ -301,22 +260,31 @@ export class PhotoService {
   }
   /*
   이미 원본 있을 때, 하나의 디자인 만들기
+  실패한거용인데, 사용 안하는것 같음
    */
   async retryUploadPhoto(
     userId: string,
     originalPhotoId: number,
-    designId: number,
+    designId?: number,
   ) {
     const originalPhoto = await this.db
       .selectFrom('photos as p')
       .innerJoin('upload_file as u', 'u.id', 'p.upload_file_id')
       .where('p.id', '=', originalPhotoId)
-      .select(['p.id as photo_id', 'u.url as url'])
+      .select([
+        'p.id as photo_id',
+        'u.url as url',
+        'p.selected_design_id as selectedDesignId',
+      ])
       .executeTakeFirst();
     const prompt = await this.db
       .selectFrom('prompt')
       .leftJoin('upload_file', 'upload_file.id', 'prompt.upload_file_id')
-      .where('prompt.design_id', '=', designId)
+      .where(
+        'prompt.design_id',
+        '=',
+        designId ?? originalPhoto.selectedDesignId,
+      )
       .select([
         'prompt.design_id as designId',
         'prompt.ment',
@@ -353,7 +321,9 @@ export class PhotoService {
       };
     }
   }
-
+  /*
+  썸네일 before After 만들기
+   */
   async generateBeforeAfterThumbnail(photoId: number) {
     const photo = await this.db
       .selectFrom('photos as p')
@@ -410,5 +380,103 @@ export class PhotoService {
         }
       }
     }
+  }
+
+  async checkNeedMakePhotos(userId: string) {
+    const photos = await this.db
+      .selectFrom('photos')
+      .where('user_id', '=', userId)
+      .select('id')
+      .execute();
+
+    for (const { id } of photos) {
+      await this.checkNeedMakePhoto(userId, id);
+    }
+  }
+
+  async checkNeedMakePhoto(userId: string, photoId: number) {
+    try {
+      const result = await this.photoRepository.getPhotoById(photoId);
+
+      if (result?.paymentId) {
+        const imgs = result.resultImages ?? [];
+
+        const completeCount = imgs.reduce(
+          (acc, img) => acc + (img.status === 'complete' ? 1 : 0),
+          0,
+        );
+
+        if (completeCount < 16) {
+          const toTime = (s?: string) => (s ? new Date(s).getTime() : NaN);
+
+          // 1) complete 아닌 것 중 "가장 오래된" 1개
+          const oldestNotComplete = imgs
+            .filter((img) => img.status !== 'complete' && !!img.createdAt)
+            .reduce<(typeof imgs)[number] | null>((best, cur) => {
+              if (!best) return cur;
+              return toTime(cur.createdAt) < toTime(best.createdAt)
+                ? cur
+                : best; // 최소
+            }, null);
+
+          // 2) 없다면 complete 중 "가장 최신" 1개
+          const newestComplete = imgs
+            .filter((img) => img.status === 'complete' && !!img.createdAt)
+            .reduce<(typeof imgs)[number] | null>((best, cur) => {
+              if (!best) return cur;
+              return toTime(cur.createdAt) > toTime(best.createdAt)
+                ? cur
+                : best; // 최대
+            }, null);
+
+          const target = oldestNotComplete ?? newestComplete;
+
+          if (target) {
+            const oneMinuteAgo = Date.now() - 60_000;
+            const targetTime = toTime(target.createdAt);
+
+            const isOlderThan1Min = targetTime <= oneMinuteAgo;
+
+            // TODO: 비교 결과로 분기
+            if (isOlderThan1Min) {
+              this.workerService.makeAllPhotos(photoId);
+            }
+          }
+        }
+      } else if (result?.code) {
+        const imgs = result.resultImages ?? [];
+
+        const completeCount = imgs.reduce(
+          (acc, img) => acc + (img.status === 'complete' ? 1 : 0),
+          0,
+        );
+        if (completeCount < 1) {
+          const toTime = (s?: string) => (s ? new Date(s).getTime() : NaN);
+
+          // 1) complete 아닌 것 중 "가장 오래된" 1개
+          const oldestNotComplete = imgs
+            .filter((img) => img.status !== 'complete' && !!img.createdAt)
+            .reduce<(typeof imgs)[number] | null>((best, cur) => {
+              if (!best) return cur;
+              return toTime(cur.createdAt) < toTime(best.createdAt)
+                ? cur
+                : best; // 최소
+            }, null);
+          const target = oldestNotComplete ?? null;
+          if (target) {
+            const oneMinuteAgo = Date.now() - 60_000;
+            const targetTime = toTime(target.createdAt);
+
+            const isOlderThan1Min = targetTime <= oneMinuteAgo;
+
+            // TODO: 비교 결과로 분기
+            if (isOlderThan1Min) {
+              this.retryUploadPhoto(userId, photoId, null);
+              //this.workerService.makeAllPhotos(photoId);
+            }
+          }
+        }
+      }
+    } catch (e) {}
   }
 }

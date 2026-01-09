@@ -87,6 +87,7 @@ export type UserVO = {
 export type PhotoVO = {
   id: number;
   paymentId?: number;
+  code?: string;
   sourceImageUrl: string;
   thumbnailBeforeAfterUrl?: string;
   thumbnailWorldcupUrl?: string;

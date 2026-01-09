@@ -17,6 +17,7 @@ export class PhotoRepository {
       .select([
         'p.id as photoId',
         'p.payment_id as paymentId',
+        'p.code as code',
         'p.selected_design_id as selectedDesignId',
         'uf.url as sourceImageUrl',
         'bf.url as thumbnailBeforeAfterUrl',
@@ -45,6 +46,7 @@ export class PhotoRepository {
     return photos.map((p) => ({
       id: p.photoId,
       paymentId: p.paymentId,
+      code: p.code,
       selectedDesignId: p.selectedDesignId,
       sourceImageUrl: p.sourceImageUrl,
       thumbnailBeforeAfterUrl: p.thumbnailBeforeAfterUrl,
@@ -72,6 +74,7 @@ export class PhotoRepository {
       .select([
         'p.id as photoId',
         'p.payment_id as paymentId',
+        'p.code as code',
         'p.selected_design_id as selectedDesignId',
         'uf.url as sourceImageUrl',
         'bf.url as thumbnailBeforeAfterUrl',
@@ -99,6 +102,7 @@ export class PhotoRepository {
     return {
       id: photo.photoId,
       paymentId: photo.paymentId,
+      code: photo.code,
       sourceImageUrl: photo.sourceImageUrl,
       thumbnailBeforeAfterUrl: photo.thumbnailBeforeAfterUrl,
       thumbnailWorldcupUrl: photo.thumbnailWorldcupUrl,

@@ -176,4 +176,11 @@ export class AdminController {
     }
     return await this.adminService.changePhone(before, after);
   }
+  @Get('makePhoto')
+  async retryMakePhoto(@Query('phone') phone: string) {
+    if (isEmpty(phone)) {
+      throw new BadRequestException('phone is required.');
+    }
+    return await this.adminService.retryMakePhoto(phone);
+  }
 }

@@ -52,6 +52,7 @@ model photos {
   user_id                   String      @db.UniqueIdentifier
   upload_file_id            String      @db.UniqueIdentifier
   payment_id                Int?
+  code                      String?     @db.NVarChar(50)
   created_at                DateTime?   @db.DateTime
   selected_design_id        Int?
   thumbnail_before_after_id String?     @db.UniqueIdentifier

@@ -17,11 +17,12 @@ import { DateTime } from 'luxon';
 import { AzureBlobService } from 'src/azure/blob.service';
 import { KakaoService } from 'src/kakao/kakao.service';
 import { PhotoWorkerService } from 'src/photo/photo-worker.service';
+import { PhotoService } from 'src/photo/photo.service';
 @Injectable()
 export class AdminService {
   constructor(
     private readonly db: DatabaseProvider,
-    private readonly adminRepository: AdminRepository,
+    private readonly photoService: PhotoService,
     private readonly azureBlobService: AzureBlobService,
     private readonly kakaoService: KakaoService,
     private readonly workerService: PhotoWorkerService,
@@ -299,6 +300,26 @@ export class AdminService {
       return {
         status: HttpStatus.OK,
         message: 'phone changed successfully',
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async retryMakePhoto(phone: string) {
+    try {
+      const user = await this.db
+        .selectFrom('users')
+        .where('phone', '=', phone)
+        .selectAll()
+        .executeTakeFirst();
+      if (user) {
+        this.photoService.checkNeedMakePhotos(user.id);
+      }
+      return {
+        status: HttpStatus.OK,
       };
     } catch (e) {
       return {
