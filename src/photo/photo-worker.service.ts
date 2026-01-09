@@ -100,19 +100,33 @@ export class PhotoWorkerService {
     }
     //꿀배포 실패시 알림톡 쏘기
     if (type === 'first') {
+      // await this.kakaoService.sendKakaoNotification(
+      //   userId,
+      //   'pr_fail_fst_pt',
+      //   null,
+      //   ['헤어스타일'],
+      //   [],
+      // );
       await this.kakaoService.sendKakaoNotification(
         userId,
-        'pr_fail_fst_pt',
+        'test_02',
         null,
-        ['헤어스타일'],
+        ['첫번째 사진에 오류가 발생했어요'],
         [],
       );
     } else if (type === 'all') {
+      // await this.kakaoService.sendKakaoNotification(
+      //   userId,
+      //   'pr_fail_any_pt',
+      //   null,
+      //   [],
+      //   [],
+      // );
       await this.kakaoService.sendKakaoNotification(
         userId,
-        'pr_fail_any_pt',
+        'test_02',
         null,
-        [],
+        ['완성되지 못한 사진이 있어요'],
         [],
       );
     }
