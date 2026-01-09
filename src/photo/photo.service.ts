@@ -25,6 +25,19 @@ export class PhotoService {
     private readonly thumbnailService: ThumbnailService,
     private readonly userRepository: UserRepository,
   ) {}
+  async test(photoId: number) {
+    try {
+      await this.generateBeforeAfterThumbnail(photoId);
+      return {
+        status: HttpStatus.OK,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
 
   /*
   유저의 사진 리스트

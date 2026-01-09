@@ -2,7 +2,8 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { createCanvas, loadImage, registerFont } from 'canvas';
 import { join } from 'path';
 import { AzureBlobService } from 'src/azure/blob.service';
-
+import axios from 'axios';
+import sharp = require('sharp');
 @Injectable()
 export class ThumbnailService implements OnModuleInit {
   constructor(private readonly azureBlobService: AzureBlobService) {}
@@ -30,7 +31,39 @@ export class ThumbnailService implements OnModuleInit {
       console.error('[ThumbnailService] 폰트 등록 중 예외 발생:', error);
     }
   }
+  async loadImageFromUrl(url: string) {
+    const res = await axios.get(url, {
+      responseType: 'arraybuffer',
+      timeout: 15000,
+      validateStatus: () => true,
+    });
 
+    if (res.status < 200 || res.status >= 300) {
+      throw new Error(`Image fetch failed: status=${res.status} url=${url}`);
+    }
+
+    const input = Buffer.from(res.data);
+    const contentType = String(res.headers['content-type'] || '').toLowerCase();
+
+    // webp(및 향후 avif/heic 등) 대응: canvas에 넣기 전에 표준 포맷으로 정규화
+    const needTranscode =
+      contentType.includes('image/webp') ||
+      contentType.includes('image/avif') ||
+      contentType.includes('image/heic') ||
+      contentType.includes('image/heif');
+
+    if (!needTranscode) {
+      // jpeg/png면 바로 시도
+      try {
+        return await loadImage(input);
+      } catch {
+        // content-type이 거짓말이거나 깨진 경우 대비: 변환으로 한번 더 시도
+      }
+    }
+
+    const normalized = await sharp(input).png().toBuffer(); // 또는 .jpeg()
+    return await loadImage(normalized);
+  }
   /**
    * Generates a composite image (Before/After) for sharing
    */
@@ -49,8 +82,8 @@ export class ThumbnailService implements OnModuleInit {
 
     // Load images
     const [imgBefore, imgAfter] = await Promise.all([
-      loadImage(beforeUrl),
-      loadImage(afterUrl),
+      this.loadImageFromUrl(beforeUrl),
+      this.loadImageFromUrl(afterUrl),
     ]);
 
     // Left Half (Before)
@@ -190,7 +223,7 @@ export class ThumbnailService implements OnModuleInit {
       const loadedImages = await Promise.all(
         targetUrls.map(async (url) => {
           try {
-            return await loadImage(url);
+            return await this.loadImageFromUrl(url);
           } catch (e) {
             return null; // 로드 실패 시 빈 칸 처리
           }
