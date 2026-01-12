@@ -40,6 +40,7 @@ jobs:
             scripts \
             package.json \
             node_modules \
+            tsconfig.json \
             package-lock.json \
             nest-cli.json \
             .npmrc
@@ -77,13 +78,6 @@ jobs:
           app-name: 'pinkroom-api'
           slot-name: 'develop'
           package: develop.zip
-
-      - name: Clean previous dist on Azure (optional but recommended)
-        run: |
-          curl -X POST https://pinkroom-api-develop-gjf6a9a6hue4gpaj.scm.koreacentral-01.azurewebsites.net/api/command \
-          -u '${{ secrets.AZURE_APP_SERVICE_DEVELOP_USER }}:${{ secrets.AZURE_APP_SERVICE_DEVELOP_PASSWORD }}' \
-          -H "Content-Type: application/json" \
-          -d '{"command": "rm -rf /home/site/wwwroot/dist"}'
 
       - name: Install dependencies on Azure
         run: |
