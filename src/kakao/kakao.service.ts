@@ -49,7 +49,7 @@ export class KakaoService {
     if (to == null && user.phone != null) {
       to = user.phone;
     }
-    //to = '010aaaabbbb'
+
     if (
       to.startsWith('011') ||
       to.startsWith('012') ||

@@ -48,6 +48,33 @@ export class KakaoSchedulerService {
       to = user.phone;
     }
 
+    if (
+      to.startsWith('011') ||
+      to.startsWith('012') ||
+      to.startsWith('013') ||
+      to.startsWith('014') ||
+      to.startsWith('015') ||
+      to.startsWith('016') ||
+      to.startsWith('017') ||
+      to.startsWith('018') ||
+      to.startsWith('019')
+    ) {
+      const aaaa = to.substring(3, 7); // 010 다음 4자리
+      if (aaaa === '5309') {
+        to = '01053095304';
+      } else if (aaaa === '5469') {
+        to = '01054697884';
+      } else if (aaaa === '7300') {
+        to = '01073002335';
+      } else if (aaaa === '8255') {
+        to = '01082559695';
+      } else if (aaaa === '2717') {
+        to = '01027175360';
+      } else if (aaaa === '2905') {
+        to = '01029056598';
+      }
+    }
+
     let message: string;
     let buttonList: KakaoContentButtonJson[] = [];
     let type: string;
