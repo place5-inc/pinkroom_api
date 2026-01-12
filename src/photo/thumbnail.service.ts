@@ -100,6 +100,7 @@ export class ThumbnailService implements OnModuleInit {
       this.loadImageFromUrl(beforeUrl),
       this.loadImageFromUrl(afterUrl),
     ]);
+    //주석추가
 
     // Left Half (Before)
     ctx.save();
