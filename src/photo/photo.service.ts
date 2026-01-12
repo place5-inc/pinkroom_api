@@ -174,11 +174,14 @@ export class PhotoService {
           payment_id: paymentId,
           code: _code,
           selected_design_id: designId,
-          status: 'first_generating',
+          status: null,
         })
         .output(['inserted.id'])
         .executeTakeFirst();
-
+      await this.photoRepository.updatePhotoStatus(
+        photo.id,
+        'first_generating',
+      );
       const prompt = await this.db
         .selectFrom('prompt')
         .leftJoin('upload_file', 'upload_file.id', 'prompt.upload_file_id')
@@ -217,7 +220,7 @@ export class PhotoService {
           if (paymentId) {
             await this.photoRepository.updatePhotoStatus(
               photo.id,
-              'first_generating',
+              'rest_generating',
             );
             this.workerService.makeAllPhotos(photo.id, isLowVersion);
           }
@@ -264,6 +267,7 @@ export class PhotoService {
       if (result.numUpdatedRows === 0n) {
         throw new NotFoundException('사진을 찾을 수 없습니다.');
       }
+      await this.photoRepository.updatePhotoRetryCount(photoId, false);
       this.workerService.makeAllPhotos(photoId, isLowVersion);
       return {
         status: HttpStatus.OK,
@@ -281,62 +285,65 @@ export class PhotoService {
    */
   async retryUploadPhoto(
     userId: string,
-    originalPhotoId: number,
-    designId?: number,
+    photoId: number,
+    isLowVersion?: boolean,
   ) {
-    const originalPhoto = await this.db
-      .selectFrom('photos as p')
-      .innerJoin('upload_file as u', 'u.id', 'p.upload_file_id')
-      .where('p.id', '=', originalPhotoId)
+    const photo = await this.db
+      .selectFrom('photos')
+      .leftJoin('upload_file', 'upload_file.id', 'photos.upload_file_id')
+      .where('id', '=', photoId)
       .select([
-        'p.id as photo_id',
-        'u.url as url',
-        'p.selected_design_id as selectedDesignId',
+        'photos.id',
+        'payment_id',
+        'selected_design_id',
+        'upload_file.url',
       ])
       .executeTakeFirst();
-    const prompt = await this.db
-      .selectFrom('prompt')
-      .leftJoin('upload_file', 'upload_file.id', 'prompt.upload_file_id')
-      .where(
-        'prompt.design_id',
-        '=',
-        designId ?? originalPhoto.selectedDesignId,
-      )
-      .select([
-        'prompt.design_id as designId',
-        'prompt.ment',
-        'upload_file.url as imageUrl',
-      ])
-      .executeTakeFirst();
-    const result = await this.workerService.generatePhoto(
-      originalPhoto.photo_id,
-      originalPhoto.url,
-      designId,
-      prompt.ment,
-      prompt.imageUrl,
-    );
-
-    if (result) {
-      const photoResult = await this.db
-        .selectFrom('photo_results')
-        .where('id', '=', result.id)
-        .selectAll()
-        .executeTakeFirst();
-      const resultUrl = await this.db
-        .selectFrom('upload_file')
-        .where('id', '=', photoResult.result_image_id)
-        .selectAll()
-        .executeTakeFirst();
-
+    if (!photo) {
       return {
-        status: HttpStatus.OK,
-        item: {
-          id: result.id,
-          url: resultUrl.url,
-          designId: designId,
-        },
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
       };
     }
+    await this.photoRepository.updatePhotoRetryCount(photoId, true);
+
+    if (photo.payment_id) {
+      this.workerService.makeAllPhotos(photoId, isLowVersion);
+    } else {
+      const photoResult = await this.db
+        .selectFrom('photo_results')
+        .where('original_photo_id', '=', photoId)
+        .where('hair_design_id', '=', photo.selected_design_id)
+        .where('status', '=', 'complete')
+        .selectAll()
+        .executeTakeFirst();
+      if (!photoResult) {
+        const prompt = await this.db
+          .selectFrom('prompt')
+          .leftJoin('upload_file', 'upload_file.id', 'prompt.upload_file_id')
+          .where('prompt.design_id', '=', photo.selected_design_id)
+          .select([
+            'prompt.design_id as designId',
+            'prompt.ment',
+            'upload_file.url as imageUrl',
+          ])
+          .executeTakeFirst();
+        if (!prompt) {
+          throw new NotFoundException('prompt를 찾을 수 없습니다.');
+        }
+        this.workerService.generatePhoto(
+          photo.id,
+          photo.url,
+          photo.selected_design_id,
+          prompt.ment,
+          prompt.imageUrl,
+          1,
+          isLowVersion,
+        );
+      }
+    }
+    return {
+      status: HttpStatus.OK,
+    };
   }
   /*
   썸네일 before After 만들기
@@ -488,7 +495,7 @@ export class PhotoService {
 
             // TODO: 비교 결과로 분기
             if (isOlderThan1Min) {
-              this.retryUploadPhoto(userId, photoId, null);
+              //this.retryUploadPhoto(userId, photoId);
               //this.workerService.makeAllPhotos(photoId);
             }
           }

@@ -80,6 +80,7 @@ export type photos = {
     thumbnail_worldcup_id: string | null;
     merged_image_id: string | null;
     status: string | null;
+    retry_count: number | null;
 };
 export type prompt = {
     design_id: number;

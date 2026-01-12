@@ -14,6 +14,32 @@ export class PhotoRepository {
       .where('id', '=', photoId)
       .execute();
   }
+  async updatePhotoRetryCount(photoId: number, isPlus: boolean) {
+    if (isPlus) {
+      const photo = await this.db
+        .selectFrom('photos')
+        .where('id', '=', photoId)
+        .selectAll()
+        .executeTakeFirst();
+      const count = photo.retry_count ?? 0;
+
+      await this.db
+        .updateTable('photos')
+        .set({
+          retry_count: count + 1,
+        })
+        .where('id', '=', photoId)
+        .execute();
+    } else {
+      await this.db
+        .updateTable('photos')
+        .set({
+          retry_count: 0,
+        })
+        .where('id', '=', photoId)
+        .execute();
+    }
+  }
   async getPhotosByUserId(userId: string): Promise<PhotoVO[]> {
     const photos = await this.db
       .selectFrom('photos as p')
@@ -34,6 +60,7 @@ export class PhotoRepository {
         'mi.url as mergedImageUrl',
         'p.created_at',
         'p.status as status',
+        'p.retry_count as retry_count',
       ])
       .execute();
 
@@ -69,6 +96,7 @@ export class PhotoRepository {
         mergedImageUrl: p.mergedImageUrl,
         createdAt: p.created_at.toISOString(),
         status: p.status,
+        retryCount: p.retry_count,
         resultImages: photoResults
           .filter((r) => r.photoId === p.photoId)
           .map((r) => ({
@@ -101,6 +129,7 @@ export class PhotoRepository {
         'mi.url as mergedImageUrl',
         'p.created_at',
         'p.status as status',
+        'p.retry_count as retry_count',
       ])
       .executeTakeFirst();
 
@@ -132,6 +161,7 @@ export class PhotoRepository {
       selectedDesignId: photo.selectedDesignId,
       createdAt: photo.created_at.toISOString(),
       status: photo.status,
+      retryCount: photo.retry_count,
       resultImages: photoResults.map((r) => ({
         id: r.resultId,
         url: r.url,
