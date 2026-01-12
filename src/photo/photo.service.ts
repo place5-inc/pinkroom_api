@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ForbiddenException,
+  HttpException,
   HttpStatus,
   Injectable,
   NotFoundException,
@@ -221,10 +222,10 @@ export class PhotoService {
         status: HttpStatus.REQUEST_TIMEOUT,
       };
     } catch (e) {
-      return {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: e.message,
-      };
+      throw new HttpException(
+        e.message,
+        e.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
