@@ -35,11 +35,12 @@ jobs:
       - name: Zip artifact for deployment
         run: |
           zip -r develop.zip \
-            dist \
+            src \
+            resources \
             scripts \
             package.json \
-            package-lock.json \
             node_modules \
+            package-lock.json \
             nest-cli.json \
             .npmrc
 
@@ -89,7 +90,7 @@ jobs:
           curl -X POST https://pinkroom-api-develop-gjf6a9a6hue4gpaj.scm.koreacentral-01.azurewebsites.net/api/command \
           -u '${{ secrets.AZURE_APP_SERVICE_DEVELOP_USER }}:${{ secrets.AZURE_APP_SERVICE_DEVELOP_PASSWORD }}' \
           -H "Content-Type: application/json" \
-          -d '{"command": "npm install --production --prefix /home/site/wwwroot"}'
+          -d '{"command": "npm install && npm run build --prefix /home/site/wwwroot"}'
 
   cleanup:
     runs-on: ubuntu-latest
