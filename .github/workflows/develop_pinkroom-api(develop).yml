@@ -29,6 +29,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Check fonts
+        run: ls -R dist/resources/fonts
+
       - name: Zip artifact for deployment
         run: |
           zip -r develop.zip \
