@@ -9,11 +9,15 @@ export class ThumbnailService implements OnModuleInit {
   constructor(private readonly azureBlobService: AzureBlobService) {}
   onModuleInit() {
     try {
-      const ROOT = resolve(__dirname, '../../../');
-
-      const fontDir = join(ROOT, 'resources', 'fonts');
-      const fontPathBold = join(fontDir, 'Pretendard-Bold.ttf');
-      const fontPathRegular = join(fontDir, 'Pretendard-Regular.ttf');
+      const rootPath = process.cwd();
+      const fontPathBold = join(
+        rootPath,
+        'resources/fonts/Pretendard-Bold.ttf',
+      );
+      const fontPathRegular = join(
+        rootPath,
+        'resources/fonts/Pretendard-Regular.ttf',
+      );
 
       console.log('[ThumbnailService] 폰트 경로 확인:', fontPathBold);
 
@@ -133,7 +137,7 @@ export class ThumbnailService implements OnModuleInit {
 
     // Draw Badges
     // 폰트 설정: 개별 등록한 PretendardBold를 우선 사용합니다.
-    ctx.font = `800 20px "PretendardBold"`;
+    ctx.font = '800 20px "Pretendard"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -276,7 +280,7 @@ export class ThumbnailService implements OnModuleInit {
 
       ctx.fillStyle = '#ffffff';
       // 폰트 폴백 설정 (Pretendard -> Apple SD -> System)
-      ctx.font = `800 15px "Pretendard", "Apple SD Gothic Neo", sans-serif`;
+      ctx.font = `800 15px "PretendardBold"`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('PINK ROOM', width / 2, currentY + labelHeight / 2);
@@ -290,7 +294,7 @@ export class ThumbnailService implements OnModuleInit {
       const lineHeight = Math.round(fontSize * 1.4);
 
       ctx.fillStyle = '#444444';
-      ctx.font = `900 ${fontSize}px Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif`;
+      ctx.font = `900 27px "Pretendard"`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
 
@@ -412,7 +416,7 @@ export class ThumbnailService implements OnModuleInit {
       /** 타이틀 */
       let currentY = paddingTop;
       ctx.fillStyle = '#e9407a';
-      ctx.font = `900 12px Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif`;
+      ctx.font = `900 12px "Pretendard"`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.fillText('내 친구의 BEST 헤어스타일은?', width / 2, currentY - 2);

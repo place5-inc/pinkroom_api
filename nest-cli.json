@@ -3,6 +3,13 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "assets": [
+      {
+        "include": "../resources/fonts/**/*",
+        "outDir": "dist/resources/fonts",
+        "watchAssets": true
+      }
+    ]
   }
 }
