@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { createCanvas, loadImage, registerFont } from 'canvas';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { AzureBlobService } from 'src/azure/blob.service';
 import axios from 'axios';
 import sharp = require('sharp');
@@ -9,7 +9,9 @@ export class ThumbnailService implements OnModuleInit {
   constructor(private readonly azureBlobService: AzureBlobService) {}
   onModuleInit() {
     try {
-      const fontDir = join(process.cwd(), 'resources', 'fonts');
+      const ROOT = resolve(__dirname, '../../../');
+
+      const fontDir = join(ROOT, 'resources', 'fonts');
       const fontPathBold = join(fontDir, 'Pretendard-Bold.ttf');
       const fontPathRegular = join(fontDir, 'Pretendard-Regular.ttf');
 
@@ -17,8 +19,17 @@ export class ThumbnailService implements OnModuleInit {
 
       const fs = require('fs');
       if (fs.existsSync(fontPathBold)) {
-        registerFont(fontPathBold, { family: 'PretendardBold' });
-        registerFont(fontPathRegular, { family: 'PretendardRegular' });
+        // registerFont(fontPathBold, { family: 'PretendardBold' });
+        // registerFont(fontPathRegular, { family: 'PretendardRegular' });
+        registerFont(fontPathRegular, {
+          family: 'Pretendard',
+          weight: '400',
+        });
+
+        registerFont(fontPathBold, {
+          family: 'Pretendard',
+          weight: '700',
+        });
         console.log(
           '[ThumbnailService] Pretendard 폰트 등록 완료 (PretendardBold, PretendardRegular)',
         );
