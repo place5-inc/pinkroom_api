@@ -64,6 +64,7 @@ export class PhotoWorkerService {
       if (completedSet.size === totalCount.count) {
         console.log(`🎉 ${attempt}번째 시도에서 전부 완료`);
         this.afterMakeAllPhoto(originalPhotoId);
+        return;
       }
 
       // 4️⃣ 미완료 design만 재요청
