@@ -11,12 +11,18 @@ export class ThumbnailService implements OnModuleInit {
     try {
       const rootPath = process.cwd();
       const fontPathBold = join(
-        rootPath,
-        'dist/resources/fonts/Pretendard-Bold.ttf',
+        __dirname,
+        '..',
+        'resources',
+        'fonts',
+        'Pretendard-Bold.ttf',
       );
       const fontPathRegular = join(
-        rootPath,
-        'dist/resources/fonts/Pretendard-Regular.ttf',
+        __dirname,
+        '..',
+        'resources',
+        'fonts',
+        'Pretendard-Regular.ttf',
       );
 
       console.log('[ThumbnailService] 폰트 경로 확인:', fontPathBold);
