@@ -7,6 +7,7 @@ import { sql } from 'kysely';
 import { generateCode, normalizeError } from 'src/libs/helpers';
 import { ThumbnailService } from './thumbnail.service';
 import { MessageService } from 'src/message/message.service';
+import { PhotoRepository } from './photo.repository';
 @Injectable()
 export class PhotoWorkerService {
   constructor(
@@ -16,6 +17,7 @@ export class PhotoWorkerService {
     private readonly kakaoService: KakaoService,
     private readonly thumbnailService: ThumbnailService,
     private readonly messageService: MessageService,
+    private readonly photoRepository: PhotoRepository,
   ) {}
 
   async makeAllPhotos(originalPhotoId: number, isLowVersion?: boolean) {
@@ -92,6 +94,8 @@ export class PhotoWorkerService {
       // 5️⃣ 외부 API 반영 시간 대비 약간 대기
       await new Promise((r) => setTimeout(r, 2000));
     }
+
+    await this.photoRepository.updatePhotoStatus(originalPhotoId, 'finished');
     this.failMakePhoto(originalPhoto.user_id, 'all');
     console.error('🚨 최대 재시도 초과, 일부 실패');
   }
@@ -135,6 +139,7 @@ export class PhotoWorkerService {
   }
 
   async afterMakeAllPhoto(photoId: number) {
+    await this.photoRepository.updatePhotoStatus(photoId, 'complete');
     this.sendKakao(photoId);
     this.generateWorldcupImage(photoId);
   }
@@ -331,7 +336,7 @@ export class PhotoWorkerService {
     isLowVersion?: boolean,
   ) {
     try {
-      await this.insertIntoPhoto(photoId, designId, null, 'waiting', tryCount);
+      await this.insertIntoPhoto(photoId, designId, null, 'pending', tryCount);
       const image = await this.aiService.generatePhotoGemini(
         photoUrl,
         null,

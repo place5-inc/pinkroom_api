@@ -58,6 +58,7 @@ model photos {
   thumbnail_before_after_id String?     @db.UniqueIdentifier
   thumbnail_worldcup_id     String?     @db.UniqueIdentifier
   merged_image_id           String?     @db.UniqueIdentifier
+  status                    String?     @db.NVarChar(50)
   upload_file               upload_file @relation(fields: [upload_file_id], references: [id], onUpdate: NoAction, map: "FK_photos_upload_file")
 }
 

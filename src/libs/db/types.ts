@@ -79,6 +79,7 @@ export type photos = {
     thumbnail_before_after_id: string | null;
     thumbnail_worldcup_id: string | null;
     merged_image_id: string | null;
+    status: string | null;
 };
 export type prompt = {
     design_id: number;

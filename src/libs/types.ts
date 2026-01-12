@@ -97,7 +97,7 @@ export type PhotoVO = {
   selectedDesignId?: number;
   didShareWorldcup?: boolean;
   mergedImageUrl?: string;
-  isCompleted?: boolean;
+  status?: string;
 };
 
 export type ResultImageVO = {

@@ -174,6 +174,7 @@ export class PhotoService {
           payment_id: paymentId,
           code: _code,
           selected_design_id: designId,
+          status: 'first_generating',
         })
         .output(['inserted.id'])
         .executeTakeFirst();
@@ -207,10 +208,17 @@ export class PhotoService {
         if (result) {
           //before After Thumbnail 생성
           await this.generateBeforeAfterThumbnail(photo.id);
+          if (!paymentId) {
+            await this.photoRepository.updatePhotoStatus(photo.id, 'complete');
+          }
 
           const item = await this.photoRepository.getPhotoById(photo.id);
 
           if (paymentId) {
+            await this.photoRepository.updatePhotoStatus(
+              photo.id,
+              'first_generating',
+            );
             this.workerService.makeAllPhotos(photo.id, isLowVersion);
           }
           return {
@@ -219,6 +227,7 @@ export class PhotoService {
           };
         }
       }
+      await this.photoRepository.updatePhotoStatus(photo.id, 'finished');
       this.workerService.failMakePhoto(userId, 'first');
       return {
         status: HttpStatus.REQUEST_TIMEOUT,
