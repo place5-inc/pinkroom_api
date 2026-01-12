@@ -75,12 +75,12 @@ jobs:
           slot-name: 'develop'
           package: develop.zip
 
-      - name: Install dependencies on Azure
-        run: |
-          curl -X POST https://pinkroom-api-develop-gjf6a9a6hue4gpaj.scm.koreacentral-01.azurewebsites.net/api/command \
-          -u '${{ secrets.AZURE_APP_SERVICE_DEVELOP_USER }}:${{ secrets.AZURE_APP_SERVICE_DEVELOP_PASSWORD }}' \
-          -H "Content-Type: application/json" \
-          -d '{"command": "npm install --production --prefix /home/site/wwwroot"}'
+      # - name: Install dependencies on Azure
+      #   run: |
+      #     curl -X POST https://pinkroom-api-develop-gjf6a9a6hue4gpaj.scm.koreacentral-01.azurewebsites.net/api/command \
+      #     -u '${{ secrets.AZURE_APP_SERVICE_DEVELOP_USER }}:${{ secrets.AZURE_APP_SERVICE_DEVELOP_PASSWORD }}' \
+      #     -H "Content-Type: application/json" \
+      #     -d '{"command": "npm install --production --prefix /home/site/wwwroot"}'
 
   cleanup:
     runs-on: ubuntu-latest

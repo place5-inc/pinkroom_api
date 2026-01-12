@@ -12,11 +12,11 @@ export class ThumbnailService implements OnModuleInit {
       const rootPath = process.cwd();
       const fontPathBold = join(
         rootPath,
-        'resources/fonts/Pretendard-Bold.ttf',
+        'dist/resources/fonts/Pretendard-Bold.ttf',
       );
       const fontPathRegular = join(
         rootPath,
-        'resources/fonts/Pretendard-Regular.ttf',
+        'dist/resources/fonts/Pretendard-Regular.ttf',
       );
 
       console.log('[ThumbnailService] 폰트 경로 확인:', fontPathBold);
@@ -38,9 +38,21 @@ export class ThumbnailService implements OnModuleInit {
           '[ThumbnailService] Pretendard 폰트 등록 완료 (PretendardBold, PretendardRegular)',
         );
       } else {
-        console.warn(
-          '[ThumbnailService] Pretendard TTF 파일을 찾을 수 없습니다. 기본 폰트를 사용합니다.',
+        // 만약 dist에 없다면 루트의 resources라도 시도합니다.
+        const fallbackPath = join(
+          rootPath,
+          'resources/fonts/Pretendard-Bold.ttf',
         );
+        if (fs.existsSync(fallbackPath)) {
+          registerFont(
+            join(rootPath, 'resources/fonts/Pretendard-Regular.ttf'),
+            { family: 'Pretendard', weight: '400' },
+          );
+          registerFont(fallbackPath, { family: 'Pretendard', weight: '700' });
+          console.log('[Font Debug] Fonts registered from root resources.');
+        } else {
+          console.warn('[Font Debug] No font files found in dist or root.');
+        }
       }
     } catch (error) {
       console.error('[ThumbnailService] 폰트 등록 중 예외 발생:', error);
@@ -281,7 +293,7 @@ export class ThumbnailService implements OnModuleInit {
 
       ctx.fillStyle = '#ffffff';
       // 폰트 폴백 설정 (Pretendard -> Apple SD -> System)
-      ctx.font = `700 15px "Pretendard"`;
+      ctx.font = '700 15px "Pretendard", sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('PINK ROOM', width / 2, currentY + labelHeight / 2);
@@ -295,7 +307,7 @@ export class ThumbnailService implements OnModuleInit {
       const lineHeight = Math.round(fontSize * 1.4);
 
       ctx.fillStyle = '#444444';
-      ctx.font = `700 27px "Pretendard"`;
+      ctx.font = '700 27px "Pretendard", sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
 
@@ -417,7 +429,7 @@ export class ThumbnailService implements OnModuleInit {
       /** 타이틀 */
       let currentY = paddingTop;
       ctx.fillStyle = '#e9407a';
-      ctx.font = `700 12px "Pretendard"`;
+      ctx.font = '700 12px "Pretendard", sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.fillText('내 친구의 BEST 헤어스타일은?', width / 2, currentY - 2);
