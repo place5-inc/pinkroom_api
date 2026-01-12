@@ -21,7 +21,7 @@ export class PhotoWorkerService {
   ) {}
 
   async makeAllPhotos(originalPhotoId: number, isLowVersion?: boolean) {
-    const MAX_RETRY = 2;
+    const MAX_RETRY = 3;
     let attempt = 0;
     // 2️⃣ 원본 사진
     const originalPhoto = await this.db
@@ -64,9 +64,11 @@ export class PhotoWorkerService {
       const completedSet = new Set(completed.map((r) => r.hair_design_id));
 
       if (completedSet.size === totalCount.count) {
-        console.log(`🎉 ${attempt}번째 시도에서 전부 완료`);
         this.afterMakeAllPhoto(originalPhotoId);
         return;
+      }
+      if (attempt == MAX_RETRY - 1) {
+        break;
       }
 
       // 4️⃣ 미완료 design만 재요청
@@ -97,7 +99,6 @@ export class PhotoWorkerService {
 
     await this.photoRepository.updatePhotoStatus(originalPhotoId, 'finished');
     this.failMakePhoto(originalPhoto.user_id, 'all');
-    console.error('🚨 최대 재시도 초과, 일부 실패');
   }
   async failMakePhoto(userId: string, type: string) {
     //first, all
