@@ -68,7 +68,7 @@ export class ShareService {
         .executeTakeFirst();
 
       const useCount = row?.count ?? 0;
-      if (useCount > 15) {
+      if (useCount > 3) {
         canUseFree = false;
       }
       return {

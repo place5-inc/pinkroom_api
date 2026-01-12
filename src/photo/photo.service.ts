@@ -174,11 +174,14 @@ export class PhotoService {
           payment_id: paymentId,
           code: _code,
           selected_design_id: designId,
-          status: 'first_generating',
+          status: null,
         })
         .output(['inserted.id'])
         .executeTakeFirst();
-
+      await this.photoRepository.updatePhotoStatus(
+        photo.id,
+        'first_generating',
+      );
       const prompt = await this.db
         .selectFrom('prompt')
         .leftJoin('upload_file', 'upload_file.id', 'prompt.upload_file_id')
