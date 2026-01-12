@@ -35,6 +35,7 @@ jobs:
             dist \
             node_modules \
             package.json \
+            nest-cli.json \
             package-lock.json \
             resources \
             .npmrc
