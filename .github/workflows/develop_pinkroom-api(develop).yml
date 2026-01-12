@@ -26,23 +26,19 @@ jobs:
       - name: Install all packages
         run: npm install
 
-      - name: Build app and copy fonts
+      - name: Build
         run: |
           npm run build
-          echo "Listing fonts in dist/resources/fonts"
-          ls -R dist/resources/fonts
 
       - name: Zip artifact for deployment
         run: |
           zip -r develop.zip \
+            dist \
             src \
             resources \
-            scripts \
             package.json \
             node_modules \
-            tsconfig.json \
             package-lock.json \
-            nest-cli.json \
             .npmrc
 
       - name: Upload artifact for deployment job
@@ -84,7 +80,7 @@ jobs:
           curl -X POST https://pinkroom-api-develop-gjf6a9a6hue4gpaj.scm.koreacentral-01.azurewebsites.net/api/command \
           -u '${{ secrets.AZURE_APP_SERVICE_DEVELOP_USER }}:${{ secrets.AZURE_APP_SERVICE_DEVELOP_PASSWORD }}' \
           -H "Content-Type: application/json" \
-          -d '{"command": "npm install && npm run build --prefix /home/site/wwwroot"}'
+          -d '{"command": "npm install --production --prefix /home/site/wwwroot"}'
 
   cleanup:
     runs-on: ubuntu-latest
