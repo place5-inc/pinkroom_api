@@ -90,6 +90,8 @@ export class InicisService {
           );
         }
       } catch (err) {}
+    } else {
+      throw new BadRequestException(resultMsg);
     }
   }
   async confirmMobilePayment({
