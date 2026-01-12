@@ -122,7 +122,7 @@ export class ThumbnailService implements OnModuleInit {
 
     // Draw Badges
     // 폰트 설정: 개별 등록한 PretendardBold를 우선 사용합니다.
-    ctx.font = `800 20px "Pretendard", "Apple SD Gothic Neo", sans-serif`;
+    ctx.font = `800 20px "PretendardBold"`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
