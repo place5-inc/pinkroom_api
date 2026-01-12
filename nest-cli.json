@@ -6,8 +6,8 @@
     "deleteOutDir": true,
     "assets": [
       {
-        "include": "../resources/fonts/**/*",
-        "outDir": "dist/resources/fonts",
+        "include": "resources/fonts/**/*",
+        "outDir": "dist",
         "watchAssets": true
       }
     ]
