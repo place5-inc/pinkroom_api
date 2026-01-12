@@ -21,6 +21,7 @@ export class AiService {
     fileBase64?: string,
     ment?: string,
     sampleUrl?: string,
+    isLowVersion: boolean = false,
   ): Promise<string> {
     try {
       const apiKey = process.env.GEMINI_API_KEY;
@@ -32,7 +33,9 @@ export class AiService {
           'fileUri 또는 fileBase64 중 하나는 필수입니다.',
         );
       }
-
+      const model = isLowVersion
+        ? 'gemini-2.0-flash'
+        : 'gemini-3-pro-image-preview';
       const ai = new GoogleGenAI({ apiKey });
 
       // parts를 동적으로 구성
@@ -88,21 +91,25 @@ export class AiService {
 
       const geminiResponse = await ai.models.generateContent({
         // model: 'gemini-2.5-flash-image',
-        model: 'gemini-3-pro-image-preview',
+        model: model,
         contents: [
           {
             role: 'user',
             parts,
           },
         ],
-        config: {
-          responseModalities: ['Text', 'Image'],
-          imageConfig: {
-            imageSize: process.env.GEMINI_IMAGE_SIZE ?? '2K',
-          },
-          // ✅ 60초 타임아웃
-          httpOptions: { timeout: 60_000 },
-        },
+        config: isLowVersion
+          ? {
+              responseModalities: ['Text', 'Image'],
+              httpOptions: { timeout: 60_000 },
+            }
+          : {
+              responseModalities: ['Text', 'Image'],
+              imageConfig: {
+                imageSize: process.env.GEMINI_IMAGE_SIZE ?? '2K',
+              },
+              httpOptions: { timeout: 60_000 },
+            },
       });
 
       const resultParts = geminiResponse.candidates?.[0]?.content?.parts;

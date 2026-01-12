@@ -18,7 +18,7 @@ export class PhotoWorkerService {
     private readonly messageService: MessageService,
   ) {}
 
-  async makeAllPhotos(originalPhotoId: number) {
+  async makeAllPhotos(originalPhotoId: number, isLowVersion?: boolean) {
     const MAX_RETRY = 2;
     let attempt = 0;
     // 2️⃣ 원본 사진
@@ -82,6 +82,7 @@ export class PhotoWorkerService {
             prompt.ment,
             prompt.imageUrl,
             attempt,
+            isLowVersion,
           );
         } catch (e) {
           console.error(`❌ design ${designId} 실패 (attempt ${attempt})`, e);
@@ -327,6 +328,7 @@ export class PhotoWorkerService {
     ment: string,
     sampleUrl?: string,
     tryCount?: number,
+    isLowVersion?: boolean,
   ) {
     try {
       await this.insertIntoPhoto(photoId, designId, null, 'waiting', tryCount);
@@ -335,6 +337,7 @@ export class PhotoWorkerService {
         null,
         ment,
         sampleUrl,
+        isLowVersion,
       );
 
       const uploadFile = await this.uploadToAzure(image, true);

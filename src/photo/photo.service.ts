@@ -89,6 +89,7 @@ export class PhotoService {
     designId: number,
     paymentId?: number,
     _code?: string,
+    isLowVersion?: boolean,
   ) {
     try {
       if (!paymentId && !_code) {
@@ -201,6 +202,7 @@ export class PhotoService {
           prompt.ment,
           prompt.imageUrl,
           attempt,
+          isLowVersion,
         );
         if (result) {
           //before After Thumbnail 생성
@@ -209,7 +211,7 @@ export class PhotoService {
           const item = await this.photoRepository.getPhotoById(photo.id);
 
           if (paymentId) {
-            this.workerService.makeAllPhotos(photo.id);
+            this.workerService.makeAllPhotos(photo.id, isLowVersion);
           }
           return {
             status: HttpStatus.OK,
@@ -233,7 +235,12 @@ export class PhotoService {
   전체 사진 생성
   쿠폰으로 한개 만들고, 이후에 결제했을 떄
    */
-  async remainingPhoto(userId: string, photoId: number, paymentId: number) {
+  async remainingPhoto(
+    userId: string,
+    photoId: number,
+    paymentId: number,
+    isLowVersion?: boolean,
+  ) {
     try {
       const result = await this.db
         .updateTable('photos')
@@ -248,7 +255,7 @@ export class PhotoService {
       if (result.numUpdatedRows === 0n) {
         throw new NotFoundException('사진을 찾을 수 없습니다.');
       }
-      this.workerService.makeAllPhotos(photoId);
+      this.workerService.makeAllPhotos(photoId, isLowVersion);
       return {
         status: HttpStatus.OK,
       };
@@ -440,7 +447,7 @@ export class PhotoService {
 
             // TODO: 비교 결과로 분기
             if (isOlderThan1Min) {
-              this.workerService.makeAllPhotos(photoId);
+              this.workerService.makeAllPhotos(photoId, false);
             }
           }
         }
