@@ -98,6 +98,7 @@ export type PhotoVO = {
   didShareWorldcup?: boolean;
   mergedImageUrl?: string;
   status?: string;
+  retryCount?: number;
 };
 
 export type ResultImageVO = {
