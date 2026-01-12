@@ -31,13 +31,12 @@ jobs:
 
       - name: Zip artifact for deployment
         run: |
-          mkdir -p dist/resources/fonts
-          cp -r resources/fonts/* dist/resources/fonts/
           zip -r develop.zip \
             dist \
             node_modules \
             package.json \
             package-lock.json \
+            nest-cli.json \
             .npmrc
 
       - name: Upload artifact for deployment job
