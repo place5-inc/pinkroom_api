@@ -28,6 +28,9 @@ export class PhotoRepository {
 
     const photoIds = photos.map((p) => p.photoId);
 
+    if (photoIds.length === 0) {
+      return [];
+    }
     const photoResults = await this.db
       .selectFrom('photo_results as pr')
       .leftJoin('upload_file as uf', 'uf.id', 'pr.result_image_id')
