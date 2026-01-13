@@ -72,8 +72,6 @@ export class PhotoService {
         .updateTable('photo_results')
         .set({
           status: 'fail',
-          fail_code: 'TIMEOUT', // 원하면 제거/변경
-          // updated_at: now, // 컬럼 있으면 추천
         })
         .where('original_photo_id', '=', photoId)
         .where('status', '=', 'pending')
@@ -92,7 +90,6 @@ export class PhotoService {
           .updateTable('photos')
           .set({
             status: 'finished',
-            // updated_at: now, // 컬럼 있으면 추천
           })
           .where('id', '=', photoId)
           .execute();
