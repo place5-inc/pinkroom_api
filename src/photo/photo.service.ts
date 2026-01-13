@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   HttpException,
   HttpStatus,
@@ -157,6 +158,14 @@ export class PhotoService {
           .execute();
         if (!payment) {
           throw new NotFoundException('결제를 찾을 수 없습니다.');
+        }
+        const beforePaymentPhoto = await this.db
+          .selectFrom('photos')
+          .where('payment_id', '=', paymentId)
+          .selectAll()
+          .executeTakeFirst();
+        if (beforePaymentPhoto) {
+          throw new ConflictException('이미 결제된 id 입니다.');
         }
       }
       if (_code) {
