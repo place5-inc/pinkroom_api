@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
-import { PhotoVO } from 'src/libs/types';
+import { PhotoResultStatus, PhotoVO } from 'src/libs/types';
 @Injectable()
 export class PhotoRepository {
   constructor(private readonly db: DatabaseProvider) {}
@@ -39,6 +39,53 @@ export class PhotoRepository {
         .where('id', '=', photoId)
         .execute();
     }
+  }
+  async updatePhotoResult(
+    originalPhotoId: number,
+    hairDesignId: number,
+    resultImageId?: string,
+    status?: PhotoResultStatus,
+    tryCount?: number,
+    code?: string,
+  ) {
+    const before = await this.db
+      .selectFrom('photo_results')
+      .where('original_photo_id', '=', originalPhotoId)
+      .where('hair_design_id', '=', hairDesignId)
+      .select('id')
+      .executeTakeFirst();
+    if (before) {
+      const setValues: Record<string, any> = {
+        created_at: new Date(),
+      };
+
+      if (resultImageId !== undefined)
+        setValues.result_image_id = resultImageId;
+      if (status !== undefined) setValues.status = status;
+      if (tryCount !== undefined) setValues.try_count = tryCount;
+      if (code !== undefined) setValues.fail_code = code;
+      await this.db
+        .updateTable('photo_results')
+        .set(setValues)
+        .where('original_photo_id', '=', originalPhotoId)
+        .where('hair_design_id', '=', hairDesignId)
+        .executeTakeFirst();
+
+      return before;
+    }
+    return await this.db
+      .insertInto('photo_results')
+      .values({
+        original_photo_id: originalPhotoId,
+        hair_design_id: hairDesignId,
+        created_at: new Date(),
+        result_image_id: resultImageId,
+        status: status,
+        try_count: tryCount,
+        fail_code: code,
+      })
+      .output(['inserted.id'])
+      .executeTakeFirst();
   }
   async getPhotosByUserId(userId: string): Promise<PhotoVO[]> {
     const photos = await this.db
