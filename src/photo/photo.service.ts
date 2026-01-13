@@ -28,7 +28,7 @@ export class PhotoService {
   ) {}
   async test(photoId: number) {
     try {
-      await this.generateBeforeAfterThumbnail(photoId);
+      //await this.generateBeforeAfterThumbnail(photoId);
       return {
         status: HttpStatus.OK,
       };
@@ -271,7 +271,7 @@ export class PhotoService {
         );
         if (result) {
           //before After Thumbnail 생성
-          await this.generateBeforeAfterThumbnail(photo.id);
+          await this.workerService.generateBeforeAfterThumbnail(photo.id);
           if (!paymentId) {
             await this.photoRepository.updatePhotoStatus(photo.id, 'complete');
           }
@@ -358,103 +358,49 @@ export class PhotoService {
       };
     }
     await this.photoRepository.updatePhotoRetryCount(photoId, true);
-
+    const photoResult = await this.db
+      .selectFrom('photo_results')
+      .where('original_photo_id', '=', photoId)
+      .where('hair_design_id', '=', photo.selected_design_id)
+      .where('status', '=', 'complete')
+      .selectAll()
+      .executeTakeFirst();
+    //맨 처음 사진이 없다면,
+    if (!photoResult) {
+      //한장을 만든다.
+      const result = await this.workerService.makeOnlyOne(
+        photo.id,
+        photo.url,
+        photo.selected_design_id,
+        1,
+      );
+      //한장이 성공하면
+      if (result) {
+        if (photo.payment_id) {
+          await this.photoRepository.updatePhotoStatus(
+            photoId,
+            'rest_generating',
+          );
+          this.workerService.makeAllPhotos(photoId);
+        } else {
+          await this.photoRepository.updatePhotoStatus(photoId, 'complete');
+        }
+        return {
+          status: HttpStatus.OK,
+          result,
+        };
+      } else {
+        await this.photoRepository.updatePhotoStatus(photo.id, 'finished');
+        return {
+          status: HttpStatus.REQUEST_TIMEOUT,
+        };
+      }
+    }
     if (photo.payment_id) {
       this.workerService.makeAllPhotos(photoId);
-    } else {
-      const photoResult = await this.db
-        .selectFrom('photo_results')
-        .where('original_photo_id', '=', photoId)
-        .where('hair_design_id', '=', photo.selected_design_id)
-        .where('status', '=', 'complete')
-        .selectAll()
-        .executeTakeFirst();
-      if (!photoResult) {
-        const prompt = await this.db
-          .selectFrom('prompt')
-          .leftJoin('upload_file', 'upload_file.id', 'prompt.upload_file_id')
-          .where('prompt.design_id', '=', photo.selected_design_id)
-          .select([
-            'prompt.design_id as designId',
-            'prompt.ment',
-            'upload_file.url as imageUrl',
-          ])
-          .executeTakeFirst();
-        if (!prompt) {
-          throw new NotFoundException('prompt를 찾을 수 없습니다.');
-        }
-        this.workerService.generatePhoto(
-          photo.id,
-          photo.url,
-          photo.selected_design_id,
-          prompt.ment,
-          prompt.imageUrl,
-          1,
-        );
-      }
     }
     return {
       status: HttpStatus.OK,
     };
-  }
-  /*
-  썸네일 before After 만들기
-   */
-  async generateBeforeAfterThumbnail(photoId: number) {
-    const photo = await this.db
-      .selectFrom('photos as p')
-      .leftJoin('upload_file as uf', 'uf.id', 'p.upload_file_id')
-      .where('p.id', '=', photoId)
-      .select([
-        'p.id as photoId',
-        'p.thumbnail_before_after_id as thumbnail_before_after_id',
-        'p.selected_design_id as selected_design_id',
-        'uf.url as beforeUrl',
-      ])
-      .executeTakeFirst();
-    if (!photo) {
-      return;
-    }
-    const after = await this.db
-      .selectFrom('photo_results as pf')
-      .leftJoin('upload_file as uf', 'uf.id', 'pf.result_image_id')
-      .where('original_photo_id', '=', photoId)
-      .where('hair_design_id', '=', photo.selected_design_id)
-      .select(['uf.url as afterUrl'])
-      .executeTakeFirst();
-
-    const MAX_THUMBNAIL_RETRY = 2;
-    for (let i = 0; i < MAX_THUMBNAIL_RETRY; i++) {
-      try {
-        const thumbnailBuffer = await this.thumbnailService.generateBeforeAfter(
-          photo.beforeUrl,
-          after.afterUrl,
-        );
-
-        const thumbnailBase64 = `data:image/jpeg;base64,${thumbnailBuffer.toString(
-          'base64',
-        )}`;
-        const thumbnailUpload =
-          await this.azureBlobService.uploadFileImageBase64(thumbnailBase64);
-
-        if (thumbnailUpload) {
-          await this.db
-            .updateTable('photos')
-            .set({ thumbnail_before_after_id: thumbnailUpload.id })
-            .where('id', '=', photoId)
-            .execute();
-          console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
-          break; // 성공 시 루프 탈출
-        }
-      } catch (error) {
-        console.error(
-          `[PhotoService] 썸네일 생성 실패 (${i + 1}번째 시도):`,
-          error,
-        );
-        if (i === MAX_THUMBNAIL_RETRY - 1) {
-          console.error('[PhotoService] 썸네일 최종 생성 실패');
-        }
-      }
-    }
   }
 }
