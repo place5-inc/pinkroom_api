@@ -68,17 +68,36 @@ export class PhotoService {
       const now = new Date();
       const cutoff = new Date(now.getTime() - 90 * 1000); // 2분 전
 
-      // 1) DB 업데이트: pending인데 created_at이 cutoff보다 이전이면 fail 처리
-      // fail_code도 같이 넣고 싶으면 set에 추가하세요.
-      await this.db
+      const upd = await this.db
         .updateTable('photo_results')
         .set({
           status: 'fail',
+          fail_code: 'TIMEOUT', // 원하면 제거/변경
+          // updated_at: now, // 컬럼 있으면 추천
         })
         .where('original_photo_id', '=', photoId)
         .where('status', '=', 'pending')
         .where('created_at', '<=', cutoff)
-        .execute();
+        .executeTakeFirst();
+
+      // Kysely에서 업데이트된 row 수
+      const changed =
+        typeof upd.numUpdatedRows === 'bigint'
+          ? Number(upd.numUpdatedRows)
+          : (upd.numUpdatedRows ?? 0);
+
+      // 2) 변경된 게 "있으면" photos.status를 finished로 변경
+      if (changed > 0) {
+        await this.db
+          .updateTable('photos')
+          .set({
+            status: 'finished',
+            // updated_at: now, // 컬럼 있으면 추천
+          })
+          .where('id', '=', photoId)
+          .execute();
+      }
+
       const result = await this.photoRepository.getPhotoById(photoId);
 
       return {
