@@ -392,7 +392,7 @@ export class PhotoService {
       await this.photoRepository.updatePhotoStatus(photo.id, 'finished');
       return { status: HttpStatus.REQUEST_TIMEOUT };
     }
-
+    const item = await this.photoRepository.getPhotoById(photo.id);
     // 첫 장 성공 후 공통 처리
     if (isPaid) {
       await runRestGeneration();
@@ -400,6 +400,6 @@ export class PhotoService {
       await this.photoRepository.updatePhotoStatus(photoId, 'complete');
     }
 
-    return { status: HttpStatus.OK, result };
+    return { status: HttpStatus.OK, result: item };
   }
 }
