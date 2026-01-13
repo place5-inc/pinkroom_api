@@ -15,6 +15,16 @@ export class WorldcupService {
   async getWorldcupList(userId: string) {
     try {
       const results = await this.photoRepository.getPhotosByUserId(userId);
+      const user = await this.userRepository.getUser(userId);
+
+      // ✅ 사진이 없으면 여기서 바로 반환 (IN () 방지)
+      if (!results || results.length === 0) {
+        return {
+          status: HttpStatus.OK,
+          results: [],
+          user,
+        };
+      }
 
       const photoIds = results.map((p) => p.id);
 
@@ -56,8 +66,6 @@ export class WorldcupService {
         voteCount: voteCountByPhotoId[photo.id] ?? 0,
         didShareWorldcup: sharedPhotoIdSet.has(photo.id),
       }));
-
-      const user = await this.userRepository.getUser(userId);
 
       return {
         status: HttpStatus.OK,
