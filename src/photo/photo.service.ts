@@ -323,6 +323,7 @@ export class PhotoService {
       if (result.numUpdatedRows === 0n) {
         throw new NotFoundException('사진을 찾을 수 없습니다.');
       }
+      await this.photoRepository.updatePhotoStatus(photoId, 'rest_generating');
       await this.photoRepository.updatePhotoRetryCount(photoId, false);
       this.workerService.makeAllPhotos(photoId);
       return {
