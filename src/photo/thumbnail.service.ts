@@ -9,94 +9,24 @@ export class ThumbnailService implements OnModuleInit {
   constructor(private readonly azureBlobService: AzureBlobService) {}
   onModuleInit() {
     try {
-      const rootPath = process.cwd();
-      // const fontPathBold = join(
-      //   rootPath,
-      //   'dist/resources/fonts/Pretendard-Bold.ttf',
-      // );
-      // const fontPathRegular = join(
-      //   rootPath,
-      //   'dist/resources/fonts/Pretendard-Regular.ttf',
-      // );
       const path = require('path');
-      // 1. 탐색할 후보 경로 리스트 (대소문자 주의!)
-      const candidates = [
-        path.join(rootPath, 'dist/resources/fonts/Pretendard-Bold.ttf'),
-        path.join(rootPath, 'resources/fonts/Pretendard-Bold.ttf'),
-        path.join(rootPath, 'wwwroot/dist/resources/fonts/Pretendard-Bold.ttf'),
-        path.resolve(__dirname, '../../resources/fonts/Pretendard-Bold.ttf'),
-        path.resolve(__dirname, '../resources/fonts/Pretendard-Bold.ttf'),
-      ];
-      console.log('[ThumbnailService] 폰트 탐색 시작...');
+      const rootPath = process.cwd(); // /home/site/wwwroot
 
-      //console.log('[ThumbnailService] 폰트 경로 확인:', fontPathBold);
+      // API 결과로 확인된 확실한 경로
+      const fontDir = path.join(rootPath, 'dist/resources/fonts');
+
+      const regularPath = path.join(fontDir, 'Pretendard-Regular.ttf');
+      const boldPath = path.join(fontDir, 'Pretendard-Bold.ttf');
 
       const fs = require('fs');
-      // if (fs.existsSync(fontPathBold)) {
-      //   // registerFont(fontPathBold, { family: 'PretendardBold' });
-      //   // registerFont(fontPathRegular, { family: 'PretendardRegular' });
-      //   registerFont(fontPathRegular, {
-      //     family: 'Pretendard',
-      //     weight: '400',
-      //   });
-
-      //   registerFont(fontPathBold, {
-      //     family: 'Pretendard',
-      //     weight: '700',
-      //   });
-      //   console.log(
-      //     '[ThumbnailService] Pretendard 폰트 등록 완료 (PretendardBold, PretendardRegular)',
-      //   );
-      // } else {
-      //   // 만약 dist에 없다면 루트의 resources라도 시도합니다.
-      //   const fallbackPath = join(
-      //     rootPath,
-      //     'resources/fonts/Pretendard-Bold.ttf',
-      //   );
-      //   if (fs.existsSync(fallbackPath)) {
-      //     registerFont(
-      //       join(rootPath, 'resources/fonts/Pretendard-Regular.ttf'),
-      //       { family: 'Pretendard', weight: '400' },
-      //     );
-      //     registerFont(fallbackPath, { family: 'Pretendard', weight: '700' });
-      //     console.log('[Font Debug] Fonts registered from root resources.');
-      //   } else {
-      //     console.warn('[Font Debug] No font files found in dist or root.');
-      //   }
-      // }
-
-      let foundBaseDir = null;
-
-      for (const fullPath of candidates) {
-        const exists = fs.existsSync(fullPath);
-        console.log(
-          `[Font Check] 경로 확인: ${fullPath} -> ${exists ? '✅ 있음' : '❌ 없음'}`,
-        );
-
-        if (exists) {
-          foundBaseDir = path.dirname(fullPath);
-          break;
-        }
-      }
-
-      if (foundBaseDir) {
-        const filesInDir = fs.readdirSync(foundBaseDir);
-        console.log(
-          `[Font Check] 🎯 폴더 내부 파일 목록: ${JSON.stringify(filesInDir)}`,
-        );
-        const regularPath = path.join(foundBaseDir, 'Pretendard-Regular.ttf');
-        const boldPath = path.join(foundBaseDir, 'Pretendard-Bold.ttf');
-
+      if (fs.existsSync(regularPath) && fs.existsSync(boldPath)) {
+        // 폰트 등록 (family 이름을 하나로 통일하고 weight로 구분하는 것이 표준입니다)
         registerFont(regularPath, { family: 'Pretendard', weight: '400' });
         registerFont(boldPath, { family: 'Pretendard', weight: '700' });
 
-        console.log(
-          `[ThumbnailService] 🎯 최종 폰트 등록 완료! 위치: ${foundBaseDir}`,
-        );
+        console.log('[ThumbnailService] 폰트 등록 완료: Pretendard (400, 700)');
       } else {
-        console.error(
-          '[ThumbnailService] 😱 경고: 모든 경로에서 폰트 파일을 찾지 못했습니다.',
-        );
+        console.error('[ThumbnailService] 폰트 파일을 찾을 수 없습니다.');
       }
     } catch (error) {
       console.error('[ThumbnailService] 폰트 등록 중 예외 발생:', error);
@@ -194,7 +124,7 @@ export class ThumbnailService implements OnModuleInit {
 
     // Draw Badges
     // 폰트 설정: 개별 등록한 PretendardBold를 우선 사용합니다.
-    ctx.font = '700 20px "Pretendard", sans-serif';
+    ctx.font = '700 20px "Pretendard"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -337,7 +267,7 @@ export class ThumbnailService implements OnModuleInit {
 
       ctx.fillStyle = '#ffffff';
       // 폰트 폴백 설정 (Pretendard -> Apple SD -> System)
-      ctx.font = '700 15px "Pretendard", sans-serif';
+      ctx.font = '700 15px "Pretendard"';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('PINK ROOM', width / 2, currentY + labelHeight / 2);
@@ -351,7 +281,7 @@ export class ThumbnailService implements OnModuleInit {
       const lineHeight = Math.round(fontSize * 1.4);
 
       ctx.fillStyle = '#444444';
-      ctx.font = '700 27px "Pretendard", sans-serif';
+      ctx.font = '700 27px "Pretendard"';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
 
@@ -473,7 +403,7 @@ export class ThumbnailService implements OnModuleInit {
       /** 타이틀 */
       let currentY = paddingTop;
       ctx.fillStyle = '#e9407a';
-      ctx.font = '700 12px "Pretendard", sans-serif';
+      ctx.font = '700 12px "Pretendard"';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.fillText('내 친구의 BEST 헤어스타일은?', width / 2, currentY - 2);
