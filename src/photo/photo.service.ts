@@ -44,64 +44,102 @@ export class PhotoService {
    */
   async getPhotoList(userId: string) {
     try {
+      const now = new Date();
+      const cutoff = new Date(now.getTime() - 2 * 60 * 1000); // 2분 전
+
+      await this.db.startTransaction(async (trx) => {
+        // 1) 해당 유저의 모든 photo 중, timeout된 pending 결과를 fail로 변경
+        // + 어떤 photoId들이 영향을 받았는지 returning으로 받음
+        const updatedRows = await trx
+          .updateTable('photo_results as pr')
+          .set({
+            status: 'fail',
+            // updated_at: now,
+          })
+          .where('pr.status', '=', 'pending')
+          .where('pr.created_at', '<=', cutoff)
+          .where(
+            'pr.original_photo_id',
+            'in',
+            trx
+              .selectFrom('photos as p')
+              .select('p.id')
+              .where('p.user_id', '=', userId),
+          )
+          .returning(['pr.original_photo_id as photoId'])
+          .execute();
+
+        const affectedPhotoIds = [
+          ...new Set(updatedRows.map((r) => r.photoId)),
+        ];
+
+        // 2) fail로 바뀐 결과가 있는 photo들은 photos.status를 finished로 변경
+        if (affectedPhotoIds.length > 0) {
+          await trx
+            .updateTable('photos')
+            .set({
+              status: 'finished',
+            })
+            .where('id', 'in', affectedPhotoIds)
+            .execute();
+        }
+      });
+
+      // 3) 최신 상태로 조회해서 응답
       const results = await this.photoRepository.getPhotosByUserId(userId);
       const user = await this.userRepository.getUser(userId);
 
-      return {
-        status: HttpStatus.OK,
-        results,
-        user,
-      };
-    } catch (e) {
-      return {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: e.message,
-      };
+      return { status: HttpStatus.OK, results, user };
+    } catch (e: any) {
+      return { status: HttpStatus.INTERNAL_SERVER_ERROR, message: e.message };
     }
   }
-
   /*
   사진 리스트
    */
   async getResultPhotoList(photoId: number) {
     try {
       const now = new Date();
-      const cutoff = new Date(now.getTime() - 90 * 1000); // 2분 전
+      const cutoff = new Date(now.getTime() - 2 * 60 * 1000); // 2분 전
 
-      const upd = await this.db
-        .updateTable('photo_results')
-        .set({
-          status: 'fail',
-        })
-        .where('original_photo_id', '=', photoId)
-        .where('status', '=', 'pending')
-        .where('created_at', '<=', cutoff)
-        .executeTakeFirst();
-
-      // Kysely에서 업데이트된 row 수
-      const changed =
-        typeof upd.numUpdatedRows === 'bigint'
-          ? Number(upd.numUpdatedRows)
-          : (upd.numUpdatedRows ?? 0);
-
-      // 2) 변경된 게 "있으면" photos.status를 finished로 변경
-      if (changed > 0) {
-        await this.db
-          .updateTable('photos')
+      const result = await this.db.startTransaction(async (trx) => {
+        // 1) timeout된 pending 결과들을 fail로 변경
+        const upd = await trx
+          .updateTable('photo_results')
           .set({
-            status: 'finished',
+            status: 'fail',
           })
-          .where('id', '=', photoId)
-          .execute();
-      }
+          .where('original_photo_id', '=', photoId)
+          .where('status', '=', 'pending')
+          .where('created_at', '<=', cutoff)
+          .executeTakeFirst();
 
-      const result = await this.photoRepository.getPhotoById(photoId);
+        // Kysely에서 업데이트된 row 수
+        const changed =
+          typeof upd.numUpdatedRows === 'bigint'
+            ? Number(upd.numUpdatedRows)
+            : (upd.numUpdatedRows ?? 0);
+
+        // 2) 변경된 게 "있으면" photos.status를 finished로 변경
+        if (changed > 0) {
+          await trx
+            .updateTable('photos')
+            .set({
+              status: 'finished',
+            })
+            .where('id', '=', photoId)
+            .execute();
+        }
+
+        // 3) 최신 상태 재조회해서 클라이언트에 반환
+        return this.photoRepository.getPhotoById(photoId);
+      });
 
       return {
         status: HttpStatus.OK,
         result,
       };
-    } catch (e) {
+    } catch (e: any) {
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         message: e.message,
