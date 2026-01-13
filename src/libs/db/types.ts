@@ -123,6 +123,7 @@ export type users = {
     use_code_id: string | null;
     use_code_photo_id: number | null;
     sample_type: number | null;
+    deleted_at: Timestamp | null;
 };
 export type worldcup_log = {
     id: Generated<number>;

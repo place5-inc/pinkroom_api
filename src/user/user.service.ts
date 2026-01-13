@@ -9,6 +9,7 @@ export class UserService {
       .selectFrom('users')
       .selectAll()
       .where('phone', '=', phone)
+      .where('deleted_at', 'is', null)
       .executeTakeFirst();
   }
   async createUser(phone: string, sampleType?: number) {
