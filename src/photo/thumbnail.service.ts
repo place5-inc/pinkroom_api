@@ -81,14 +81,19 @@ export class ThumbnailService implements OnModuleInit {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
 
-    // Load images
-    const [imgBefore, imgAfter] = await Promise.all([
+    // 1. 이미지 로딩
+    const [imgBefore, imgAfter, tagBefore, tagAfter] = await Promise.all([
       this.loadImageFromUrl(beforeUrl),
       this.loadImageFromUrl(afterUrl),
+      this.loadImageFromUrl(
+        'https://pinkroom.blob.core.windows.net/pinkroom/before_tag.png',
+      ),
+      this.loadImageFromUrl(
+        'https://pinkroom.blob.core.windows.net/pinkroom/after_tag.png',
+      ),
     ]);
-    //주석추가
 
-    // Left Half (Before)
+    // 2. Left Half (Before Photo)
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, 0, width / 2, height);
@@ -102,7 +107,7 @@ export class ThumbnailService implements OnModuleInit {
     ctx.drawImage(imgBefore, (width / 2 - w1) / 2, (height - h1) / 2, w1, h1);
     ctx.restore();
 
-    // Right Half (After)
+    // 3. Right Half (After Photo)
     ctx.save();
     ctx.beginPath();
     ctx.rect(width / 2, 0, width / 2, height);
@@ -122,32 +127,31 @@ export class ThumbnailService implements OnModuleInit {
     );
     ctx.restore();
 
-    // Draw Badges
-    // 폰트 설정: 개별 등록한 PretendardBold를 우선 사용합니다.
-    ctx.font = '700 20px "Pretendard"';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    const badgeW = 84;
-    const badgeH = 32;
-    const margin = 12; // 사용자 요청 마진
+    // 4. 태그 이미지 설정
+    const margin = 12;
     const badgeY = margin;
 
-    // Before Badge (Left Half - Top Left)
-    const leftBadgeX = margin;
-    ctx.fillStyle = 'rgba(128, 128, 128, 1.0)';
-    this.drawRoundedRect(ctx, leftBadgeX, badgeY, badgeW, badgeH, 6);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText('Before', leftBadgeX + badgeW / 2, badgeY + badgeH / 2);
+    // 기본 높이는 둘 다 동일하게 유지
+    const badgeH = 32;
 
-    // After Badge (Right Half - Top Left)
-    const rightBadgeX = width / 2 + margin;
-    ctx.fillStyle = '#E9407A';
-    this.drawRoundedRect(ctx, rightBadgeX, badgeY, badgeW, badgeH, 6);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText('After', rightBadgeX + badgeW / 2, badgeY + badgeH / 2);
+    // Before 태그 가로 폭 (기존 유지)
+    const beforeW = 84;
+
+    // After 태그 가로 폭 (198/249 비율로 축소)
+    // 84 * (198/249) = 약 66.8
+    const afterW = beforeW * (198 / 249);
+
+    // Before Tag 그리기
+    if (tagBefore) {
+      ctx.drawImage(tagBefore, margin, badgeY, beforeW, badgeH);
+    }
+
+    // After Tag 그리기 (높이는 같고 가로만 축소됨)
+    if (tagAfter) {
+      const rightBadgeX = width / 2 + margin;
+      // 가로 폭에 afterW 적용
+      ctx.drawImage(tagAfter, rightBadgeX, badgeY, afterW, badgeH);
+    }
 
     return canvas.toBuffer('image/jpeg', { quality: 0.9 });
   }
@@ -201,115 +205,67 @@ export class ThumbnailService implements OnModuleInit {
   private async generateMergedCanvas(
     imageUrls: string[],
   ): Promise<Buffer | null> {
-    const width = 440;
-    const scale = 2;
+    // 1. 기본 논리 사이즈 설정 (사용자 제공 수치)
+    const width = 800;
+    const height = 1330;
+    const bannerHeight = 352;
+    const gridAreaHeight = 978; // 1330 - 352
+
+    const scale = 2; // 고해상도 출력을 위한 배율
     const cols = 4;
     const rows = 4;
-    const gap = 6;
-    const paddingX = 12;
-    const paddingY = 40;
-    const labelWidth = 105;
-    const labelHeight = 30;
-    const labelMarginTop = 0;
-    const titleMarginTop = 16;
-    const titleFontSize = 28;
-    const titleLineHeight = 38;
-    const gridMarginTop = 32;
-    const cellRadius = 8;
 
-    // 셀 크기 계산
+    // 2. 그리드 간격 및 패딩 설정
+    const paddingX = 22; // 좌우 여백
+    const gridTopMargin = 0; // 배너와 그리드 사이 간격
+    const gap = 11; // 이미지 사이 간격
+    const cellRadius = 14; // 이미지 모서리 둥글게
+
+    // 3. 셀 크기 자동 계산
     const gridWidth = width - paddingX * 2;
     const cellWidth = (gridWidth - gap * (cols - 1)) / cols;
-    const cellHeight = (cellWidth / 83) * 100;
-    const gridHeight = cellHeight * rows + gap * (rows - 1);
-
-    const titleBlockHeight = titleLineHeight * 2;
-    const totalHeight =
-      paddingY +
-      labelMarginTop +
-      labelHeight +
-      titleMarginTop +
-      titleBlockHeight +
-      gridMarginTop +
-      gridHeight +
-      paddingY;
+    // 4:5 혹은 제공된 비율(0.83)에 맞게 높이 설정 (여기선 영역에 맞춰 자동 배분)
+    const cellHeight =
+      (gridAreaHeight - gridTopMargin - gap * (rows - 1) - 70) / rows;
 
     try {
-      const canvas = createCanvas(
-        Math.round(width * scale),
-        Math.round(totalHeight * scale),
-      );
+      // 캔버스 생성 (고해상도 적용)
+      const canvas = createCanvas(width * scale, height * scale);
       const ctx = canvas.getContext('2d');
       ctx.scale(scale, scale);
 
-      // 이미지 병렬 로딩
-      const targetUrls = imageUrls.slice(0, cols * rows);
-      const loadedImages = await Promise.all(
-        targetUrls.map(async (url) => {
-          try {
-            return await this.loadImageFromUrl(url);
-          } catch (e) {
-            return null; // 로드 실패 시 빈 칸 처리
-          }
-        }),
-      );
+      // 이미지들 병렬 로딩
+      const [loadedImages, bannerImage] = await Promise.all([
+        Promise.all(
+          imageUrls
+            .slice(0, 16)
+            .map((url) => this.loadImageFromUrl(url).catch(() => null)),
+        ),
+        this.loadImageFromUrl(
+          'https://pinkroom.blob.core.windows.net/pinkroom/merged_top.png',
+        ),
+      ]);
 
-      // 배경
+      // 배경색 (흰색)
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, width, totalHeight);
+      ctx.fillRect(0, 0, width, height);
 
-      // 상단 라벨 (Pink Label)
-      const labelX = (width - labelWidth) / 2;
-      let currentY = paddingY + labelMarginTop;
+      // 4. 상단 배너 이미지 그리기 (800x352)
+      if (bannerImage) {
+        ctx.drawImage(bannerImage, 0, 0, width, bannerHeight);
+      }
 
-      ctx.fillStyle = '#e9407a';
-      ctx.fillRect(labelX, currentY, labelWidth, labelHeight);
+      // 5. 그리드 시작 위치 설정
+      const gridStartY = bannerHeight + gridTopMargin;
 
-      ctx.fillStyle = '#ffffff';
-      // 폰트 폴백 설정 (Pretendard -> Apple SD -> System)
-      ctx.font = '700 15px "Pretendard"';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('PINK ROOM', width / 2, currentY + labelHeight / 2);
-
-      // 타이틀
-      currentY += labelHeight + titleMarginTop;
-
-      const lines = ['저에게 가장 잘 어울리는', '헤어스타일을 골라주세요!'];
-
-      const fontSize = 27;
-      const lineHeight = Math.round(fontSize * 1.4);
-
-      ctx.fillStyle = '#444444';
-      ctx.font = '700 27px "Pretendard"';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-
-      ctx.save();
-      ctx.scale(0.96, 1);
-
-      lines.forEach((line, i) => {
-        const y = currentY + i * lineHeight;
-
-        const x = width / 2 / 0.96; // scale 보정
-        ctx.fillText(line, x, y);
-        ctx.fillText(line, x + 0.4, y);
-        ctx.fillText(line, x, y + 0.4);
-      });
-
-      ctx.restore();
-
-      // 그리드 그리기
-      const gridStartY = currentY + titleBlockHeight + gridMarginTop;
-      const cellRatio = 83 / 100;
-
-      for (let index = 0; index < cols * rows; index += 1) {
+      // 6. 16개 이미지 배치
+      for (let index = 0; index < 16; index++) {
         const row = Math.floor(index / cols);
         const col = index % cols;
         const x = paddingX + col * (cellWidth + gap);
         const y = gridStartY + row * (cellHeight + gap);
 
-        // 셀 배경 (이미지 없을 경우 보임)
+        // 셀 배경 (이미지 로딩 실패 시 노출)
         ctx.fillStyle = '#f8f8f8';
         this.drawRoundedRect(ctx, x, y, cellWidth, cellHeight, cellRadius);
         ctx.fill();
@@ -317,12 +273,10 @@ export class ThumbnailService implements OnModuleInit {
         const img = loadedImages[index];
         if (!img) continue;
 
-        // Cover fit 계산
-        const imgRatio = (img.width as number) / (img.height as number);
-        let drawWidth: number;
-        let drawHeight: number;
-        let offsetX: number;
-        let offsetY: number;
+        // 이미지 Cover Fit 계산
+        const imgRatio = img.width / img.height;
+        const cellRatio = cellWidth / cellHeight;
+        let drawWidth, drawHeight, offsetX, offsetY;
 
         if (imgRatio > cellRatio) {
           drawHeight = cellHeight;
@@ -343,6 +297,7 @@ export class ThumbnailService implements OnModuleInit {
         ctx.restore();
       }
 
+      // 최종 결과물 출력
       return canvas.toBuffer('image/jpeg', { quality: 0.95 });
     } catch (e) {
       console.error('[generateMergedCanvas] Error:', e);
@@ -357,10 +312,9 @@ export class ThumbnailService implements OnModuleInit {
     const scale = 2;
 
     const paddingX = 18;
-    const paddingTop = 16;
-    const titleFontSize = 12;
-    const titleLineHeight = 1.2;
-    const gapBetweenTitleAndGrid = 12;
+    const paddingTop = 0; // 배너 시작 위치 (약간 조정)
+    const bannerHeight = 36; // 상단 배너(글자 포함) 이미지의 고정 높이 설정
+    const gapBetweenTitleAndGrid = 7; // 배너와 그리드 사이 간격 축소
 
     const gridRowGap = 5;
     const gridColGap = 5;
@@ -369,6 +323,7 @@ export class ThumbnailService implements OnModuleInit {
     const bottomGradientHeight = 44;
     const cellRadius = 4;
 
+    // 그리드 너비와 셀 크기 계산
     const gridWidth = width - paddingX * 2;
     const cellWidth = (gridWidth - gridColGap * (cols - 1)) / cols;
     const cellHeight = cellWidth / rowAspect;
@@ -381,36 +336,40 @@ export class ThumbnailService implements OnModuleInit {
       const ctx = canvas.getContext('2d');
       ctx.scale(scale, scale);
 
-      /** 이미지 로딩 */
+      /** 1. 이미지 및 배너 로딩 병렬 처리 */
       const urls = imageUrls.slice(0, 8);
-      const images = await Promise.all(
-        urls.map(async (url) => {
-          try {
-            return await this.loadImageFromUrl(url);
-          } catch {
-            return null;
-          }
-        }),
-      );
+      const [images, bannerImage] = await Promise.all([
+        Promise.all(
+          urls.map((url) => this.loadImageFromUrl(url).catch(() => null)),
+        ),
+        this.loadImageFromUrl(
+          'https://pinkroom.blob.core.windows.net/pinkroom/merged_top_2.png',
+        ),
+      ]);
 
-      /** 배경 그라데이션 */
+      /** 2. 배경 그라데이션 */
       const bgGradient = ctx.createLinearGradient(0, 0, width, height * 3);
       bgGradient.addColorStop(0.202, '#F8DBE7');
       bgGradient.addColorStop(1, '#D31154');
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, width, height);
 
-      /** 타이틀 */
+      /** 3. 상단 타이틀 배너 그리기 (텍스트 fillText 대체) */
       let currentY = paddingTop;
-      ctx.fillStyle = '#e9407a';
-      ctx.font = '700 12px "Pretendard"';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillText('내 친구의 BEST 헤어스타일은?', width / 2, currentY - 2);
+      let finalBannerHeight = 36; // 폴백용 기본값
+      if (bannerImage) {
+        // 비율 계산: 원본 너비 대비 높이 비율을 구함
+        const aspectRatio = bannerImage.width / bannerImage.height;
+        // 캔버스 너비(300)에 맞춘 실제 높이 계산 (글자 찌그러짐 방지)
+        finalBannerHeight = width / aspectRatio;
 
-      currentY += titleFontSize * titleLineHeight + gapBetweenTitleAndGrid;
+        ctx.drawImage(bannerImage, 0, currentY, width, finalBannerHeight);
+      }
 
-      /** 4x2 그리드 */
+      // 그리드 시작 위치 계산 (배너 높이 + 간격)
+      currentY += bannerHeight + gapBetweenTitleAndGrid;
+
+      /** 4. 4x2 그리드 그리기 */
       for (let row = 0; row < 2; row++) {
         for (let col = 0; col < 4; col++) {
           const index = row * 4 + col;
@@ -419,6 +378,7 @@ export class ThumbnailService implements OnModuleInit {
           const x = paddingX + col * (cellWidth + gridColGap);
           const y = currentY + row * (cellHeight + gridRowGap);
 
+          // 이미지 베이스 (로딩 실패 대비)
           ctx.fillStyle = '#F3F4F6';
           this.drawRoundedRect(ctx, x, y, cellWidth, cellHeight, cellRadius);
           ctx.fill();
@@ -428,14 +388,12 @@ export class ThumbnailService implements OnModuleInit {
           ctx.save();
           this.drawRoundedRect(ctx, x, y, cellWidth, cellHeight, cellRadius);
           ctx.clip();
-
           this.drawImageCover(ctx, img, x, y, cellWidth, cellHeight);
-
           ctx.restore();
         }
       }
 
-      /** 하단 그라데이션 */
+      /** 5. 하단 그라데이션 */
       const bottomGradient = ctx.createLinearGradient(
         0,
         height - bottomGradientHeight,
