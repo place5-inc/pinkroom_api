@@ -142,7 +142,6 @@ export class PhotoService {
     designId: number,
     paymentId?: number,
     _code?: string,
-    isLowVersion?: boolean,
   ) {
     try {
       if (!paymentId && !_code) {
@@ -193,7 +192,8 @@ export class PhotoService {
           .executeTakeFirst();
 
         const useCount = row?.count ?? 0;
-        if (useCount > 15) {
+        const limit = Number(process.env.CODE_SHARE_LIMIT ?? 0);
+        if (useCount >= limit) {
           throw new ForbiddenException('코드 사용 가능 횟수를 초과했습니다.');
         }
         const user = await this.db
@@ -259,7 +259,6 @@ export class PhotoService {
           prompt.ment,
           prompt.imageUrl,
           attempt,
-          isLowVersion,
         );
         if (result) {
           //before After Thumbnail 생성
@@ -275,7 +274,7 @@ export class PhotoService {
               photo.id,
               'rest_generating',
             );
-            this.workerService.makeAllPhotos(photo.id, isLowVersion);
+            this.workerService.makeAllPhotos(photo.id);
           }
           return {
             status: HttpStatus.OK,
@@ -300,12 +299,7 @@ export class PhotoService {
   전체 사진 생성
   쿠폰으로 한개 만들고, 이후에 결제했을 떄
    */
-  async remainingPhoto(
-    userId: string,
-    photoId: number,
-    paymentId: number,
-    isLowVersion?: boolean,
-  ) {
+  async remainingPhoto(userId: string, photoId: number, paymentId: number) {
     try {
       const result = await this.db
         .updateTable('photos')
@@ -321,7 +315,7 @@ export class PhotoService {
         throw new NotFoundException('사진을 찾을 수 없습니다.');
       }
       await this.photoRepository.updatePhotoRetryCount(photoId, false);
-      this.workerService.makeAllPhotos(photoId, isLowVersion);
+      this.workerService.makeAllPhotos(photoId);
       return {
         status: HttpStatus.OK,
       };
@@ -336,11 +330,7 @@ export class PhotoService {
   이미 원본 있을 때, 하나의 디자인 만들기
   실패한거용인데, 사용 안하는것 같음
    */
-  async retryUploadPhoto(
-    userId: string,
-    photoId: number,
-    isLowVersion?: boolean,
-  ) {
+  async retryUploadPhoto(userId: string, photoId: number) {
     const photo = await this.db
       .selectFrom('photos')
       .leftJoin('upload_file', 'upload_file.id', 'photos.upload_file_id')
@@ -360,7 +350,7 @@ export class PhotoService {
     await this.photoRepository.updatePhotoRetryCount(photoId, true);
 
     if (photo.payment_id) {
-      this.workerService.makeAllPhotos(photoId, isLowVersion);
+      this.workerService.makeAllPhotos(photoId);
     } else {
       const photoResult = await this.db
         .selectFrom('photo_results')
@@ -390,7 +380,6 @@ export class PhotoService {
           prompt.ment,
           prompt.imageUrl,
           1,
-          isLowVersion,
         );
       }
     }
@@ -457,103 +446,5 @@ export class PhotoService {
         }
       }
     }
-  }
-
-  async checkNeedMakePhotos(userId: string) {
-    const photos = await this.db
-      .selectFrom('photos')
-      .where('user_id', '=', userId)
-      .select('id')
-      .execute();
-
-    for (const { id } of photos) {
-      await this.checkNeedMakePhoto(userId, id);
-    }
-  }
-
-  async checkNeedMakePhoto(userId: string, photoId: number) {
-    try {
-      const result = await this.photoRepository.getPhotoById(photoId);
-
-      if (result?.paymentId) {
-        const imgs = result.resultImages ?? [];
-
-        const completeCount = imgs.reduce(
-          (acc, img) => acc + (img.status === 'complete' ? 1 : 0),
-          0,
-        );
-
-        if (completeCount < 16) {
-          const toTime = (s?: string) => (s ? new Date(s).getTime() : NaN);
-
-          // 1) complete 아닌 것 중 "가장 오래된" 1개
-          const oldestNotComplete = imgs
-            .filter((img) => img.status !== 'complete' && !!img.createdAt)
-            .reduce<(typeof imgs)[number] | null>((best, cur) => {
-              if (!best) return cur;
-              return toTime(cur.createdAt) < toTime(best.createdAt)
-                ? cur
-                : best; // 최소
-            }, null);
-
-          // 2) 없다면 complete 중 "가장 최신" 1개
-          const newestComplete = imgs
-            .filter((img) => img.status === 'complete' && !!img.createdAt)
-            .reduce<(typeof imgs)[number] | null>((best, cur) => {
-              if (!best) return cur;
-              return toTime(cur.createdAt) > toTime(best.createdAt)
-                ? cur
-                : best; // 최대
-            }, null);
-
-          const target = oldestNotComplete ?? newestComplete;
-
-          if (target) {
-            const oneMinuteAgo = Date.now() - 60_000;
-            const targetTime = toTime(target.createdAt);
-
-            const isOlderThan1Min = targetTime <= oneMinuteAgo;
-
-            // TODO: 비교 결과로 분기
-            if (isOlderThan1Min) {
-              this.workerService.makeAllPhotos(photoId, false);
-            }
-          }
-        }
-      } else if (result?.code) {
-        const imgs = result.resultImages ?? [];
-
-        const completeCount = imgs.reduce(
-          (acc, img) => acc + (img.status === 'complete' ? 1 : 0),
-          0,
-        );
-        if (completeCount < 1) {
-          const toTime = (s?: string) => (s ? new Date(s).getTime() : NaN);
-
-          // 1) complete 아닌 것 중 "가장 오래된" 1개
-          const oldestNotComplete = imgs
-            .filter((img) => img.status !== 'complete' && !!img.createdAt)
-            .reduce<(typeof imgs)[number] | null>((best, cur) => {
-              if (!best) return cur;
-              return toTime(cur.createdAt) < toTime(best.createdAt)
-                ? cur
-                : best; // 최소
-            }, null);
-          const target = oldestNotComplete ?? null;
-          if (target) {
-            const oneMinuteAgo = Date.now() - 60_000;
-            const targetTime = toTime(target.createdAt);
-
-            const isOlderThan1Min = targetTime <= oneMinuteAgo;
-
-            // TODO: 비교 결과로 분기
-            if (isOlderThan1Min) {
-              //this.retryUploadPhoto(userId, photoId);
-              //this.workerService.makeAllPhotos(photoId);
-            }
-          }
-        }
-      }
-    } catch (e) {}
   }
 }
