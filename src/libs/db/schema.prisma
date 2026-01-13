@@ -169,3 +169,9 @@ model worldcup_log {
   first_vote_at DateTime? @db.DateTime
   last_vote_at  DateTime? @db.DateTime
 }
+
+model gemini_key {
+  id         Int       @id(map: "PK_gemini_key") @default(autoincrement())
+  key        String?   @db.NVarChar(200)
+  expired_at DateTime? @db.DateTime
+}

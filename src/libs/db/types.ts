@@ -17,6 +17,11 @@ export type code_hair_style = {
     published_at: Timestamp | null;
     order_seq: number | null;
 };
+export type gemini_key = {
+    id: Generated<number>;
+    key: string | null;
+    expired_at: Timestamp | null;
+};
 export type kakao_log = {
     key: Generated<number>;
     user_id: string | null;
@@ -144,6 +149,7 @@ export type worldcup_votes = {
 export type DB = {
     code_hair_design: code_hair_design;
     code_hair_style: code_hair_style;
+    gemini_key: gemini_key;
     kakao_log: kakao_log;
     log_gemini_error: log_gemini_error;
     payments: payments;
