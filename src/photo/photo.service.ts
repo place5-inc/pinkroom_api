@@ -44,6 +44,38 @@ export class PhotoService {
    */
   async getPhotoList(userId: string) {
     try {
+      const now = new Date();
+      const cutoff = new Date(now.getTime() - 2 * 60 * 1000);
+
+      // 1) 만료 대상 photoId 먼저 조회
+      const expired = await this.db
+        .selectFrom('photo_results as pr')
+        .innerJoin('photos as p', 'p.id', 'pr.original_photo_id')
+        .select(['pr.original_photo_id as photoId'])
+        .where('p.user_id', '=', userId)
+        .where('pr.status', '=', 'pending')
+        .where('pr.created_at', '<=', cutoff)
+        .execute();
+
+      const affectedPhotoIds = [...new Set(expired.map((r) => r.photoId))];
+
+      if (affectedPhotoIds.length > 0) {
+        // 2) 결과 fail 처리 (업데이트 테이블 alias 쓰지 말기)
+        await this.db
+          .updateTable('photo_results')
+          .set({ status: 'fail' })
+          .where('original_photo_id', 'in', affectedPhotoIds)
+          .where('status', '=', 'pending')
+          .where('created_at', '<=', cutoff)
+          .execute();
+
+        // 3) photos finished 처리
+        await this.db
+          .updateTable('photos')
+          .set({ status: 'finished' })
+          .where('id', 'in', affectedPhotoIds)
+          .execute();
+      }
       // 3) 최신 상태로 조회해서 응답
       const results = await this.photoRepository.getPhotosByUserId(userId);
       const user = await this.userRepository.getUser(userId);
