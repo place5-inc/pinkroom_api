@@ -291,6 +291,8 @@ export class PhotoWorkerService {
     sampleUrl?: string,
     tryCount?: number,
   ) {
+    let keyRow: { id: number; key: string } | undefined;
+
     try {
       await this.photoRepository.updatePhotoResult(
         photoId,
@@ -299,11 +301,17 @@ export class PhotoWorkerService {
         'pending',
         tryCount,
       );
+
+      keyRow = await this.getGeminiKey();
+
+      if (!keyRow) throw new Error('No available gemini_key');
+
       const image = await this.aiService.generatePhotoGemini(
         photoUrl,
         null,
         ment,
         sampleUrl,
+        keyRow.key,
       );
 
       const uploadFile = await this.uploadToAzure(image, true);
@@ -319,6 +327,13 @@ export class PhotoWorkerService {
         tryCount,
       );
     } catch (e) {
+      if (keyRow?.id) {
+        await this.db
+          .updateTable('gemini_key')
+          .set({ expired_at: new Date() })
+          .where('id', '=', keyRow.id)
+          .execute();
+      }
       const err = normalizeError(e);
 
       await this.db
@@ -367,14 +382,29 @@ export class PhotoWorkerService {
 
   async generatePhotoAdminTest(base64: string, ment: string, ai: string) {
     if (ai == 'gemini') {
-      const image = await this.aiService.generatePhotoGemini(
-        null,
-        base64,
-        ment,
-        null,
-      );
-      const uploadFile = await this.uploadToAzure(image, true);
-      return uploadFile.url;
+      let keyRow: { id: number; key: string } | undefined;
+      try {
+        keyRow = await this.getGeminiKey();
+
+        if (!keyRow) throw new Error('No available gemini_key');
+        const image = await this.aiService.generatePhotoGemini(
+          null,
+          base64,
+          ment,
+          null,
+          keyRow.key,
+        );
+        const uploadFile = await this.uploadToAzure(image, true);
+        return uploadFile.url;
+      } catch (e) {
+        if (keyRow?.id) {
+          await this.db
+            .updateTable('gemini_key')
+            .set({ expired_at: new Date() })
+            .where('id', '=', keyRow.id)
+            .execute();
+        }
+      }
     } else if (ai == 'seedream') {
       const image = await this.aiService.generatePhotoSeedream(
         null,
@@ -453,5 +483,36 @@ export class PhotoWorkerService {
     }
 
     return 'Unknown error';
+  }
+
+  async getGeminiKey() {
+    const lastResetUtc = sql`
+(
+  (
+    CASE
+      WHEN CONVERT(time, SYSDATETIMEOFFSET() AT TIME ZONE 'Korea Standard Time') < '17:00:00'
+        THEN DATEADD(day, -1, DATEADD(hour, 17, CONVERT(datetime2, CONVERT(date, SYSDATETIMEOFFSET() AT TIME ZONE 'Korea Standard Time'))))
+      ELSE DATEADD(hour, 17, CONVERT(datetime2, CONVERT(date, SYSDATETIMEOFFSET() AT TIME ZONE 'Korea Standard Time')))
+    END
+  ) AT TIME ZONE 'Korea Standard Time'
+) AT TIME ZONE 'UTC'
+`;
+
+    const q = this.db
+      .selectFrom('gemini_key')
+      .where(
+        sql<boolean>`
+    expired_at IS NULL
+    OR expired_at < ${lastResetUtc}
+  `,
+      )
+      .orderBy('id')
+      .select(['id', 'key']);
+
+    console.log(q.compile().sql);
+    console.log(q.compile().parameters);
+
+    const keyRow = await q.executeTakeFirst();
+    return keyRow;
   }
 }

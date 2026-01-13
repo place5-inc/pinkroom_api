@@ -29,9 +29,10 @@ export class AiService {
     fileBase64?: string,
     ment?: string,
     sampleUrl?: string,
+    key?: string,
   ): Promise<string> {
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = key ?? process.env.GEMINI_API_KEY;
       if (!apiKey) {
         throw new InternalServerErrorException('GEMINI_API_KEY is missing');
       }
@@ -40,6 +41,7 @@ export class AiService {
           'fileUri 또는 fileBase64 중 하나는 필수입니다.',
         );
       }
+
       const model = process.env.GEMINI_MODEL_ID;
       const ai = new GoogleGenAI({ apiKey });
 
