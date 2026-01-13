@@ -308,4 +308,12 @@ export class AdminService {
       };
     }
   }
+  async geminiReset() {
+    await this.db
+      .updateTable('gemini_key')
+      .set({
+        expired_at: null,
+      })
+      .execute();
+  }
 }
