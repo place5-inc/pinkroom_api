@@ -8,6 +8,7 @@ import { generateCode, normalizeError } from 'src/libs/helpers';
 import { ThumbnailService } from './thumbnail.service';
 import { MessageService } from 'src/message/message.service';
 import { PhotoRepository } from './photo.repository';
+import { PhotoResultStatus } from 'src/libs/types';
 @Injectable()
 export class PhotoWorkerService {
   constructor(
@@ -280,50 +281,6 @@ export class PhotoWorkerService {
     return await this.azureBlobService.uploadFileImageBase64(base64, toWebp);
   }
 
-  async insertIntoPhoto(
-    originalPhotoId: number,
-    hairDesignId: number,
-    resultImageId?: string,
-    status?: string,
-    tryCount?: number,
-    code?: string,
-  ) {
-    const before = await this.db
-      .selectFrom('photo_results')
-      .where('original_photo_id', '=', originalPhotoId)
-      .where('hair_design_id', '=', hairDesignId)
-      .select('id')
-      .executeTakeFirst();
-    if (before) {
-      await this.db
-        .updateTable('photo_results')
-        .set({
-          created_at: new Date(),
-          result_image_id: resultImageId,
-          status: status,
-          try_count: tryCount,
-          fail_code: code,
-        })
-        .where('original_photo_id', '=', originalPhotoId)
-        .where('hair_design_id', '=', hairDesignId)
-        .output(['inserted.id'])
-        .executeTakeFirst();
-      return before;
-    }
-    return await this.db
-      .insertInto('photo_results')
-      .values({
-        original_photo_id: originalPhotoId,
-        hair_design_id: hairDesignId,
-        created_at: new Date(),
-        result_image_id: resultImageId,
-        status: status,
-        try_count: tryCount,
-        fail_code: code,
-      })
-      .output(['inserted.id'])
-      .executeTakeFirst();
-  }
   /*
   사진 하나 만을기
    */
@@ -337,7 +294,13 @@ export class PhotoWorkerService {
     isLowVersion?: boolean,
   ) {
     try {
-      await this.insertIntoPhoto(photoId, designId, null, 'pending', tryCount);
+      await this.photoRepository.updatePhotoResult(
+        photoId,
+        designId,
+        null,
+        'pending',
+        tryCount,
+      );
       const image = await this.aiService.generatePhotoGemini(
         photoUrl,
         null,
@@ -351,7 +314,7 @@ export class PhotoWorkerService {
         throw new InternalServerErrorException('Azure 업로드 실패');
       }
 
-      return await this.insertIntoPhoto(
+      return await this.photoRepository.updatePhotoResult(
         photoId,
         designId,
         uploadFile.id,
@@ -374,10 +337,16 @@ export class PhotoWorkerService {
       //TODO 에러일때 문자쏘기
       const ment = await this.extractGeminiErrorMessage(err.message);
       this.messageService.sendErrorToManager(ment ?? '사진 생성 에러');
-      await this.insertIntoPhoto(photoId, designId, null, 'fail', tryCount);
+      await this.photoRepository.updatePhotoResult(
+        photoId,
+        designId,
+        null,
+        'fail',
+        tryCount,
+      );
       try {
         const code = await this.extractGeminiErrorCode(err.message);
-        await this.insertIntoPhoto(
+        await this.photoRepository.updatePhotoResult(
           photoId,
           designId,
           null,

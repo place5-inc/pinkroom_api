@@ -13,7 +13,12 @@ export const DEV_CONFIG = {
     '01029056598',
   ],
 };
-
+export type PhotoStatus =
+  | 'first_generating'
+  | 'rest_generating'
+  | 'complete'
+  | 'finished';
+export type PhotoResultStatus = 'pending' | 'complete' | 'fail';
 export type DTO<T = never> = Promise<DTOBody<T>>;
 export type DTOBody<T = never> = {
   status: HttpStatus;

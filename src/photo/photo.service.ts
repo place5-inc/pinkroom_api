@@ -8,14 +8,13 @@ import {
 } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
 import { AzureBlobService } from 'src/azure/blob.service';
-import { Image, PhotoVO } from 'src/libs/types';
+import { Image } from 'src/libs/types';
 import { PhotoWorkerService } from './photo-worker.service';
 import { PhotoRepository } from './photo.repository';
 import { sql } from 'kysely';
 import { ThumbnailService } from './thumbnail.service';
 import { UserRepository } from 'src/user/user.repository';
-import { createCanvas, loadImage } from 'canvas';
-import axios from 'axios';
+
 @Injectable()
 export class PhotoService {
   constructor(
@@ -66,6 +65,20 @@ export class PhotoService {
    */
   async getResultPhotoList(photoId: number) {
     try {
+      const now = new Date();
+      const cutoff = new Date(now.getTime() - 90 * 1000); // 2분 전
+
+      // 1) DB 업데이트: pending인데 created_at이 cutoff보다 이전이면 fail 처리
+      // fail_code도 같이 넣고 싶으면 set에 추가하세요.
+      await this.db
+        .updateTable('photo_results')
+        .set({
+          status: 'fail',
+        })
+        .where('original_photo_id', '=', photoId)
+        .where('status', '=', 'pending')
+        .where('created_at', '<=', cutoff)
+        .execute();
       const result = await this.photoRepository.getPhotoById(photoId);
 
       return {
