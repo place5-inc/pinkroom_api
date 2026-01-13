@@ -16,12 +16,19 @@ export class AiService {
     private readonly httpService: HttpService,
     //private readonly photoService: PhotoService,
   ) {}
+  async check() {
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+    const models = await ai.models.list({ config: { pageSize: 200 } });
+    for await (const m of models) {
+      console.log(m.name);
+    }
+  }
   async generatePhotoGemini(
     fileUri?: string,
     fileBase64?: string,
     ment?: string,
     sampleUrl?: string,
-    isLowVersion: boolean = false,
   ): Promise<string> {
     try {
       const apiKey = process.env.GEMINI_API_KEY;
@@ -33,9 +40,7 @@ export class AiService {
           'fileUri 또는 fileBase64 중 하나는 필수입니다.',
         );
       }
-      const model = isLowVersion
-        ? 'gemini-2.0-flash'
-        : 'gemini-3-pro-image-preview';
+      const model = process.env.GEMINI_MODEL_ID;
       const ai = new GoogleGenAI({ apiKey });
 
       // parts를 동적으로 구성
@@ -98,18 +103,13 @@ export class AiService {
             parts,
           },
         ],
-        config: isLowVersion
-          ? {
-              responseModalities: ['Text', 'Image'],
-              httpOptions: { timeout: 60_000 },
-            }
-          : {
-              responseModalities: ['Text', 'Image'],
-              imageConfig: {
-                imageSize: process.env.GEMINI_IMAGE_SIZE ?? '2K',
-              },
-              httpOptions: { timeout: 60_000 },
-            },
+        config: {
+          responseModalities: ['Text', 'Image'],
+          imageConfig: {
+            imageSize: process.env.GEMINI_IMAGE_SIZE ?? '2K',
+          },
+          httpOptions: { timeout: 60_000 },
+        },
       });
 
       const resultParts = geminiResponse.candidates?.[0]?.content?.parts;

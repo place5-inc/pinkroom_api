@@ -30,7 +30,6 @@ export class UserController {
       body.designId,
       body.paymentId,
       body.code,
-      body.isLowVersion,
     );
   }
   @Post('photo/retry')
@@ -43,7 +42,6 @@ export class UserController {
       body.userId,
       body.photoId,
       body.paymentId,
-      body.isLowVersion,
     );
   }
   @Get()

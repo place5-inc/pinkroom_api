@@ -68,7 +68,9 @@ export class ShareService {
         .executeTakeFirst();
 
       const useCount = row?.count ?? 0;
-      if (useCount >= 3) {
+
+      const limit = Number(process.env.CODE_SHARE_LIMIT ?? 0);
+      if (useCount >= limit) {
         canUseFree = false;
       }
       return {

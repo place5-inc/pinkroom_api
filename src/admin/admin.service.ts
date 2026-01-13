@@ -308,24 +308,4 @@ export class AdminService {
       };
     }
   }
-  async retryMakePhoto(phone: string) {
-    try {
-      const user = await this.db
-        .selectFrom('users')
-        .where('phone', '=', phone)
-        .selectAll()
-        .executeTakeFirst();
-      if (user) {
-        this.photoService.checkNeedMakePhotos(user.id);
-      }
-      return {
-        status: HttpStatus.OK,
-      };
-    } catch (e) {
-      return {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: e.message,
-      };
-    }
-  }
 }
