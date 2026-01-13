@@ -176,4 +176,8 @@ export class AdminController {
     }
     return await this.adminService.changePhone(before, after);
   }
+  @Get('gemini/reset')
+  async geminiReset() {
+    return await this.adminService.geminiReset();
+  }
 }
