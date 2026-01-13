@@ -291,7 +291,7 @@ export class PhotoService {
     const photo = await this.db
       .selectFrom('photos')
       .leftJoin('upload_file', 'upload_file.id', 'photos.upload_file_id')
-      .where('id', '=', photoId)
+      .where('photos.id', '=', photoId)
       .select([
         'photos.id',
         'payment_id',
