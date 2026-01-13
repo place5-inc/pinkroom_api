@@ -548,7 +548,14 @@ export class PhotoWorkerService {
     console.log(q.compile().sql);
     console.log(q.compile().parameters);
 
-    const keyRow = await q.executeTakeFirst();
+    let keyRow = await q.executeTakeFirst();
+    if (!keyRow) {
+      keyRow = await this.db
+        .selectFrom('gemini_key')
+        .orderBy('id')
+        .select(['id', 'key'])
+        .executeTakeFirst();
+    }
     return keyRow;
   }
   /*

@@ -352,12 +352,20 @@ export class PhotoService {
         'upload_file.url',
       ])
       .executeTakeFirst();
+
     if (!photo) {
-      return {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-      };
+      return { status: HttpStatus.INTERNAL_SERVER_ERROR };
     }
+
     await this.photoRepository.updatePhotoRetryCount(photoId, true);
+
+    const isPaid = !!photo.payment_id;
+
+    const runRestGeneration = async () => {
+      await this.photoRepository.updatePhotoStatus(photoId, 'rest_generating');
+      this.workerService.makeAllPhotos(photoId);
+    };
+
     const photoResult = await this.db
       .selectFrom('photo_results')
       .where('original_photo_id', '=', photoId)
@@ -365,42 +373,33 @@ export class PhotoService {
       .where('status', '=', 'complete')
       .selectAll()
       .executeTakeFirst();
-    //맨 처음 사진이 없다면,
-    if (!photoResult) {
-      //한장을 만든다.
-      const result = await this.workerService.makeOnlyOne(
-        photo.id,
-        photo.url,
-        photo.selected_design_id,
-        1,
-      );
-      //한장이 성공하면
-      if (result) {
-        if (photo.payment_id) {
-          await this.photoRepository.updatePhotoStatus(
-            photoId,
-            'rest_generating',
-          );
-          this.workerService.makeAllPhotos(photoId);
-        } else {
-          await this.photoRepository.updatePhotoStatus(photoId, 'complete');
-        }
-        return {
-          status: HttpStatus.OK,
-          result,
-        };
-      } else {
-        await this.photoRepository.updatePhotoStatus(photo.id, 'finished');
-        return {
-          status: HttpStatus.REQUEST_TIMEOUT,
-        };
-      }
+
+    // 첫 장이 이미 있으면: 결제건만 나머지 생성 트리거
+    if (photoResult) {
+      if (isPaid) await runRestGeneration();
+      return { status: HttpStatus.OK };
     }
-    if (photo.payment_id) {
-      this.workerService.makeAllPhotos(photoId);
+
+    // 첫 장이 없으면: 한 장 생성 시도
+    const result = await this.workerService.makeOnlyOne(
+      photo.id,
+      photo.url,
+      photo.selected_design_id,
+      1,
+    );
+
+    if (!result) {
+      await this.photoRepository.updatePhotoStatus(photo.id, 'finished');
+      return { status: HttpStatus.REQUEST_TIMEOUT };
     }
-    return {
-      status: HttpStatus.OK,
-    };
+
+    // 첫 장 성공 후 공통 처리
+    if (isPaid) {
+      await runRestGeneration();
+    } else {
+      await this.photoRepository.updatePhotoStatus(photoId, 'complete');
+    }
+
+    return { status: HttpStatus.OK, result };
   }
 }
