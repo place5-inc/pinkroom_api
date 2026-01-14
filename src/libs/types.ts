@@ -73,6 +73,7 @@ export type UploadPhotoBody = {
   code?: string;
   designId?: number;
   photoId?: number;
+  retryCount?: number;
 };
 export type WorldcupBody = {
   voteId?: number;
