@@ -347,8 +347,12 @@ export class PhotoService {
       await this.photoRepository.updatePhotoStatus(photoId, 'rest_generating');
       await this.photoRepository.updatePhotoRetryCount(photoId, 0);
       this.workerService.makeAllPhotos(photoId);
+
+      const item = await this.photoRepository.getPhotoById(photoId);
+
       return {
         status: HttpStatus.OK,
+        result: item,
       };
     } catch (e) {
       return {
