@@ -1,8 +1,8 @@
 generator kysely {
   provider     = "prisma-kysely"
   output       = "./"
-  fileName     = "types.ts"
   enumFileName = "enums.ts"
+  fileName     = "types.ts"
 }
 
 datasource db {
@@ -174,4 +174,13 @@ model gemini_key {
   id         Int       @id(map: "PK_gemini_key") @default(autoincrement())
   key        String?   @db.NVarChar(200)
   expired_at DateTime? @db.DateTime
+}
+
+model user_action_log {
+  id        Int       @id(map: "PK_user_action_log") @default(autoincrement())
+  phone     String?   @db.NVarChar(50)
+  pay_count Int?
+  view      String?   @db.NVarChar(50)
+  action    String?   @db.NVarChar(50)
+  log_at    DateTime? @db.DateTime
 }
