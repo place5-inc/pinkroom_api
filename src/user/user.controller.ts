@@ -18,10 +18,13 @@ import { PhotoService } from '../photo/photo.service';
 import { UploadPhotoBody, Image } from 'src/libs/types';
 import { isEmpty } from 'src/libs/helpers';
 import * as path from 'path';
-
+import { PhotoWorkerService } from 'src/photo/photo-worker.service';
 @Controller('user')
 export class UserController {
-  constructor(private photoService: PhotoService) {}
+  constructor(
+    private photoService: PhotoService,
+    private photoWorkerService: PhotoWorkerService,
+  ) {}
   @Post('photo/upload')
   async uploadPhoto(@Body() body: UploadPhotoBody) {
     return await this.photoService.uploadPhoto(
@@ -75,4 +78,11 @@ export class UserController {
   //   }
   //   throw new HttpException(message, status);
   // }
+  @Get('font/test')
+  async fontTest(@Query('photoId') photoId: number) {
+    if (isEmpty(photoId)) {
+      throw new BadRequestException('photoId is required.');
+    }
+    return await this.photoService.fontTest(photoId);
+  }
 }

@@ -39,6 +39,27 @@ export class PhotoService {
       };
     }
   }
+  async fontTest(photoId: number) {
+    try {
+      const url1 =
+        await this.workerService.generateBeforeAfterThumbnailFontTest(photoId);
+      // const url2 =
+      //   await this.workerService.generateWorldcupMergedImageFontTest(photoId);
+      // const url3 =
+      //   await this.workerService.generateWorldcupThumbnailImageFontTest(
+      //     photoId,
+      //   );
+      return {
+        status: HttpStatus.OK,
+        url: [url1],
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
 
   /*
   유저의 사진 리스트
