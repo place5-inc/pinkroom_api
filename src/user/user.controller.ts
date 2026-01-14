@@ -37,7 +37,11 @@ export class UserController {
   }
   @Post('photo/retry')
   async retryPhoto(@Body() body: UploadPhotoBody) {
-    return await this.photoService.retryUploadPhoto(body.userId, body.photoId);
+    return await this.photoService.retryUploadPhoto(
+      body.userId,
+      body.photoId,
+      body.retryCount,
+    );
   }
   @Post('photo/remaining')
   async remainingPhoto(@Body() body: UploadPhotoBody) {

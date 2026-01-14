@@ -14,31 +14,14 @@ export class PhotoRepository {
       .where('id', '=', photoId)
       .execute();
   }
-  async updatePhotoRetryCount(photoId: number, isPlus: boolean) {
-    if (isPlus) {
-      const photo = await this.db
-        .selectFrom('photos')
-        .where('id', '=', photoId)
-        .selectAll()
-        .executeTakeFirst();
-      const count = photo.retry_count ?? 0;
-
-      await this.db
-        .updateTable('photos')
-        .set({
-          retry_count: count + 1,
-        })
-        .where('id', '=', photoId)
-        .execute();
-    } else {
-      await this.db
-        .updateTable('photos')
-        .set({
-          retry_count: 0,
-        })
-        .where('id', '=', photoId)
-        .execute();
-    }
+  async updatePhotoRetryCount(photoId: number, retryCount?: number) {
+    await this.db
+      .updateTable('photos')
+      .set({
+        retry_count: retryCount,
+      })
+      .where('id', '=', photoId)
+      .execute();
   }
   async updatePhotoResult(
     originalPhotoId: number,

@@ -345,7 +345,7 @@ export class PhotoService {
         throw new NotFoundException('사진을 찾을 수 없습니다.');
       }
       await this.photoRepository.updatePhotoStatus(photoId, 'rest_generating');
-      await this.photoRepository.updatePhotoRetryCount(photoId, false);
+      await this.photoRepository.updatePhotoRetryCount(photoId, 0);
       this.workerService.makeAllPhotos(photoId);
       return {
         status: HttpStatus.OK,
@@ -361,7 +361,7 @@ export class PhotoService {
   이미 원본 있을 때, 하나의 디자인 만들기
   실패한거용인데, 사용 안하는것 같음
    */
-  async retryUploadPhoto(userId: string, photoId: number) {
+  async retryUploadPhoto(userId: string, photoId: number, retryCount?: number) {
     const photo = await this.db
       .selectFrom('photos')
       .leftJoin('upload_file', 'upload_file.id', 'photos.upload_file_id')
@@ -378,7 +378,7 @@ export class PhotoService {
       return { status: HttpStatus.INTERNAL_SERVER_ERROR };
     }
 
-    await this.photoRepository.updatePhotoRetryCount(photoId, true);
+    await this.photoRepository.updatePhotoRetryCount(photoId, retryCount);
 
     const isPaid = !!photo.payment_id;
 
