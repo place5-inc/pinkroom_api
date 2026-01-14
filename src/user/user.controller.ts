@@ -13,17 +13,17 @@ import {
   Query,
   BadRequestException,
 } from '@nestjs/common';
-import { UserService } from './user.service';
 import { PhotoService } from '../photo/photo.service';
-import { UploadPhotoBody, Image } from 'src/libs/types';
+import { UploadPhotoBody, Image, UserActionBody } from 'src/libs/types';
 import { isEmpty } from 'src/libs/helpers';
 import * as path from 'path';
-import { PhotoWorkerService } from 'src/photo/photo-worker.service';
+import { UserService } from './user.service';
+
 @Controller('user')
 export class UserController {
   constructor(
     private photoService: PhotoService,
-    private photoWorkerService: PhotoWorkerService,
+    private userService: UserService,
   ) {}
   @Post('photo/upload')
   async uploadPhoto(@Body() body: UploadPhotoBody) {
@@ -72,6 +72,10 @@ export class UserController {
     }
     return await this.photoService.test(photoId);
   }
+  @Post('actionLog')
+  async addUserActionLog(@Body() body: UserActionBody) {
+    return await this.userService.addUserActionLog(body);
+  }
   // @Get()
   // async getUser(@Request() { user: token }) {
   //   const { status, message, data } = await this.userService.getUser(
@@ -82,11 +86,4 @@ export class UserController {
   //   }
   //   throw new HttpException(message, status);
   // }
-  @Get('font/test')
-  async fontTest(@Query('photoId') photoId: number) {
-    if (isEmpty(photoId)) {
-      throw new BadRequestException('photoId is required.');
-    }
-    return await this.photoService.fontTest(photoId);
-  }
 }

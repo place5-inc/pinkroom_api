@@ -327,4 +327,32 @@ export class AdminService {
       code: result.code,
     };
   }
+  async getActionLog(page: number) {
+    try {
+      const pageSize = 100;
+      const offset = (page - 1) * pageSize;
+      let query = this.db.selectFrom('user_action_log');
+      const logs = await query
+        .select([
+          'id',
+          'pay_count as payCount',
+          'view',
+          'action',
+          'log_at as logAt',
+        ])
+        .orderBy('id', 'desc') //최신이 위에 오도록
+        .offset(offset) // = OFFSET {offset} ROWS
+        .fetch(pageSize) // = FETCH NEXT {pageSize} ROWS ONLY
+        .execute();
+      return {
+        status: HttpStatus.OK,
+        data: logs,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
 }

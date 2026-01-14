@@ -83,6 +83,14 @@ export type WorldcupBody = {
   userId?: string;
   name?: string;
 };
+
+export type UserActionBody = {
+  phone?: string;
+  payCount?: number;
+  view?: string;
+  action?: string;
+  logAt?: Date | null;
+};
 export type UserVO = {
   id?: string;
   phone?: string;

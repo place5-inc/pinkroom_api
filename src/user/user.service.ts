@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
 import { randomUUID } from 'crypto';
+import { UserActionBody } from 'src/libs/types';
 @Injectable()
 export class UserService {
   constructor(private readonly db: DatabaseProvider) {}
@@ -31,5 +32,20 @@ export class UserService {
       .selectAll()
       .where('id', '=', id)
       .executeTakeFirst();
+  }
+  async addUserActionLog(body: UserActionBody) {
+    await this.db
+      .insertInto('user_action_log')
+      .values({
+        phone: body.phone,
+        pay_count: body.payCount,
+        view: body.view,
+        action: body.action,
+        log_at: new Date(),
+      })
+      .executeTakeFirst();
+    return {
+      status: HttpStatus.OK,
+    };
   }
 }

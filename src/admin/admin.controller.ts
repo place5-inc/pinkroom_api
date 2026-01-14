@@ -184,4 +184,10 @@ export class AdminController {
   async getCertiCode(@Query('phone') phone: string) {
     return await this.adminService.getCertiCode(phone);
   }
+  @Get('actionLog')
+  async getActionLog(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+  ) {
+    return await this.adminService.getActionLog(page);
+  }
 }

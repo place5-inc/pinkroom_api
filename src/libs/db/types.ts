@@ -113,6 +113,14 @@ export type upload_file = {
     url: string | null;
     created_at: Timestamp | null;
 };
+export type user_action_log = {
+    id: Generated<number>;
+    phone: string | null;
+    pay_count: number | null;
+    view: string | null;
+    action: string | null;
+    log_at: Timestamp | null;
+};
 export type user_certification = {
     id: Generated<number>;
     phone_number: string;
@@ -161,6 +169,7 @@ export type DB = {
     scheduler_log: scheduler_log;
     token: token;
     upload_file: upload_file;
+    user_action_log: user_action_log;
     user_certification: user_certification;
     users: users;
     worldcup_log: worldcup_log;
