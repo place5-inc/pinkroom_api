@@ -43,15 +43,15 @@ export class PhotoService {
     try {
       const url1 =
         await this.workerService.generateBeforeAfterThumbnailFontTest(photoId);
-      // const url2 =
-      //   await this.workerService.generateWorldcupMergedImageFontTest(photoId);
-      // const url3 =
-      //   await this.workerService.generateWorldcupThumbnailImageFontTest(
-      //     photoId,
-      //   );
+      const url2 =
+        await this.workerService.generateWorldcupMergedImageFontTest(photoId);
+      const url3 =
+        await this.workerService.generateWorldcupThumbnailImageFontTest(
+          photoId,
+        );
       return {
         status: HttpStatus.OK,
-        url: [url1],
+        url: [url1, url2, url3],
       };
     } catch (e) {
       return {
