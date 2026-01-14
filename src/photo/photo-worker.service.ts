@@ -438,6 +438,49 @@ export class PhotoWorkerService {
     return await this.azureBlobService.uploadFileImageBase64(base64, toWebp);
   }
 
+  dummyPhoto: {
+    id: string;
+    // file_name: string;
+    // url: string;
+    // created_at: Date;
+  }[][] = [
+    [
+      { id: '39e94c91-28bc-402b-a085-7d594a6b74dd' },
+      { id: 'ba80653b-07bf-4c9d-a3e0-8384cba795f1' },
+      { id: 'a8810582-1439-4861-94f1-92b3f855f678' },
+      { id: '10a0364b-8210-4867-9437-e389b2bb05a2' },
+      { id: '2b3fabd1-3217-43dd-b85b-416c1040c38f' },
+      { id: '90207901-73f4-4019-9a80-607dcc99efed' },
+      { id: '670793ca-2f84-45ac-94d6-2bc990dc73ff' },
+      { id: '26f2d926-3945-4752-8cfb-4c1ca565df2f' },
+      { id: '392c840a-c286-4864-a79f-8f59d7a82611' },
+      { id: 'a29c0884-dc30-472b-8a02-3cf50cb61186' },
+      { id: '6794ae02-3c86-40b3-84d8-715bbb5e25eb' },
+      { id: 'b3cda297-ac21-413d-bb65-bf3b2adea198' },
+      { id: 'f1829a6c-d0be-4f7a-b2fe-fefe6d5dac53' },
+      { id: 'f70b5cac-552a-4f6b-ba92-a8d55426dae0' },
+      { id: 'c5845803-4077-4f40-88a9-6cf8a90cf93a' },
+      { id: '22f15427-5740-49bc-8265-b1517723e9df' },
+    ],
+    [
+      { id: '02b8d6fd-1770-4b69-ae3d-b303a8884145' },
+      { id: '5506560e-13f9-4548-843a-721252cdaa02' },
+      { id: '16546fab-3e23-4bd1-bbe5-b1032803d186' },
+      { id: 'f7a9b898-6975-40b0-9c08-f64be296b705' },
+      { id: '3d718799-d7e5-4fcd-b978-315ce2f3f343' },
+      { id: 'c9734c8a-dd41-4768-b0b2-9ce5ff85fa1e' },
+      { id: '91f85654-3754-47c7-a320-3972e92fcf82' },
+      { id: '7e7684e0-23f9-4893-a3e1-15330e97a36c' },
+      { id: 'd3246329-b816-405e-acfe-290bb788ae41' },
+      { id: '1213f8b1-5099-47ed-8d86-267b8a293a17' },
+      { id: 'da12cae3-d5f1-4a58-9e20-c1f2e383000c' },
+      { id: 'e50c2542-8f37-4745-962a-b19f3b307105' },
+      { id: '6bfbc244-d35a-4d4c-94b5-f7ee2a62f2e4' },
+      { id: 'fdbfae0a-f0d3-49d1-bb19-3a2446dc2263' },
+      { id: 'e4b93fc1-aa6a-4751-b34b-2411f2ec45a8' },
+      { id: '62a1a205-026b-4ad3-9a1e-6107cf5b72f3' },
+    ],
+  ];
   /*
   사진 만들기
    */
@@ -460,22 +503,36 @@ export class PhotoWorkerService {
         tryCount,
       );
 
-      keyRow = await this.getGeminiKey();
+      const forTest = new Promise<{
+        id: string;
+      }>((resolve, reject) => {
+        setTimeout(() => {
+          for (let i = 0; i < 16; i++) {
+            if (designId === i + 1) {
+              resolve(this.dummyPhoto[0][i]);
+            }
+          }
+        }, 3 * 1000);
+      });
 
-      if (!keyRow) throw new Error('No available gemini_key');
+      const uploadFile = await forTest;
 
-      const image = await this.aiService.generatePhotoGemini(
-        photoUrl,
-        null,
-        ment,
-        sampleUrl,
-        keyRow.key,
-      );
+      // keyRow = await this.getGeminiKey();
 
-      const uploadFile = await this.uploadToAzure(image, true);
-      if (!uploadFile) {
-        throw new InternalServerErrorException('Azure 업로드 실패');
-      }
+      // if (!keyRow) throw new Error('No available gemini_key');
+
+      // const image = await this.aiService.generatePhotoGemini(
+      //   photoUrl,
+      //   null,
+      //   ment,
+      //   sampleUrl,
+      //   keyRow.key,
+      // );
+
+      // const uploadFile = await this.uploadToAzure(image, true);
+      // if (!uploadFile) {
+      //   throw new InternalServerErrorException('Azure 업로드 실패');
+      // }
 
       return await this.photoRepository.updatePhotoResult(
         photoId,
