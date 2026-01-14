@@ -79,15 +79,23 @@ export class AzureBlobService {
     }
     return;
   }
-  async uploadFileImageBase64(image?: string, toWebp = false) {
+  async uploadFileImageBase64(
+    image?: string,
+    toWebp = false,
+    preserveQuality = false,
+  ) {
     if (image != null) {
       if (isValidImage(image)) {
-        return await this.uploadFileForAdmin(image, toWebp);
+        return await this.uploadFileForAdmin(image, toWebp, preserveQuality);
       }
     }
     return;
   }
-  async uploadFileForAdmin(fileData: string, toWebp = false) {
+  async uploadFileForAdmin(
+    fileData: string,
+    toWebp = false,
+    preserveQuality = false,
+  ) {
     const containerClient =
       this.blobServiceClient.getContainerClient('pinkroom');
 
@@ -100,15 +108,23 @@ export class AzureBlobService {
     let buffer: Buffer = Buffer.from(matches[2], 'base64');
 
     // ✅ 옵션이 true일 때만 webp 변환
+    let transformer = sharp(buffer);
+
+    if (!preserveQuality) {
+      transformer = transformer.resize({
+        width: 800,
+        withoutEnlargement: true,
+      });
+    }
     let mimeType = originalMimeType;
     if (toWebp) {
-    }
-    buffer = await sharp(buffer)
-      .resize({ width: 800, withoutEnlargement: true }) // 필요 없으면 이 줄 제거 가능
-      .webp({ quality: 80 })
-      .toBuffer();
+      transformer = preserveQuality
+        ? transformer.webp({ lossless: true }) // ✅ 무손실
+        : transformer.webp({ quality: 80 }); // ✅ 손실 압축
 
-    mimeType = 'image/webp';
+      mimeType = 'image/webp';
+    }
+    buffer = await transformer.toBuffer();
     const fileId = v4();
 
     // ✅ 확장자: webp면 webp로, 아니면 원래 mimeType 기반

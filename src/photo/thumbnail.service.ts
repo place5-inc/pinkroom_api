@@ -4,6 +4,15 @@ import { join, resolve } from 'path';
 import { AzureBlobService } from 'src/azure/blob.service';
 import axios from 'axios';
 import sharp = require('sharp');
+import * as path from 'path';
+registerFont(
+  path.join(process.cwd(), 'dist/resources/fonts/Pretendard-Bold.ttf'),
+  { family: 'PretendardBold' },
+);
+registerFont(
+  path.join(process.cwd(), 'dist/resources/fonts/Pretendard-Regular.ttf'),
+  { family: 'PretendardRegular' },
+);
 @Injectable()
 export class ThumbnailService {
   constructor(private readonly azureBlobService: AzureBlobService) {}
@@ -167,7 +176,8 @@ export class ThumbnailService {
       ctx.drawImage(tagAfter, rightBadgeX, badgeY, afterW, badgeH);
     }
 
-    return canvas.toBuffer('image/jpeg', { quality: 0.9 });
+    //return canvas.toBuffer('image/jpeg', { quality: 0.9 });
+    return canvas.toBuffer('image/png');
   }
   async generateBeforeAfterFontTest(
     beforeUrl: string,
@@ -222,7 +232,7 @@ export class ThumbnailService {
     );
     ctx.restore();
 
-    ctx.font = '21px "PretendardMedium"';
+    ctx.font = `21px 'PretendardRegular'`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -439,7 +449,8 @@ export class ThumbnailService {
       }
 
       // 최종 결과물 출력
-      return canvas.toBuffer('image/jpeg', { quality: 0.95 });
+      //return canvas.toBuffer('image/jpeg', { quality: 0.95 });
+      return canvas.toBuffer('image/png');
     } catch (e) {
       console.error('[generateMergedCanvas] Error:', e);
       return null;
@@ -653,7 +664,8 @@ export class ThumbnailService {
         bottomGradientHeight,
       );
 
-      return canvas.toBuffer('image/jpeg', { quality: 0.95 });
+      //return canvas.toBuffer('image/jpeg', { quality: 0.95 });
+      return canvas.toBuffer('image/png');
     } catch (e) {
       console.error('[generateWorldcupThumbnailCanvas]', e);
       return null;

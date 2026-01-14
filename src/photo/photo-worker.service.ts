@@ -251,7 +251,11 @@ export class PhotoWorkerService {
           'base64',
         )}`;
         const mergedImageUpload =
-          await this.azureBlobService.uploadFileImageBase64(mergedImageBase64);
+          await this.azureBlobService.uploadFileImageBase64(
+            mergedImageBase64,
+            false,
+            true,
+          );
 
         if (mergedImageUpload) {
           await this.db
@@ -286,7 +290,11 @@ export class PhotoWorkerService {
           'base64',
         )}`;
         const thumbnailUpload =
-          await this.azureBlobService.uploadFileImageBase64(thumbnailBase64);
+          await this.azureBlobService.uploadFileImageBase64(
+            thumbnailBase64,
+            false,
+            true,
+          );
 
         if (thumbnailUpload) {
           await this.db
@@ -335,9 +343,14 @@ export class PhotoWorkerService {
           'base64',
         )}`;
         const mergedImageUpload =
-          await this.azureBlobService.uploadFileImageBase64(mergedImageBase64);
+          await this.azureBlobService.uploadFileImageBase64(
+            mergedImageBase64,
+            false,
+            true,
+          );
 
         if (mergedImageUpload) {
+          url = mergedImageUpload.url;
           // await this.db
           //   .updateTable('photos')
           //   .set({ merged_image_id: mergedImageUpload.id })
@@ -389,9 +402,14 @@ export class PhotoWorkerService {
           'base64',
         )}`;
         const thumbnailUpload =
-          await this.azureBlobService.uploadFileImageBase64(thumbnailBase64);
+          await this.azureBlobService.uploadFileImageBase64(
+            thumbnailBase64,
+            false,
+            true,
+          );
 
         if (thumbnailUpload) {
+          url = thumbnailUpload.url;
           // await this.db
           //   .updateTable('photos')
           //   .set({ thumbnail_worldcup_id: thumbnailUpload.id })
@@ -700,7 +718,11 @@ export class PhotoWorkerService {
           'base64',
         )}`;
         const thumbnailUpload =
-          await this.azureBlobService.uploadFileImageBase64(thumbnailBase64);
+          await this.azureBlobService.uploadFileImageBase64(
+            thumbnailBase64,
+            false,
+            true,
+          );
 
         if (thumbnailUpload) {
           await this.db
