@@ -17,10 +17,14 @@ async function bootstrap() {
   // API 결과로 확인된 확실한 경로
   const fontDir = path.join(rootPath, 'dist/resources/fonts');
   const fonts = [
-    { file: 'Pretendard-Light.ttf', family: 'PretendardLight' },
-    { file: 'Pretendard-Regular.ttf', family: 'PretendardRegular' },
-    { file: 'Pretendard-Medium.ttf', family: 'PretendardMedium' },
-    { file: 'Pretendard-Bold.ttf', family: 'PretendardBold' },
+    //{ file: 'Pretendard-Light.ttf', name: 'PretendardLight', weight: '300' },
+    {
+      file: 'Pretendard-Regular.ttf',
+      name: 'PretendardRegular',
+      weight: '400',
+    },
+    //{ file: 'Pretendard-Medium.ttf', name: 'PretendardMedium', weight: '500' },
+    { file: 'Pretendard-Bold.ttf', name: 'PretendardBold', weight: '700' },
   ];
   const fs = require('fs');
   for (const font of fonts) {
@@ -28,7 +32,11 @@ async function bootstrap() {
     if (!fs.existsSync(fontPath)) {
       continue;
     }
-    registerFont(fontPath, { family: font.family });
+    registerFont(fontPath, {
+      family: 'Pretendard',
+      weight: font.weight,
+    });
+    console.log(`[Main] ${font.name} font registered`);
   }
 
   const app = await NestFactory.create<NestFastifyApplication>(

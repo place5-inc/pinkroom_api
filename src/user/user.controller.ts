@@ -86,4 +86,11 @@ export class UserController {
   //   }
   //   throw new HttpException(message, status);
   // }
+  @Get('font/test')
+  async fontTest(@Query('photoId') photoId: number) {
+    if (isEmpty(photoId)) {
+      throw new BadRequestException('photoId is required.');
+    }
+    return await this.photoService.fontTest(photoId);
+  }
 }

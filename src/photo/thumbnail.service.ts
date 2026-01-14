@@ -232,7 +232,7 @@ export class ThumbnailService {
     );
     ctx.restore();
 
-    ctx.font = `21px 'PretendardRegular'`;
+    ctx.font = '400 21px "Pretendard"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
