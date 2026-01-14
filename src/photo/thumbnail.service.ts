@@ -5,47 +5,47 @@ import { AzureBlobService } from 'src/azure/blob.service';
 import axios from 'axios';
 import sharp = require('sharp');
 @Injectable()
-export class ThumbnailService implements OnModuleInit {
+export class ThumbnailService {
   constructor(private readonly azureBlobService: AzureBlobService) {}
-  onModuleInit() {
-    try {
-      const path = require('path');
-      const rootPath = process.cwd(); // /home/site/wwwroot
+  // onModuleInit() {
+  //   try {
+  //     const path = require('path');
+  //     const rootPath = process.cwd(); // /home/site/wwwroot
 
-      // API 결과로 확인된 확실한 경로
-      const fontDir = path.join(rootPath, 'dist/resources/fonts');
-      const fonts = [
-        { file: 'Pretendard-Light.ttf', family: 'PretendardLight' },
-        { file: 'Pretendard-Regular.ttf', family: 'PretendardRegular' },
-        { file: 'Pretendard-Medium.ttf', family: 'PretendardMedium' },
-        { file: 'Pretendard-Bold.ttf', family: 'PretendardBold' },
-      ];
-      const fs = require('fs');
-      for (const font of fonts) {
-        const fontPath = path.join(fontDir, font.file);
-        if (!fs.existsSync(fontPath)) {
-          continue;
-        }
-        registerFont(fontPath, { family: font.family });
-      }
-      // const regularPath = path.join(fontDir, 'Pretendard-Regular.ttf');
-      // const mediumPath = path.join(fontDir, 'Pretendard-Medium.ttf');
-      // const boldPath = path.join(fontDir, 'Pretendard-Bold.ttf');
+  //     // API 결과로 확인된 확실한 경로
+  //     const fontDir = path.join(rootPath, 'dist/resources/fonts');
+  //     const fonts = [
+  //       { file: 'Pretendard-Light.ttf', family: 'PretendardLight' },
+  //       { file: 'Pretendard-Regular.ttf', family: 'PretendardRegular' },
+  //       { file: 'Pretendard-Medium.ttf', family: 'PretendardMedium' },
+  //       { file: 'Pretendard-Bold.ttf', family: 'PretendardBold' },
+  //     ];
+  //     const fs = require('fs');
+  //     for (const font of fonts) {
+  //       const fontPath = path.join(fontDir, font.file);
+  //       if (!fs.existsSync(fontPath)) {
+  //         continue;
+  //       }
+  //       registerFont(fontPath, { family: font.family });
+  //     }
+  //     // const regularPath = path.join(fontDir, 'Pretendard-Regular.ttf');
+  //     // const mediumPath = path.join(fontDir, 'Pretendard-Medium.ttf');
+  //     // const boldPath = path.join(fontDir, 'Pretendard-Bold.ttf');
 
-      // if (fs.existsSync(regularPath) && fs.existsSync(boldPath)) {
-      //   // 폰트 등록 (family 이름을 하나로 통일하고 weight로 구분하는 것이 표준입니다)
-      //   registerFont(regularPath, { family: 'Pretendard', weight: 'normal' });
-      //   registerFont(mediumPath, { family: 'Pretendard', weight: 'medium' });
-      //   registerFont(boldPath, { family: 'Pretendard', weight: 'bold' });
+  //     // if (fs.existsSync(regularPath) && fs.existsSync(boldPath)) {
+  //     //   // 폰트 등록 (family 이름을 하나로 통일하고 weight로 구분하는 것이 표준입니다)
+  //     //   registerFont(regularPath, { family: 'Pretendard', weight: 'normal' });
+  //     //   registerFont(mediumPath, { family: 'Pretendard', weight: 'medium' });
+  //     //   registerFont(boldPath, { family: 'Pretendard', weight: 'bold' });
 
-      //   console.log('[ThumbnailService] 폰트 등록 완료: Pretendard (400, 700)');
-      // } else {
-      //   console.error('[ThumbnailService] 폰트 파일을 찾을 수 없습니다.');
-      // }
-    } catch (error) {
-      console.error('[ThumbnailService] 폰트 등록 중 예외 발생:', error);
-    }
-  }
+  //     //   console.log('[ThumbnailService] 폰트 등록 완료: Pretendard (400, 700)');
+  //     // } else {
+  //     //   console.error('[ThumbnailService] 폰트 파일을 찾을 수 없습니다.');
+  //     // }
+  //   } catch (error) {
+  //     console.error('[ThumbnailService] 폰트 등록 중 예외 발생:', error);
+  //   }
+  // }
   async loadImageFromUrl(url: string) {
     const res = await axios.get(url, {
       responseType: 'arraybuffer',
