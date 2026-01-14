@@ -316,4 +316,15 @@ export class AdminService {
       })
       .execute();
   }
+  async getCertiCode(phone: string) {
+    const result = await this.db
+      .selectFrom('user_certification')
+      .where('phone_number', '=', phone)
+      .orderBy('id desc')
+      .selectAll()
+      .executeTakeFirst();
+    return {
+      code: result.code,
+    };
+  }
 }

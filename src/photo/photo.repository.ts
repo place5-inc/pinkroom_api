@@ -15,13 +15,14 @@ export class PhotoRepository {
       .execute();
   }
   async updatePhotoRetryCount(photoId: number, retryCount?: number) {
-    await this.db
-      .updateTable('photos')
-      .set({
-        retry_count: retryCount,
-      })
-      .where('id', '=', photoId)
-      .execute();
+    if (retryCount)
+      await this.db
+        .updateTable('photos')
+        .set({
+          retry_count: retryCount,
+        })
+        .where('id', '=', photoId)
+        .execute();
   }
   async updatePhotoResult(
     originalPhotoId: number,

@@ -180,4 +180,8 @@ export class AdminController {
   async geminiReset() {
     return await this.adminService.geminiReset();
   }
+  @Get('getCertiCode')
+  async getCertiCode(@Query('phone') phone: string) {
+    return await this.adminService.getCertiCode(phone);
+  }
 }
