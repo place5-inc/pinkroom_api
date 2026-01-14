@@ -509,10 +509,10 @@ export class PhotoWorkerService {
         setTimeout(() => {
           for (let i = 0; i < 16; i++) {
             if (designId === i + 1) {
-              resolve(this.dummyPhoto[0][i]);
+              resolve(this.dummyPhoto[1][i]);
             }
           }
-        }, 3 * 1000);
+        }, 8 * 1000);
       });
 
       const uploadFile = await forTest;

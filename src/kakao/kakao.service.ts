@@ -32,6 +32,7 @@ export class KakaoService {
     values: string[] = [],
     params: string[] = [],
   ): Promise<void> {
+    return;
     //카카오 알림을 껐다면 보내지 않는다.
     if (!userId) {
       return;
