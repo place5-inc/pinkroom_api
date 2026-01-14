@@ -335,6 +335,7 @@ export class AdminService {
       const logs = await query
         .select([
           'id',
+          'phone',
           'pay_count as payCount',
           'view',
           'action',
