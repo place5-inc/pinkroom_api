@@ -1,8 +1,8 @@
 generator kysely {
   provider     = "prisma-kysely"
   output       = "./"
-  enumFileName = "enums.ts"
   fileName     = "types.ts"
+  enumFileName = "enums.ts"
 }
 
 datasource db {
@@ -183,4 +183,15 @@ model user_action_log {
   view      String?   @db.NVarChar(50)
   action    String?   @db.NVarChar(50)
   log_at    DateTime? @db.DateTime
+}
+
+model log_dev {
+  id         Int       @id(map: "PK_log_dev")
+  user_id    String?   @db.UniqueIdentifier
+  photo_id   Int?
+  design_id  Int?
+  code       String?   @db.NVarChar(50)
+  payment_id Int?
+  api        String?   @db.NVarChar(50)
+  created_at DateTime? @db.DateTime
 }

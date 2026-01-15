@@ -143,6 +143,27 @@ export class PhotoService {
       };
     }
   }
+  async logDev(
+    user_id: string,
+    photo_id?: number,
+    design_id?: number,
+    code?: string,
+    payment_id?: number,
+    api?: string,
+  ) {
+    await this.db
+      .insertInto('log_dev')
+      .values({
+        user_id,
+        photo_id,
+        design_id,
+        code,
+        payment_id,
+        api,
+        created_at: new Date(),
+      })
+      .execute();
+  }
 
   /* 
   유저가 사진 업로드
@@ -157,6 +178,7 @@ export class PhotoService {
     forceFail?: boolean,
     delaySecond?: number,
   ) {
+    this.logDev(userId, null, designId, _code, paymentId, 'upload');
     try {
       if (!paymentId && !_code) {
         throw new BadRequestException(
@@ -337,6 +359,7 @@ export class PhotoService {
     forceFail?: boolean,
     delaySecond?: number,
   ) {
+    this.logDev(userId, photoId, null, null, paymentId, 'retry');
     try {
       const result = await this.db
         .updateTable('photos')
@@ -385,6 +408,7 @@ export class PhotoService {
     forceFail?: boolean,
     delaySecond?: number,
   ) {
+    this.logDev(userId, photoId, null, null, null, 'retry');
     const photo = await this.db
       .selectFrom('photos')
       .leftJoin('upload_file', 'upload_file.id', 'photos.upload_file_id')
