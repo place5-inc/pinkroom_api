@@ -4,6 +4,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
@@ -80,10 +81,9 @@ export class ShareService {
         canUseFree,
       };
     } catch (e) {
-      return {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: e.message,
-      };
+      if (e instanceof HttpException) throw e;
+
+      throw new InternalServerErrorException(e?.message ?? 'Internal error');
     }
   }
   async makePhotoCode(userId: string, photoId: number, type: string) {

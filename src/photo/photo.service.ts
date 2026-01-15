@@ -164,6 +164,9 @@ export class PhotoService {
     designId: number,
     paymentId?: number,
     _code?: string,
+    isDummy?: boolean,
+    forceFail?: boolean,
+    delaySecond?: number,
   ) {
     try {
       if (!paymentId && !_code) {
@@ -289,6 +292,9 @@ export class PhotoService {
           prompt.ment,
           prompt.imageUrl,
           attempt,
+          isDummy,
+          forceFail,
+          delaySecond,
         );
         if (result) {
           //before After Thumbnail 생성
@@ -304,7 +310,12 @@ export class PhotoService {
               photo.id,
               'rest_generating',
             );
-            this.workerService.makeAllPhotos(photo.id);
+            this.workerService.makeAllPhotos(
+              photo.id,
+              isDummy,
+              forceFail,
+              delaySecond,
+            );
           }
           return {
             status: HttpStatus.OK,
@@ -329,7 +340,14 @@ export class PhotoService {
   전체 사진 생성
   쿠폰으로 한개 만들고, 이후에 결제했을 떄
    */
-  async remainingPhoto(userId: string, photoId: number, paymentId: number) {
+  async remainingPhoto(
+    userId: string,
+    photoId: number,
+    paymentId: number,
+    isDummy?: boolean,
+    forceFail?: boolean,
+    delaySecond?: number,
+  ) {
     try {
       const result = await this.db
         .updateTable('photos')
@@ -346,7 +364,12 @@ export class PhotoService {
       }
       await this.photoRepository.updatePhotoStatus(photoId, 'rest_generating');
       await this.photoRepository.updatePhotoRetryCount(photoId, 0);
-      this.workerService.makeAllPhotos(photoId);
+      this.workerService.makeAllPhotos(
+        photoId,
+        isDummy,
+        forceFail,
+        delaySecond,
+      );
 
       const item = await this.photoRepository.getPhotoById(photoId);
 
@@ -365,7 +388,14 @@ export class PhotoService {
   이미 원본 있을 때, 하나의 디자인 만들기
   실패한거용인데, 사용 안하는것 같음
    */
-  async retryUploadPhoto(userId: string, photoId: number, retryCount?: number) {
+  async retryUploadPhoto(
+    userId: string,
+    photoId: number,
+    retryCount?: number,
+    isDummy?: boolean,
+    forceFail?: boolean,
+    delaySecond?: number,
+  ) {
     const photo = await this.db
       .selectFrom('photos')
       .leftJoin('upload_file', 'upload_file.id', 'photos.upload_file_id')
@@ -388,7 +418,12 @@ export class PhotoService {
 
     const runRestGeneration = async () => {
       await this.photoRepository.updatePhotoStatus(photoId, 'rest_generating');
-      this.workerService.makeAllPhotos(photoId);
+      this.workerService.makeAllPhotos(
+        photoId,
+        isDummy,
+        forceFail,
+        delaySecond,
+      );
     };
 
     const photoResult = await this.db
@@ -411,6 +446,9 @@ export class PhotoService {
       photo.url,
       photo.selected_design_id,
       1,
+      isDummy,
+      forceFail,
+      delaySecond,
     );
 
     if (!result) {

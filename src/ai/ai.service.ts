@@ -30,6 +30,8 @@ export class AiService {
     ment?: string,
     sampleUrl?: string,
     key?: string,
+    forceFail?: boolean,
+    delaySecond?: number,
   ): Promise<string> {
     const safeJson = (v: any) => {
       try {
@@ -38,6 +40,17 @@ export class AiService {
         return String(v);
       }
     };
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+    if (forceFail === true) {
+      const sec =
+        typeof delaySecond === 'number' && delaySecond > 0 ? delaySecond : 0;
+      if (sec > 0) await sleep(sec * 1000);
+
+      // 원하는 에러로 던지기 (BadRequest / InternalServerError 등 아무거나)
+      throw new InternalServerErrorException(`Forced failure after ${sec}s`);
+    }
 
     const extractResponseDebug = (resp: any) => {
       const cands = resp?.candidates ?? [];

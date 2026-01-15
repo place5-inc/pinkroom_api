@@ -21,7 +21,12 @@ export class PhotoWorkerService {
     private readonly photoRepository: PhotoRepository,
   ) {}
 
-  async makeAllPhotos(originalPhotoId: number) {
+  async makeAllPhotos(
+    originalPhotoId: number,
+    isDummy?: boolean,
+    forceFail?: boolean,
+    delaySecond?: number,
+  ) {
     const MAX_RETRY = 3;
     let attempt = 0;
     // 2️⃣ 원본 사진
@@ -87,6 +92,7 @@ export class PhotoWorkerService {
             prompt.ment,
             prompt.imageUrl,
             attempt,
+            isDummy,
           );
         } catch (e) {
           console.error(`❌ design ${designId} 실패 (attempt ${attempt})`, e);
@@ -105,6 +111,9 @@ export class PhotoWorkerService {
     photoUrl: string,
     designId: number,
     tryCount?: number,
+    isDummy?: boolean,
+    forceFail?: boolean,
+    delaySecond?: number,
   ) {
     await this.photoRepository.updatePhotoStatus(photoId, 'first_generating');
     const prompt = await this.db
@@ -127,6 +136,9 @@ export class PhotoWorkerService {
       prompt.ment,
       prompt.imageUrl,
       tryCount,
+      isDummy,
+      forceFail,
+      delaySecond,
     );
     if (result) {
       await this.generateBeforeAfterThumbnail(photoId);
@@ -491,31 +503,46 @@ export class PhotoWorkerService {
     ment: string,
     sampleUrl?: string,
     tryCount?: number,
+    isDummy?: boolean,
+    forceFail?: boolean,
+    delaySecond?: number,
   ) {
     let keyRow: { id: number; key: string } | undefined;
 
     try {
-      // await this.photoRepository.updatePhotoResult(
-      //   photoId,
-      //   designId,
-      //   null,
-      //   'pending',
-      //   tryCount,
-      // );
+      if (isDummy === true) {
+        await this.photoRepository.updatePhotoResult(
+          photoId,
+          designId,
+          null,
+          'pending',
+          tryCount,
+        );
 
-      // const forTest = new Promise<{
-      //   id: string;
-      // }>((resolve, reject) => {
-      //   setTimeout(() => {
-      //     for (let i = 0; i < 16; i++) {
-      //       if (designId === i + 1) {
-      //         resolve(this.dummyPhoto[1][i]);
-      //       }
-      //     }
-      //   }, 8 * 1000);
-      // });
+        const forTest = new Promise<{
+          id: string;
+        }>((resolve, reject) => {
+          setTimeout(
+            () => {
+              for (let i = 0; i < 16; i++) {
+                if (designId === i + 1) {
+                  resolve(this.dummyPhoto[1][i]);
+                }
+              }
+            },
+            (delaySecond ?? 8) * 1000,
+          );
+        });
 
-      // const uploadFile = await forTest;
+        const uploadFileTest = await forTest;
+        return await this.photoRepository.updatePhotoResult(
+          photoId,
+          designId,
+          uploadFileTest.id,
+          'complete',
+          tryCount,
+        );
+      }
 
       keyRow = await this.getGeminiKey();
 
@@ -527,6 +554,8 @@ export class PhotoWorkerService {
         ment,
         sampleUrl,
         keyRow.key,
+        forceFail,
+        delaySecond,
       );
 
       const uploadFile = await this.uploadToAzure(image, true);

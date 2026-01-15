@@ -33,6 +33,9 @@ export class UserController {
       body.designId,
       body.paymentId,
       body.code,
+      body.isDummy,
+      body.forceFaile,
+      body.delaySecond,
     );
   }
   @Post('photo/retry')
@@ -41,6 +44,9 @@ export class UserController {
       body.userId,
       body.photoId,
       body.retryCount,
+      body.isDummy,
+      body.forceFaile,
+      body.delaySecond,
     );
   }
   @Post('photo/remaining')
@@ -49,6 +55,9 @@ export class UserController {
       body.userId,
       body.photoId,
       body.paymentId,
+      body.isDummy,
+      body.forceFaile,
+      body.delaySecond,
     );
   }
   @Get()

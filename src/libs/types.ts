@@ -74,6 +74,9 @@ export type UploadPhotoBody = {
   designId?: number;
   photoId?: number;
   retryCount?: number;
+  isDummy?: boolean;
+  forceFaile?: boolean;
+  delaySecond?: number;
 };
 export type WorldcupBody = {
   voteId?: number;
