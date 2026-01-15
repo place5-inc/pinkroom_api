@@ -12,6 +12,7 @@ import { registerFont } from 'canvas';
 import { join } from 'path';
 
 async function bootstrap() {
+  //주석추가
   const rootPath = process.cwd();
   const fontPathBold = join(
     rootPath,
