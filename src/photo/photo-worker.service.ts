@@ -93,6 +93,8 @@ export class PhotoWorkerService {
             prompt.imageUrl,
             attempt,
             isDummy,
+            forceFail,
+            delaySecond,
           );
         } catch (e) {
           console.error(`❌ design ${designId} 실패 (attempt ${attempt})`, e);
