@@ -31,25 +31,67 @@ export class AiService {
     sampleUrl?: string,
     key?: string,
   ): Promise<string> {
-    try {
-      const apiKey = key ?? process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new InternalServerErrorException('GEMINI_API_KEY is missing');
+    const safeJson = (v: any) => {
+      try {
+        return JSON.stringify(v);
+      } catch {
+        return String(v);
       }
-      if (!fileUri && !fileBase64) {
-        throw new BadRequestException(
-          'fileUri 또는 fileBase64 중 하나는 필수입니다.',
-        );
-      }
+    };
 
-      const model = process.env.GEMINI_MODEL_ID;
+    const extractResponseDebug = (resp: any) => {
+      const cands = resp?.candidates ?? [];
+      const c0 = cands?.[0];
+      const promptFeedback =
+        resp?.promptFeedback ?? resp?.prompt_feedback ?? null;
+      const usage = resp?.usageMetadata ?? resp?.usage_metadata ?? null;
+
+      return {
+        candidatesLen: Array.isArray(cands) ? cands.length : undefined,
+        finishReason: c0?.finishReason,
+        finishMessage: c0?.finishMessage,
+        safetyRatings: c0?.safetyRatings,
+        promptFeedback,
+        usage,
+      };
+    };
+
+    const apiKey = key ?? process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new InternalServerErrorException('GEMINI_API_KEY is missing');
+    }
+    if (!fileUri && !fileBase64) {
+      throw new BadRequestException(
+        'fileUri 또는 fileBase64 중 하나는 필수입니다.',
+      );
+    }
+
+    const model = process.env.GEMINI_MODEL_ID;
+    if (!model) {
+      throw new InternalServerErrorException('GEMINI_MODEL_ID is missing');
+    }
+
+    // ment/prompt 방어
+    const safeMent = (ment ?? '').trim();
+    const promptText = sampleUrl
+      ? [
+          '첫 번째 이미지는 사용자의 얼굴 사진입니다.',
+          '두 번째 이미지는 참고할 헤어스타일 예시입니다.',
+          safeMent,
+          '- 두 번째 이미지는 헤어스타일 참고용으로만 사용하세요.',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : safeMent;
+
+    try {
       const ai = new GoogleGenAI({ apiKey });
 
-      // parts를 동적으로 구성
       const parts: any[] = [];
-      // 1) 사용자 얼굴 이미지: fileUri 우선, 없으면 base64
+
+      // 1) 사용자 얼굴 이미지
       if (fileUri) {
-        const userMimeType = getMimeTypeFromUri(fileUri);
+        const userMimeType = getMimeTypeFromUri(fileUri) || 'image/jpeg';
         parts.push({
           fileData: {
             mimeType: userMimeType,
@@ -57,13 +99,11 @@ export class AiService {
           },
         });
       } else if (fileBase64) {
-        // Base64 파싱 (data URL 형태 기대)
         const base64Match = fileBase64.match(/^data:(image\/\w+);base64,(.+)$/);
         if (!base64Match) {
           throw new BadRequestException('올바른 이미지 형식이 아닙니다.');
         }
-
-        const mimeType = base64Match[1]; // ex) image/png
+        const mimeType = base64Match[1];
         const base64Data = base64Match[2];
 
         parts.push({
@@ -74,37 +114,23 @@ export class AiService {
         });
       }
 
-      // 2️⃣ sampleUrl이 있으면 참고 이미지 추가
+      // 2) 참고 이미지
       if (sampleUrl) {
+        const sampleMimeType = getMimeTypeFromUri(sampleUrl) || 'image/jpeg';
         parts.push({
           fileData: {
-            mimeType: getMimeTypeFromUri(sampleUrl),
+            mimeType: sampleMimeType,
             fileUri: sampleUrl,
           },
         });
       }
 
-      // 3️⃣ 프롬프트 구성
-      const prompt = sampleUrl
-        ? `
-  첫 번째 이미지는 사용자의 얼굴 사진입니다.
-  두 번째 이미지는 참고할 헤어스타일 예시입니다.
-  ${ment}
-  - 두 번째 이미지는 헤어스타일 참고용으로만 사용하세요.
-  `
-        : ment;
-
-      parts.push({ text: prompt });
+      // 3) 텍스트
+      parts.push({ text: promptText || '이미지를 생성해 주세요.' });
 
       const geminiResponse = await ai.models.generateContent({
-        // model: 'gemini-2.5-flash-image',
-        model: model,
-        contents: [
-          {
-            role: 'user',
-            parts,
-          },
-        ],
+        model,
+        contents: [{ role: 'user', parts }],
         config: {
           responseModalities: ['Text', 'Image'],
           imageConfig: {
@@ -114,21 +140,44 @@ export class AiService {
         },
       });
 
-      const resultParts = geminiResponse.candidates?.[0]?.content?.parts;
-      if (!resultParts) {
-        throw new InternalServerErrorException('이미지 생성에 실패했습니다.');
+      const cands = geminiResponse.candidates ?? [];
+      if (!Array.isArray(cands) || cands.length === 0) {
+        const dbg = extractResponseDebug(geminiResponse);
+        console.error('[Gemini] No candidates', dbg);
+        throw new InternalServerErrorException(
+          `No candidates. dbg=${safeJson(dbg)}`,
+        );
       }
 
-      const imagePart = resultParts.find((p: any) => p.inlineData);
-      if (!imagePart?.inlineData) {
-        const textPart = resultParts.find((p: any) => p.text);
+      const c0: any = cands[0];
+      const resultParts = c0?.content?.parts;
+
+      if (!Array.isArray(resultParts) || resultParts.length === 0) {
+        const dbg = extractResponseDebug(geminiResponse);
+        console.error('[Gemini] Candidate has no parts', dbg);
         throw new InternalServerErrorException(
-          textPart?.text || '이미지를 생성할 수 없습니다.',
+          `Candidate has no parts. dbg=${safeJson(dbg)}`,
+        );
+      }
+
+      const imagePart = resultParts.find((p: any) => p?.inlineData);
+      if (!imagePart?.inlineData) {
+        const textPart = resultParts.find((p: any) => p?.text);
+        const dbg = extractResponseDebug(geminiResponse);
+        console.error('[Gemini] No image inlineData', {
+          dbg,
+          text: textPart?.text,
+        });
+
+        // 여기서는 네가 원래 하던 방식대로: 텍스트 있으면 그 텍스트를 그대로 에러로 올림
+        throw new InternalServerErrorException(
+          textPart?.text || `No image inlineData. dbg=${safeJson(dbg)}`,
         );
       }
 
       return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
     } catch (e) {
+      // ✅ 래핑/치환 없이 그대로 던짐
       throw e;
     }
   }
