@@ -60,48 +60,68 @@ export class PhotoService {
       };
     }
   }
+  private getCutoff(minutes = 2) {
+    return new Date(Date.now() - minutes * 60 * 1000);
+  }
+
+  async expirePendingResults(params: {
+    userId?: string;
+    photoId?: number;
+    minutes?: number;
+  }) {
+    const cutoff = this.getCutoff(params.minutes ?? 2);
+
+    // 1) 만료 대상 photoId 조회
+    let q = this.db
+      .selectFrom('photo_results as pr')
+      .select(['pr.original_photo_id as photoId'])
+      .where('pr.status', '=', 'pending')
+      .where('pr.created_at', '<=', cutoff);
+
+    if (params.photoId != null) {
+      q = q.where('pr.original_photo_id', '=', params.photoId);
+    }
+
+    if (params.userId != null) {
+      q = q
+        .innerJoin('photos as p', 'p.id', 'pr.original_photo_id')
+        .where('p.user_id', '=', params.userId);
+    }
+
+    const expired = await q.execute();
+    const affectedPhotoIds = [...new Set(expired.map((r) => r.photoId))];
+
+    if (affectedPhotoIds.length === 0) {
+      return { cutoff, affectedPhotoIds, changed: 0 };
+    }
+
+    // 2) photo_results fail 처리
+    await this.db
+      .updateTable('photo_results')
+      .set({ status: 'fail' })
+      .where('original_photo_id', 'in', affectedPhotoIds)
+      .where('status', '=', 'pending')
+      .where('created_at', '<=', cutoff)
+      .execute();
+
+    // 3) photos finished 처리 (배치)
+    await this.photoRepository.updatePhotoStatuses(
+      affectedPhotoIds,
+      'finished',
+    );
+
+    return { cutoff, affectedPhotoIds, changed: affectedPhotoIds.length };
+  }
 
   /*
   유저의 사진 리스트
    */
   async getPhotoList(userId: string) {
     try {
-      const now = new Date();
-      const cutoff = new Date(now.getTime() - 2 * 60 * 1000);
+      await this.expirePendingResults({ userId });
 
-      // 1) 만료 대상 photoId 먼저 조회
-      const expired = await this.db
-        .selectFrom('photo_results as pr')
-        .innerJoin('photos as p', 'p.id', 'pr.original_photo_id')
-        .select(['pr.original_photo_id as photoId'])
-        .where('p.user_id', '=', userId)
-        .where('pr.status', '=', 'pending')
-        .where('pr.created_at', '<=', cutoff)
-        .execute();
-
-      const affectedPhotoIds = [...new Set(expired.map((r) => r.photoId))];
-
-      if (affectedPhotoIds.length > 0) {
-        // 2) 결과 fail 처리 (업데이트 테이블 alias 쓰지 말기)
-        await this.db
-          .updateTable('photo_results')
-          .set({ status: 'fail' })
-          .where('original_photo_id', 'in', affectedPhotoIds)
-          .where('status', '=', 'pending')
-          .where('created_at', '<=', cutoff)
-          .execute();
-
-        // 3) photos finished 처리
-        await this.db
-          .updateTable('photos')
-          .set({ status: 'finished' })
-          .where('id', 'in', affectedPhotoIds)
-          .execute();
-      }
-      // 3) 최신 상태로 조회해서 응답
       const results = await this.photoRepository.getPhotosByUserId(userId);
       const user = await this.userRepository.getUser(userId);
-
       return { status: HttpStatus.OK, results, user };
     } catch (e: any) {
       return { status: HttpStatus.INTERNAL_SERVER_ERROR, message: e.message };
@@ -112,41 +132,10 @@ export class PhotoService {
    */
   async getResultPhotoList(photoId: number) {
     try {
-      const now = new Date();
-      const cutoff = new Date(now.getTime() - 2 * 60 * 1000); // 2분 전
-      const upd = await this.db
-        .updateTable('photo_results')
-        .set({
-          status: 'fail',
-        })
-        .where('original_photo_id', '=', photoId)
-        .where('status', '=', 'pending')
-        .where('created_at', '<=', cutoff)
-        .executeTakeFirst();
-
-      // Kysely에서 업데이트된 row 수
-      const changed =
-        typeof upd.numUpdatedRows === 'bigint'
-          ? Number(upd.numUpdatedRows)
-          : (upd.numUpdatedRows ?? 0);
-
-      // 2) 변경된 게 "있으면" photos.status를 finished로 변경
-      if (changed > 0) {
-        await this.db
-          .updateTable('photos')
-          .set({
-            status: 'finished',
-          })
-          .where('id', '=', photoId)
-          .execute();
-      }
+      await this.expirePendingResults({ photoId });
 
       const result = await this.photoRepository.getPhotoById(photoId);
-
-      return {
-        status: HttpStatus.OK,
-        result,
-      };
+      return { status: HttpStatus.OK, result };
     } catch (e: any) {
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,

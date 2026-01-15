@@ -1,17 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
-import { PhotoResultStatus, PhotoVO } from 'src/libs/types';
+import { PhotoResultStatus, PhotoStatus, PhotoVO } from 'src/libs/types';
 @Injectable()
 export class PhotoRepository {
   constructor(private readonly db: DatabaseProvider) {}
 
-  async updatePhotoStatus(photoId: number, status: string) {
+  async updatePhotoStatus(photoId: number, status: PhotoStatus) {
     await this.db
       .updateTable('photos')
       .set({
         status: status,
       })
       .where('id', '=', photoId)
+      .execute();
+  }
+
+  async updatePhotoStatuses(photoIds: number[], status: PhotoStatus) {
+    if (photoIds.length === 0) return;
+
+    await this.db
+      .updateTable('photos')
+      .set({ status })
+      .where('id', 'in', photoIds)
       .execute();
   }
   async updatePhotoRetryCount(photoId: number, retryCount?: number) {

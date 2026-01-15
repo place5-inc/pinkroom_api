@@ -7,6 +7,7 @@ import {
   MethodNotAllowedException,
   NotFoundException,
   Param,
+  Post,
   Query,
   Req,
 } from '@nestjs/common';
@@ -56,8 +57,8 @@ export class InicisController {
       return await this.inicisService.confirmMobilePayment(paymentResult);
     }
   }
-  @Get('test')
-  async test(@Query('userId') userId: string) {
-    return await this.inicisService.forTest(userId);
+  @Post('test')
+  async test(@Body() body) {
+    return await this.inicisService.forTest(body.userId);
   }
 }
