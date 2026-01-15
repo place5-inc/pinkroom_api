@@ -3,6 +3,7 @@ import { DatabaseProvider } from 'src/libs/db';
 import { VerificationService } from './verification.service';
 import { MessageService } from 'src/message/message.service';
 import { UserService } from 'src/user/user.service';
+import { KakaoService } from 'src/kakao/kakao.service';
 
 @Injectable()
 export class AuthService {
@@ -11,6 +12,7 @@ export class AuthService {
     private messageService: MessageService,
     private userService: UserService,
     private readonly db: DatabaseProvider,
+    private readonly kakaoService: KakaoService,
   ) {}
 
   async sendCode(phone: string) {
@@ -26,6 +28,15 @@ export class AuthService {
     if (!user) {
       user = await this.userService.createUser(phone, sampleType);
       isNew = true;
+
+      //알림톡보내기
+      await this.kakaoService.sendKakaoNotification(
+        user.id,
+        'pr_wlcm_snup_v1',
+        null,
+        [],
+        [],
+      );
     }
 
     return {
