@@ -151,18 +151,30 @@ export class PhotoService {
     payment_id?: number,
     api?: string,
   ) {
-    await this.db
-      .insertInto('log_dev')
-      .values({
+    try {
+      await this.db
+        .insertInto('log_dev')
+        .values({
+          user_id,
+          photo_id,
+          design_id,
+          code,
+          payment_id,
+          api,
+          created_at: new Date(),
+        })
+        .execute();
+    } catch (err) {
+      console.error('log_dev insert failed', {
         user_id,
         photo_id,
         design_id,
-        code,
         payment_id,
         api,
-        created_at: new Date(),
-      })
-      .execute();
+        code_len: code?.length,
+        err,
+      });
+    }
   }
 
   /* 
