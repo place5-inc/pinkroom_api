@@ -542,13 +542,6 @@ export class PhotoWorkerService {
         tryCount,
       );
     } catch (e) {
-      if (keyRow?.id) {
-        await this.db
-          .updateTable('gemini_key')
-          .set({ expired_at: new Date() })
-          .where('id', '=', keyRow.id)
-          .execute();
-      }
       const err = normalizeError(e);
 
       await this.db
@@ -573,6 +566,15 @@ export class PhotoWorkerService {
       );
       try {
         const code = await this.extractGeminiErrorCode(err.message);
+        if (code == 429) {
+          if (keyRow?.id) {
+            await this.db
+              .updateTable('gemini_key')
+              .set({ expired_at: new Date() })
+              .where('id', '=', keyRow.id)
+              .execute();
+          }
+        }
         await this.photoRepository.updatePhotoResult(
           photoId,
           designId,
@@ -612,12 +614,16 @@ export class PhotoWorkerService {
         const uploadFile = await this.uploadToAzure(image, true);
         return uploadFile.url;
       } catch (e) {
-        if (keyRow?.id) {
-          await this.db
-            .updateTable('gemini_key')
-            .set({ expired_at: new Date() })
-            .where('id', '=', keyRow.id)
-            .execute();
+        const err = normalizeError(e);
+        const code = await this.extractGeminiErrorCode(err.message);
+        if (code == 429) {
+          if (keyRow?.id) {
+            await this.db
+              .updateTable('gemini_key')
+              .set({ expired_at: new Date() })
+              .where('id', '=', keyRow.id)
+              .execute();
+          }
         }
       }
     } else if (ai == 'seedream') {
