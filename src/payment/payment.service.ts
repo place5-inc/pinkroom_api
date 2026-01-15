@@ -7,9 +7,9 @@ export class PaymentService {
 
   async completePayment(
     userId: string,
-    oId: string,
-    tId: string,
-    price: number,
+    oId?: string,
+    tId?: string,
+    price?: number,
   ) {
     const result = await this.db
       .insertInto('payments')

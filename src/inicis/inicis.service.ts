@@ -151,4 +151,7 @@ export class InicisService {
       throw new BadRequestException(P_RMESG1);
     }
   }
+  async forTest(userId: string) {
+    return await this.paymentService.completePayment(userId);
+  }
 }

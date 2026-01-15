@@ -3,6 +3,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   MethodNotAllowedException,
   NotFoundException,
   Param,
@@ -54,5 +55,9 @@ export class InicisController {
 
       return await this.inicisService.confirmMobilePayment(paymentResult);
     }
+  }
+  @Get('test')
+  async test(@Query('userId') userId: string) {
+    return await this.inicisService.forTest(userId);
   }
 }
