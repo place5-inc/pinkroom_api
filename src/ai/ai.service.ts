@@ -149,7 +149,7 @@ export class AiService {
           imageConfig: {
             imageSize: process.env.GEMINI_IMAGE_SIZE ?? '2K',
           },
-          httpOptions: { timeout: 60_000 },
+          httpOptions: { timeout: 120_000 },
         },
       });
 
