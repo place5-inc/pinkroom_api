@@ -430,7 +430,7 @@ export class PhotoService {
     }
 
     // 첫 장이 없으면: 한 장 생성 시도
-    const result = await this.workerService.makeOnlyOne(
+    this.workerService.makeOnlyOne(
       photo.id,
       photo.url,
       photo.selected_design_id,
@@ -438,20 +438,9 @@ export class PhotoService {
       isDummy,
       forceFail,
       delaySecond,
+      isPaid,
     );
 
-    if (!result) {
-      await this.photoRepository.updatePhotoStatus(photo.id, 'finished');
-      return { status: HttpStatus.REQUEST_TIMEOUT };
-    }
-    const item = await this.photoRepository.getPhotoById(photo.id);
-    // 첫 장 성공 후 공통 처리
-    if (isPaid) {
-      await runRestGeneration();
-    } else {
-      await this.photoRepository.updatePhotoStatus(photoId, 'complete');
-    }
-
-    return { status: HttpStatus.OK, result: item };
+    return { status: HttpStatus.OK };
   }
 }

@@ -114,6 +114,7 @@ export class PhotoWorkerService {
     isDummy?: boolean,
     forceFail?: boolean,
     delaySecond?: number,
+    isPaid?: boolean,
   ) {
     await this.photoRepository.updatePhotoStatus(photoId, 'first_generating');
     const prompt = await this.db
@@ -142,10 +143,17 @@ export class PhotoWorkerService {
     );
     if (result) {
       await this.generateBeforeAfterThumbnail(photoId);
-
-      return {
-        result,
-      };
+      if (isPaid) {
+        await this.photoRepository.updatePhotoStatus(
+          photoId,
+          'rest_generating',
+        );
+        this.makeAllPhotos(photoId, isDummy, forceFail, delaySecond);
+      } else {
+        await this.photoRepository.updatePhotoStatus(photoId, 'complete');
+      }
+    } else {
+      await this.photoRepository.updatePhotoStatus(photoId, 'finished');
     }
   }
   async failMakePhoto(userId: string, type: string) {
