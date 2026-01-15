@@ -25,6 +25,12 @@ export class KakaoHelper {
       templateCode === 'pr_cplt_wrc_rmd_month_test'
     ) {
       BASE_PARAMS = `s/result/${params[0]}/${params[1]}`;
+      if (
+        templateCode === 'pr_cplt_wrc_test' ||
+        templateCode === 'pr_cplt_wrc_v1'
+      ) {
+        BASE_PARAMS = `w/result/${params[0]}/${params[1]}`;
+      }
       BASE_PARAMS_2 = `w/result/${params[0]}/${params[1]}`;
     }
 
