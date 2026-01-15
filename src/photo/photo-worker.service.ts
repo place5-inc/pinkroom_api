@@ -8,7 +8,7 @@ import { generateCode, normalizeError } from 'src/libs/helpers';
 import { ThumbnailService } from './thumbnail.service';
 import { MessageService } from 'src/message/message.service';
 import { PhotoRepository } from './photo.repository';
-import { PhotoResultStatus } from 'src/libs/types';
+import { Image, PhotoResultStatus } from 'src/libs/types';
 @Injectable()
 export class PhotoWorkerService {
   constructor(
@@ -538,7 +538,7 @@ export class PhotoWorkerService {
     }
   }
 
-  async generatePhotoAdminTest(base64: string, ment: string, ai: string) {
+  async generatePhotoAdminTest(_image: Image, ment: string, ai: string) {
     if (ai == 'gemini') {
       let keyRow: { id: number; key: string } | undefined;
       try {
@@ -546,8 +546,8 @@ export class PhotoWorkerService {
 
         if (!keyRow) throw new Error('No available gemini_key');
         const image = await this.aiService.generatePhotoGemini(
-          null,
-          base64,
+          _image.url,
+          _image.data,
           ment,
           null,
           keyRow.key,
@@ -566,7 +566,7 @@ export class PhotoWorkerService {
     } else if (ai == 'seedream') {
       const image = await this.aiService.generatePhotoSeedream(
         null,
-        base64,
+        _image.data,
         ment,
         null,
       );

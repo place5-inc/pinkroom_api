@@ -259,7 +259,7 @@ export class AdminService {
   async generatePhotoAdminTest(image: Image, ment: string, ai: string) {
     try {
       const url = await this.workerService.generatePhotoAdminTest(
-        image.data,
+        image,
         ment,
         ai,
       );
