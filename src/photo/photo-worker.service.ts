@@ -351,11 +351,11 @@ export class PhotoWorkerService {
 
         if (mergedImageUpload) {
           url = mergedImageUpload.url;
-          // await this.db
-          //   .updateTable('photos')
-          //   .set({ merged_image_id: mergedImageUpload.id })
-          //   .where('id', '=', photoId)
-          //   .execute();
+          await this.db
+            .updateTable('photos')
+            .set({ merged_image_id: mergedImageUpload.id })
+            .where('id', '=', photoId)
+            .execute();
           //console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
           break; // 성공 시 루프 탈출
         }
@@ -410,11 +410,11 @@ export class PhotoWorkerService {
 
         if (thumbnailUpload) {
           url = thumbnailUpload.url;
-          // await this.db
-          //   .updateTable('photos')
-          //   .set({ thumbnail_worldcup_id: thumbnailUpload.id })
-          //   .where('id', '=', photoId)
-          //   .execute();
+          await this.db
+            .updateTable('photos')
+            .set({ thumbnail_worldcup_id: thumbnailUpload.id })
+            .where('id', '=', photoId)
+            .execute();
           //console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
           break; // 성공 시 루프 탈출
         }
@@ -838,15 +838,19 @@ export class PhotoWorkerService {
           'base64',
         )}`;
         const thumbnailUpload =
-          await this.azureBlobService.uploadFileImageBase64(thumbnailBase64);
+          await this.azureBlobService.uploadFileImageBase64(
+            thumbnailBase64,
+            false,
+            true,
+          );
 
         if (thumbnailUpload) {
           url = thumbnailUpload.url;
-          // await this.db
-          //   .updateTable('photos')
-          //   .set({ thumbnail_before_after_id: thumbnailUpload.id })
-          //   .where('id', '=', photoId)
-          //   .execute();
+          await this.db
+            .updateTable('photos')
+            .set({ thumbnail_before_after_id: thumbnailUpload.id })
+            .where('id', '=', photoId)
+            .execute();
           console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
           break; // 성공 시 루프 탈출
         }
