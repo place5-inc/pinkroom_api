@@ -349,7 +349,7 @@ export class PhotoService {
       await this.photoRepository.updatePhotoStatus(photo.id, 'finished');
       this.workerService.failMakePhoto(userId, 'first');
       return {
-        status: HttpStatus.BAD_REQUEST,
+        status: HttpStatus.REQUEST_TIMEOUT,
       };
     } catch (e) {
       throw new HttpException(
