@@ -667,9 +667,6 @@ export class PhotoWorkerService {
       .orderBy('id')
       .select(['id', 'key']);
 
-    console.log(q.compile().sql);
-    console.log(q.compile().parameters);
-
     let keyRow = await q.executeTakeFirst();
     if (!keyRow) {
       keyRow = await this.db

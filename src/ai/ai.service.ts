@@ -31,106 +31,208 @@ export class AiService {
     sampleUrl?: string,
     key?: string,
   ): Promise<string> {
-    try {
-      const apiKey = key ?? process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new InternalServerErrorException('GEMINI_API_KEY is missing');
-      }
-      if (!fileUri && !fileBase64) {
-        throw new BadRequestException(
-          'fileUri 또는 fileBase64 중 하나는 필수입니다.',
-        );
-      }
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-      const model = process.env.GEMINI_MODEL_ID;
-      const ai = new GoogleGenAI({ apiKey });
+    const getStatus = (e: any): number | undefined => {
+      // SDK/HTTP client별로 status 위치가 다를 수 있어서 넓게 잡음
+      return (
+        e?.status ??
+        e?.code ??
+        e?.response?.status ??
+        e?.cause?.status ??
+        e?.cause?.response?.status
+      );
+    };
 
-      // parts를 동적으로 구성
-      const parts: any[] = [];
-      // 1) 사용자 얼굴 이미지: fileUri 우선, 없으면 base64
-      if (fileUri) {
-        const userMimeType = getMimeTypeFromUri(fileUri);
-        parts.push({
-          fileData: {
-            mimeType: userMimeType,
-            fileUri,
-          },
-        });
-      } else if (fileBase64) {
-        // Base64 파싱 (data URL 형태 기대)
-        const base64Match = fileBase64.match(/^data:(image\/\w+);base64,(.+)$/);
-        if (!base64Match) {
-          throw new BadRequestException('올바른 이미지 형식이 아닙니다.');
+    const isRetryableStatus = (status?: number) =>
+      status === 429 || status === 500 || status === 503 || status === 504;
+
+    const safeJson = (v: any) => {
+      try {
+        return JSON.stringify(v);
+      } catch {
+        return String(v);
+      }
+    };
+
+    const extractResponseDebug = (resp: any) => {
+      const cands = resp?.candidates ?? [];
+      const c0 = cands?.[0];
+      const promptFeedback =
+        resp?.promptFeedback ?? resp?.prompt_feedback ?? null;
+      const usage = resp?.usageMetadata ?? resp?.usage_metadata ?? null;
+
+      return {
+        candidatesLen: Array.isArray(cands) ? cands.length : undefined,
+        finishReason: c0?.finishReason,
+        finishMessage: c0?.finishMessage,
+        safetyRatings: c0?.safetyRatings,
+        promptFeedback,
+        usage,
+      };
+    };
+
+    const apiKey = key ?? process.env.GEMINI_API_KEY;
+    if (!apiKey)
+      throw new InternalServerErrorException('GEMINI_API_KEY is missing');
+    if (!fileUri && !fileBase64) {
+      throw new BadRequestException(
+        'fileUri 또는 fileBase64 중 하나는 필수입니다.',
+      );
+    }
+
+    const model = process.env.GEMINI_MODEL_ID;
+    if (!model)
+      throw new InternalServerErrorException('GEMINI_MODEL_ID is missing');
+
+    // ment/prompt 방어: undefined/빈 문자열이면 text part를 넣지 않거나 기본 텍스트 넣기
+    const safeMent = (ment ?? '').trim();
+    const promptText = sampleUrl
+      ? [
+          '첫 번째 이미지는 사용자의 얼굴 사진입니다.',
+          '두 번째 이미지는 참고할 헤어스타일 예시입니다.',
+          safeMent,
+          '- 두 번째 이미지는 헤어스타일 참고용으로만 사용하세요.',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : safeMent;
+
+    // 재시도 설정 (너무 많이 재시도하면 429를 더 악화시킬 수 있어서 짧게)
+    const MAX_ATTEMPTS = 3;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const ai = new GoogleGenAI({ apiKey });
+
+        // parts 구성
+        const parts: any[] = [];
+
+        // 1) 사용자 얼굴 이미지
+        if (fileUri) {
+          const userMimeType = getMimeTypeFromUri(fileUri) || 'image/jpeg';
+          parts.push({
+            fileData: {
+              mimeType: userMimeType,
+              fileUri,
+            },
+          });
+        } else if (fileBase64) {
+          const base64Match = fileBase64.match(
+            /^data:(image\/\w+);base64,(.+)$/,
+          );
+          if (!base64Match) {
+            throw new BadRequestException('올바른 이미지 형식이 아닙니다.');
+          }
+          const mimeType = base64Match[1];
+          const base64Data = base64Match[2];
+          parts.push({
+            inlineData: {
+              mimeType,
+              data: base64Data,
+            },
+          });
         }
 
-        const mimeType = base64Match[1]; // ex) image/png
-        const base64Data = base64Match[2];
+        // 2) 참고 이미지
+        if (sampleUrl) {
+          const sampleMimeType = getMimeTypeFromUri(sampleUrl) || 'image/jpeg';
+          parts.push({
+            fileData: {
+              mimeType: sampleMimeType,
+              fileUri: sampleUrl,
+            },
+          });
+        }
 
-        parts.push({
-          inlineData: {
-            mimeType,
-            data: base64Data,
+        // 3) 텍스트 파트 (비어있으면 넣지 않음)
+        if (promptText) {
+          parts.push({ text: promptText });
+        } else {
+          // 최소 텍스트라도 넣고 싶으면 여기서 기본 문구 넣기
+          parts.push({ text: '이미지를 생성해 주세요.' });
+        }
+
+        const geminiResponse = await ai.models.generateContent({
+          model,
+          contents: [{ role: 'user', parts }],
+          config: {
+            responseModalities: ['Text', 'Image'],
+            imageConfig: {
+              imageSize: process.env.GEMINI_IMAGE_SIZE ?? '2K',
+            },
+            httpOptions: { timeout: 60_000 },
           },
         });
-      }
 
-      // 2️⃣ sampleUrl이 있으면 참고 이미지 추가
-      if (sampleUrl) {
-        parts.push({
-          fileData: {
-            mimeType: getMimeTypeFromUri(sampleUrl),
-            fileUri: sampleUrl,
-          },
+        // ---- 여기부터 응답 파싱을 “안전하게” ----
+        const cands = geminiResponse.candidates ?? [];
+        if (!Array.isArray(cands) || cands.length === 0) {
+          const dbg = extractResponseDebug(geminiResponse);
+          // Nest logger로 바꿔도 됨
+          console.error('[Gemini] No candidates', dbg);
+          throw new InternalServerErrorException(
+            `이미지 생성 후보가 없습니다. dbg=${safeJson(dbg)}`,
+          );
+        }
+
+        const c0: any = cands[0];
+        const resultParts = c0?.content?.parts;
+
+        if (!Array.isArray(resultParts) || resultParts.length === 0) {
+          const dbg = extractResponseDebug(geminiResponse);
+          console.error('[Gemini] Candidate has no parts', dbg);
+          throw new InternalServerErrorException(
+            `이미지 생성 결과 파트가 비어있습니다. dbg=${safeJson(dbg)}`,
+          );
+        }
+
+        // 이미지 파트 탐색 (inlineData 기준)
+        const imagePart = resultParts.find((p: any) => p?.inlineData);
+        if (!imagePart?.inlineData) {
+          const textPart = resultParts.find((p: any) => p?.text);
+          const dbg = extractResponseDebug(geminiResponse);
+          console.error('[Gemini] No image inlineData', {
+            dbg,
+            text: textPart?.text,
+          });
+
+          throw new InternalServerErrorException(
+            textPart?.text
+              ? `이미지가 반환되지 않았습니다. text=${textPart.text}`
+              : `이미지를 생성할 수 없습니다. dbg=${safeJson(dbg)}`,
+          );
+        }
+
+        return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+      } catch (e: any) {
+        const status = getStatus(e);
+        const retryable = isRetryableStatus(status);
+
+        // 로그 (너희 logger로 바꿔도 됨)
+        console.error('[Gemini] Error', {
+          attempt,
+          status,
+          message: e?.message,
+          details: e?.details,
         });
+
+        // 재시도 조건
+        if (attempt < MAX_ATTEMPTS && retryable) {
+          // 지수 백오프 + 약간의 지터
+          const backoff = Math.min(2000 * 2 ** (attempt - 1), 8000);
+          const jitter = Math.floor(Math.random() * 250);
+          await sleep(backoff + jitter);
+          continue;
+        }
+
+        // 재시도 끝/불가면 그대로 throw
+        throw e;
       }
-
-      // 3️⃣ 프롬프트 구성
-      const prompt = sampleUrl
-        ? `
-  첫 번째 이미지는 사용자의 얼굴 사진입니다.
-  두 번째 이미지는 참고할 헤어스타일 예시입니다.
-  ${ment}
-  - 두 번째 이미지는 헤어스타일 참고용으로만 사용하세요.
-  `
-        : ment;
-
-      parts.push({ text: prompt });
-
-      const geminiResponse = await ai.models.generateContent({
-        // model: 'gemini-2.5-flash-image',
-        model: model,
-        contents: [
-          {
-            role: 'user',
-            parts,
-          },
-        ],
-        config: {
-          responseModalities: ['Text', 'Image'],
-          imageConfig: {
-            imageSize: process.env.GEMINI_IMAGE_SIZE ?? '2K',
-          },
-          httpOptions: { timeout: 60_000 },
-        },
-      });
-
-      const resultParts = geminiResponse.candidates?.[0]?.content?.parts;
-      if (!resultParts) {
-        throw new InternalServerErrorException('이미지 생성에 실패했습니다.');
-      }
-
-      const imagePart = resultParts.find((p: any) => p.inlineData);
-      if (!imagePart?.inlineData) {
-        const textPart = resultParts.find((p: any) => p.text);
-        throw new InternalServerErrorException(
-          textPart?.text || '이미지를 생성할 수 없습니다.',
-        );
-      }
-
-      return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
-    } catch (e) {
-      throw e;
     }
+
+    // 여기 도달하진 않지만 타입 안정용
+    throw new InternalServerErrorException('이미지 생성에 실패했습니다.');
   }
 
   async generatePhotoSeedream(
