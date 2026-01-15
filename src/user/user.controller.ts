@@ -34,7 +34,7 @@ export class UserController {
       body.paymentId,
       body.code,
       body.isDummy,
-      body.forceFaile,
+      body.forceFail,
       body.delaySecond,
     );
   }
@@ -45,7 +45,7 @@ export class UserController {
       body.photoId,
       body.retryCount,
       body.isDummy,
-      body.forceFaile,
+      body.forceFail,
       body.delaySecond,
     );
   }
@@ -56,7 +56,7 @@ export class UserController {
       body.photoId,
       body.paymentId,
       body.isDummy,
-      body.forceFaile,
+      body.forceFail,
       body.delaySecond,
     );
   }
