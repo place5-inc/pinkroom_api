@@ -495,44 +495,44 @@ export class PhotoWorkerService {
     let keyRow: { id: number; key: string } | undefined;
 
     try {
-      await this.photoRepository.updatePhotoResult(
-        photoId,
-        designId,
-        null,
-        'pending',
-        tryCount,
-      );
-
-      const forTest = new Promise<{
-        id: string;
-      }>((resolve, reject) => {
-        setTimeout(() => {
-          for (let i = 0; i < 16; i++) {
-            if (designId === i + 1) {
-              resolve(this.dummyPhoto[1][i]);
-            }
-          }
-        }, 8 * 1000);
-      });
-
-      const uploadFile = await forTest;
-
-      // keyRow = await this.getGeminiKey();
-
-      // if (!keyRow) throw new Error('No available gemini_key');
-
-      // const image = await this.aiService.generatePhotoGemini(
-      //   photoUrl,
+      // await this.photoRepository.updatePhotoResult(
+      //   photoId,
+      //   designId,
       //   null,
-      //   ment,
-      //   sampleUrl,
-      //   keyRow.key,
+      //   'pending',
+      //   tryCount,
       // );
 
-      // const uploadFile = await this.uploadToAzure(image, true);
-      // if (!uploadFile) {
-      //   throw new InternalServerErrorException('Azure 업로드 실패');
-      // }
+      // const forTest = new Promise<{
+      //   id: string;
+      // }>((resolve, reject) => {
+      //   setTimeout(() => {
+      //     for (let i = 0; i < 16; i++) {
+      //       if (designId === i + 1) {
+      //         resolve(this.dummyPhoto[1][i]);
+      //       }
+      //     }
+      //   }, 8 * 1000);
+      // });
+
+      // const uploadFile = await forTest;
+
+      keyRow = await this.getGeminiKey();
+
+      if (!keyRow) throw new Error('No available gemini_key');
+
+      const image = await this.aiService.generatePhotoGemini(
+        photoUrl,
+        null,
+        ment,
+        sampleUrl,
+        keyRow.key,
+      );
+
+      const uploadFile = await this.uploadToAzure(image, true);
+      if (!uploadFile) {
+        throw new InternalServerErrorException('Azure 업로드 실패');
+      }
 
       return await this.photoRepository.updatePhotoResult(
         photoId,
