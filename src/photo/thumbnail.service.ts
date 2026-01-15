@@ -18,39 +18,39 @@ export class ThumbnailService {
   constructor(private readonly azureBlobService: AzureBlobService) {}
   // onModuleInit() {
   //   try {
-  //     const path = require('path');
-  //     const rootPath = process.cwd(); // /home/site/wwwroot
+  //     const rootPath = process.cwd();
+  //     const fontPathBold = join(
+  //       rootPath,
+  //       'dist/resources/fonts/Pretendard-Bold.ttf',
+  //     );
 
-  //     // API 결과로 확인된 확실한 경로
-  //     const fontDir = path.join(rootPath, 'dist/resources/fonts');
-  //     const fonts = [
-  //       { file: 'Pretendard-Light.ttf', family: 'PretendardLight' },
-  //       { file: 'Pretendard-Regular.ttf', family: 'PretendardRegular' },
-  //       { file: 'Pretendard-Medium.ttf', family: 'PretendardMedium' },
-  //       { file: 'Pretendard-Bold.ttf', family: 'PretendardBold' },
-  //     ];
+  //     const fontPathRegular = join(
+  //       rootPath,
+  //       'dist/resources/fonts/Pretendard-Regular.ttf',
+  //     );
+
+  //     console.log('[ThumbnailService] 폰트 경로 확인:', fontPathBold);
   //     const fs = require('fs');
-  //     for (const font of fonts) {
-  //       const fontPath = path.join(fontDir, font.file);
-  //       if (!fs.existsSync(fontPath)) {
-  //         continue;
-  //       }
-  //       registerFont(fontPath, { family: font.family });
+
+  //     if (fs.existsSync(fontPathBold) && fs.existsSync(fontPathRegular)) {
+  //       // registerFont(fontPathBold, { family: 'PretendardBold' });
+  //       // registerFont(fontPathRegular, { family: 'PretendardRegular' });
+  //       registerFont(fontPathRegular, {
+  //         family: 'Pretendard',
+  //         weight: '400',
+  //       });
+  //       registerFont(fontPathBold, {
+  //         family: 'Pretendard',
+  //         weight: '700',
+  //       });
+  //       console.log(
+  //         '[ThumbnailService] Pretendard 폰트 등록 완료 (PretendardBold, PretendardRegular)',
+  //       );
+  //     } else {
+  //       console.warn(
+  //         '[ThumbnailService] Pretendard TTF 파일을 찾을 수 없습니다. 기본 폰트를 사용합니다.',
+  //       );
   //     }
-  //     // const regularPath = path.join(fontDir, 'Pretendard-Regular.ttf');
-  //     // const mediumPath = path.join(fontDir, 'Pretendard-Medium.ttf');
-  //     // const boldPath = path.join(fontDir, 'Pretendard-Bold.ttf');
-
-  //     // if (fs.existsSync(regularPath) && fs.existsSync(boldPath)) {
-  //     //   // 폰트 등록 (family 이름을 하나로 통일하고 weight로 구분하는 것이 표준입니다)
-  //     //   registerFont(regularPath, { family: 'Pretendard', weight: 'normal' });
-  //     //   registerFont(mediumPath, { family: 'Pretendard', weight: 'medium' });
-  //     //   registerFont(boldPath, { family: 'Pretendard', weight: 'bold' });
-
-  //     //   console.log('[ThumbnailService] 폰트 등록 완료: Pretendard (400, 700)');
-  //     // } else {
-  //     //   console.error('[ThumbnailService] 폰트 파일을 찾을 수 없습니다.');
-  //     // }
   //   } catch (error) {
   //     console.error('[ThumbnailService] 폰트 등록 중 예외 발생:', error);
   //   }
@@ -184,21 +184,28 @@ export class ThumbnailService {
     afterUrl: string,
   ): Promise<Buffer> {
     const width = 800;
+
     const height = 400;
+
     const canvas = createCanvas(width, height);
+
     const ctx = canvas.getContext('2d');
 
     // Background
+
     ctx.fillStyle = '#ffffff';
+
     ctx.fillRect(0, 0, width, height);
 
-    // 1. 이미지 로딩
+    // Load images
+
     const [imgBefore, imgAfter] = await Promise.all([
       this.loadImageFromUrl(beforeUrl),
       this.loadImageFromUrl(afterUrl),
     ]);
 
-    // 2. Left Half (Before Photo)
+    //주석추가
+    // Left Half (Before)
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, 0, width / 2, height);
@@ -212,7 +219,7 @@ export class ThumbnailService {
     ctx.drawImage(imgBefore, (width / 2 - w1) / 2, (height - h1) / 2, w1, h1);
     ctx.restore();
 
-    // 3. Right Half (After Photo)
+    // Right Half (After)
     ctx.save();
     ctx.beginPath();
     ctx.rect(width / 2, 0, width / 2, height);
@@ -223,6 +230,7 @@ export class ThumbnailService {
     );
     const w2 = imgAfter.width * ratio2;
     const h2 = imgAfter.height * ratio2;
+
     ctx.drawImage(
       imgAfter,
       width / 2 + (width / 2 - w2) / 2,
@@ -230,22 +238,24 @@ export class ThumbnailService {
       w2,
       h2,
     );
-    ctx.restore();
 
-    ctx.font = '400 21px "Pretendard"';
+    ctx.restore();
+    // Draw Badges
+    // 폰트 설정: 개별 등록한 PretendardBold를 우선 사용합니다.
+
+    ctx.font = '500 22px "Pretendard"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
     const badgeW = 84;
-    // 기본 높이는 둘 다 동일하게 유지
     const badgeH = 32;
     const margin = 12; // 사용자 요청 마진
     const badgeY = margin;
-
     // Before Badge (Left Half - Top Left)
     const leftBadgeX = margin;
     ctx.fillStyle = 'rgba(128, 128, 128, 1.0)';
     this.drawRoundedRect(ctx, leftBadgeX, badgeY, badgeW, badgeH, 6);
+
     ctx.fill();
     ctx.fillStyle = '#ffffff';
     ctx.fillText('Before', leftBadgeX + badgeW / 2, badgeY + badgeH / 2);
@@ -254,11 +264,12 @@ export class ThumbnailService {
     const rightBadgeX = width / 2 + margin;
     ctx.fillStyle = '#E9407A';
     this.drawRoundedRect(ctx, rightBadgeX, badgeY, badgeW, badgeH, 6);
+
     ctx.fill();
     ctx.fillStyle = '#ffffff';
     ctx.fillText('After', rightBadgeX + badgeW / 2, badgeY + badgeH / 2);
 
-    return canvas.toBuffer('image/jpeg', { quality: 0.9 });
+    return canvas.toBuffer('image/png');
   }
 
   async generateMergedWorldcupImage(imageUrls: string[]) {
@@ -393,7 +404,7 @@ export class ThumbnailService {
             .map((url) => this.loadImageFromUrl(url).catch(() => null)),
         ),
         this.loadImageFromUrl(
-          'https://pinkroom.blob.core.windows.net/pinkroom/merged_top.png',
+          'https://pinkroom.blob.core.windows.net/pinkroom/mergedWorldCupTopImage.png',
         ),
       ]);
 
@@ -403,7 +414,16 @@ export class ThumbnailService {
 
       // 4. 상단 배너 이미지 그리기 (800x352)
       if (bannerImage) {
-        ctx.drawImage(bannerImage, 0, 0, width, bannerHeight);
+        const targetHeight = bannerHeight; // 352 고정
+        const scaleRatio = targetHeight / bannerImage.height;
+
+        const drawWidth = bannerImage.width * scaleRatio;
+        const drawHeight = targetHeight;
+
+        const offsetX = (width - drawWidth) / 2; // 좌우 중앙 정렬
+        const offsetY = 0;
+
+        ctx.drawImage(bannerImage, offsetX, offsetY, drawWidth, drawHeight);
       }
 
       // 5. 그리드 시작 위치 설정
@@ -449,7 +469,6 @@ export class ThumbnailService {
       }
 
       // 최종 결과물 출력
-      //return canvas.toBuffer('image/jpeg', { quality: 0.95 });
       return canvas.toBuffer('image/png');
     } catch (e) {
       console.error('[generateMergedCanvas] Error:', e);
@@ -496,7 +515,7 @@ export class ThumbnailService {
             .map((url) => this.loadImageFromUrl(url).catch(() => null)),
         ),
         this.loadImageFromUrl(
-          'https://pinkroom.blob.core.windows.net/pinkroom/merged_top.png',
+          'https://pinkroom.blob.core.windows.net/pinkroom/mergedWorldCupTopImage.png',
         ),
       ]);
 
@@ -506,7 +525,16 @@ export class ThumbnailService {
 
       // 4. 상단 배너 이미지 그리기 (800x352)
       if (bannerImage) {
-        ctx.drawImage(bannerImage, 0, 0, width, bannerHeight);
+        const targetHeight = bannerHeight; // 352 고정
+        const scaleRatio = targetHeight / bannerImage.height;
+
+        const drawWidth = bannerImage.width * scaleRatio;
+        const drawHeight = targetHeight;
+
+        const offsetX = (width - drawWidth) / 2; // 좌우 중앙 정렬
+        const offsetY = 0;
+
+        ctx.drawImage(bannerImage, offsetX, offsetY, drawWidth, drawHeight);
       }
 
       // 5. 그리드 시작 위치 설정
@@ -565,10 +593,11 @@ export class ThumbnailService {
     const height = 150;
     const scale = 2;
 
+    // 1. 패딩 및 간격 설정
     const paddingX = 18;
-    const paddingTop = 0; // 배너 시작 위치 (약간 조정)
-    const bannerHeight = 36; // 상단 배너(글자 포함) 이미지의 고정 높이 설정
-    const gapBetweenTitleAndGrid = 7; // 배너와 그리드 사이 간격 축소
+    const paddingTop = 17; // 상단 여백 (글자가 작아졌으므로 조금 더 확보)
+    const bannerPaddingX = 65; // 글자 이미지 좌우 패딩을 크게 하여 크기를 줄임 (70~80 권장)
+    const gapBetweenTitleAndGrid = 15; // 글자와 그리드 사이 간격
 
     const gridRowGap = 5;
     const gridColGap = 5;
@@ -577,7 +606,7 @@ export class ThumbnailService {
     const bottomGradientHeight = 44;
     const cellRadius = 4;
 
-    // 그리드 너비와 셀 크기 계산
+    // 그리드 계산
     const gridWidth = width - paddingX * 2;
     const cellWidth = (gridWidth - gridColGap * (cols - 1)) / cols;
     const cellHeight = cellWidth / rowAspect;
@@ -590,38 +619,45 @@ export class ThumbnailService {
       const ctx = canvas.getContext('2d');
       ctx.scale(scale, scale);
 
-      /** 1. 이미지 및 배너 로딩 병렬 처리 */
+      /** 1. 이미지 로딩 */
       const urls = imageUrls.slice(0, 8);
       const [images, bannerImage] = await Promise.all([
         Promise.all(
           urls.map((url) => this.loadImageFromUrl(url).catch(() => null)),
         ),
         this.loadImageFromUrl(
-          'https://pinkroom.blob.core.windows.net/pinkroom/merged_top_2.png',
+          'https://pinkroom.blob.core.windows.net/pinkroom/chooseBestHairText.png',
         ),
       ]);
 
-      /** 2. 배경 그라데이션 */
+      /** 2. 배경 그라데이션 (처음 값으로 복구) */
       const bgGradient = ctx.createLinearGradient(0, 0, width, height * 3);
       bgGradient.addColorStop(0.202, '#F8DBE7');
       bgGradient.addColorStop(1, '#D31154');
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, width, height);
 
-      /** 3. 상단 타이틀 배너 그리기 (텍스트 fillText 대체) */
+      /** 3. 상단 타이틀 배너 (크기 축소 및 중앙 배치) */
       let currentY = paddingTop;
-      let finalBannerHeight = 36; // 폴백용 기본값
-      if (bannerImage) {
-        // 비율 계산: 원본 너비 대비 높이 비율을 구함
-        const aspectRatio = bannerImage.width / bannerImage.height;
-        // 캔버스 너비(300)에 맞춘 실제 높이 계산 (글자 찌그러짐 방지)
-        finalBannerHeight = width / aspectRatio;
+      let finalBannerHeight = 0;
 
-        ctx.drawImage(bannerImage, 0, currentY, width, finalBannerHeight);
+      if (bannerImage) {
+        // 배너 너비 = 전체 너비 - (좌우 패딩 * 2)
+        const bannerDisplayWidth = width - bannerPaddingX * 2;
+        const aspectRatio = bannerImage.width / bannerImage.height;
+        finalBannerHeight = bannerDisplayWidth / aspectRatio;
+
+        ctx.drawImage(
+          bannerImage,
+          bannerPaddingX, // 중앙 배치를 위한 시작 X좌표
+          currentY,
+          bannerDisplayWidth,
+          finalBannerHeight,
+        );
       }
 
-      // 그리드 시작 위치 계산 (배너 높이 + 간격)
-      currentY += bannerHeight + gapBetweenTitleAndGrid;
+      // 그리드 시작 위치 계산
+      currentY += finalBannerHeight + gapBetweenTitleAndGrid;
 
       /** 4. 4x2 그리드 그리기 */
       for (let row = 0; row < 2; row++) {
@@ -632,7 +668,6 @@ export class ThumbnailService {
           const x = paddingX + col * (cellWidth + gridColGap);
           const y = currentY + row * (cellHeight + gridRowGap);
 
-          // 이미지 베이스 (로딩 실패 대비)
           ctx.fillStyle = '#F3F4F6';
           this.drawRoundedRect(ctx, x, y, cellWidth, cellHeight, cellRadius);
           ctx.fill();
@@ -647,7 +682,7 @@ export class ThumbnailService {
         }
       }
 
-      /** 5. 하단 그라데이션 */
+      /** 5. 하단 그라데이션 (처음 값으로 복구) */
       const bottomGradient = ctx.createLinearGradient(
         0,
         height - bottomGradientHeight,
@@ -664,7 +699,6 @@ export class ThumbnailService {
         bottomGradientHeight,
       );
 
-      //return canvas.toBuffer('image/jpeg', { quality: 0.95 });
       return canvas.toBuffer('image/png');
     } catch (e) {
       console.error('[generateWorldcupThumbnailCanvas]', e);
@@ -678,10 +712,11 @@ export class ThumbnailService {
     const height = 150;
     const scale = 2;
 
+    // 1. 패딩 및 간격 설정
     const paddingX = 18;
-    const paddingTop = 0; // 배너 시작 위치 (약간 조정)
-    const bannerHeight = 36; // 상단 배너(글자 포함) 이미지의 고정 높이 설정
-    const gapBetweenTitleAndGrid = 7; // 배너와 그리드 사이 간격 축소
+    const paddingTop = 17; // 상단 여백 (글자가 작아졌으므로 조금 더 확보)
+    const bannerPaddingX = 65; // 글자 이미지 좌우 패딩을 크게 하여 크기를 줄임 (70~80 권장)
+    const gapBetweenTitleAndGrid = 15; // 글자와 그리드 사이 간격
 
     const gridRowGap = 5;
     const gridColGap = 5;
@@ -690,7 +725,7 @@ export class ThumbnailService {
     const bottomGradientHeight = 44;
     const cellRadius = 4;
 
-    // 그리드 너비와 셀 크기 계산
+    // 그리드 계산
     const gridWidth = width - paddingX * 2;
     const cellWidth = (gridWidth - gridColGap * (cols - 1)) / cols;
     const cellHeight = cellWidth / rowAspect;
@@ -703,38 +738,45 @@ export class ThumbnailService {
       const ctx = canvas.getContext('2d');
       ctx.scale(scale, scale);
 
-      /** 1. 이미지 및 배너 로딩 병렬 처리 */
+      /** 1. 이미지 로딩 */
       const urls = imageUrls.slice(0, 8);
       const [images, bannerImage] = await Promise.all([
         Promise.all(
           urls.map((url) => this.loadImageFromUrl(url).catch(() => null)),
         ),
         this.loadImageFromUrl(
-          'https://pinkroom.blob.core.windows.net/pinkroom/merged_top_2.png',
+          'https://pinkroom.blob.core.windows.net/pinkroom/chooseBestHairText.png',
         ),
       ]);
 
-      /** 2. 배경 그라데이션 */
+      /** 2. 배경 그라데이션 (처음 값으로 복구) */
       const bgGradient = ctx.createLinearGradient(0, 0, width, height * 3);
       bgGradient.addColorStop(0.202, '#F8DBE7');
       bgGradient.addColorStop(1, '#D31154');
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, width, height);
 
-      /** 3. 상단 타이틀 배너 그리기 (텍스트 fillText 대체) */
+      /** 3. 상단 타이틀 배너 (크기 축소 및 중앙 배치) */
       let currentY = paddingTop;
-      let finalBannerHeight = 36; // 폴백용 기본값
-      if (bannerImage) {
-        // 비율 계산: 원본 너비 대비 높이 비율을 구함
-        const aspectRatio = bannerImage.width / bannerImage.height;
-        // 캔버스 너비(300)에 맞춘 실제 높이 계산 (글자 찌그러짐 방지)
-        finalBannerHeight = width / aspectRatio;
+      let finalBannerHeight = 0;
 
-        ctx.drawImage(bannerImage, 0, currentY, width, finalBannerHeight);
+      if (bannerImage) {
+        // 배너 너비 = 전체 너비 - (좌우 패딩 * 2)
+        const bannerDisplayWidth = width - bannerPaddingX * 2;
+        const aspectRatio = bannerImage.width / bannerImage.height;
+        finalBannerHeight = bannerDisplayWidth / aspectRatio;
+
+        ctx.drawImage(
+          bannerImage,
+          bannerPaddingX, // 중앙 배치를 위한 시작 X좌표
+          currentY,
+          bannerDisplayWidth,
+          finalBannerHeight,
+        );
       }
 
-      // 그리드 시작 위치 계산 (배너 높이 + 간격)
-      currentY += bannerHeight + gapBetweenTitleAndGrid;
+      // 그리드 시작 위치 계산
+      currentY += finalBannerHeight + gapBetweenTitleAndGrid;
 
       /** 4. 4x2 그리드 그리기 */
       for (let row = 0; row < 2; row++) {
@@ -745,7 +787,6 @@ export class ThumbnailService {
           const x = paddingX + col * (cellWidth + gridColGap);
           const y = currentY + row * (cellHeight + gridRowGap);
 
-          // 이미지 베이스 (로딩 실패 대비)
           ctx.fillStyle = '#F3F4F6';
           this.drawRoundedRect(ctx, x, y, cellWidth, cellHeight, cellRadius);
           ctx.fill();
@@ -760,7 +801,7 @@ export class ThumbnailService {
         }
       }
 
-      /** 5. 하단 그라데이션 */
+      /** 5. 하단 그라데이션 (처음 값으로 복구) */
       const bottomGradient = ctx.createLinearGradient(
         0,
         height - bottomGradientHeight,
@@ -777,7 +818,7 @@ export class ThumbnailService {
         bottomGradientHeight,
       );
 
-      return canvas.toBuffer('image/jpeg', { quality: 0.95 });
+      return canvas.toBuffer('image/png');
     } catch (e) {
       console.error('[generateWorldcupThumbnailCanvas]', e);
       return null;

@@ -9,34 +9,54 @@ import * as path from 'path';
 import fastifyStatic from '@fastify/static';
 import fastifyView from '@fastify/view';
 import { registerFont } from 'canvas';
+import { join } from 'path';
 
 async function bootstrap() {
-  const path = require('path');
-  const rootPath = process.cwd(); // /home/site/wwwroot
+  const rootPath = process.cwd();
+  const fontPathBold = join(
+    rootPath,
+    'dist/resources/fonts/Pretendard-Bold.ttf',
+  );
 
-  // API 결과로 확인된 확실한 경로
-  const fontDir = path.join(rootPath, 'dist/resources/fonts');
-  const fonts = [
-    //{ file: 'Pretendard-Light.ttf', name: 'PretendardLight', weight: '300' },
-    {
-      file: 'Pretendard-Regular.ttf',
-      name: 'PretendardRegular',
-      weight: '400',
-    },
-    //{ file: 'Pretendard-Medium.ttf', name: 'PretendardMedium', weight: '500' },
-    { file: 'Pretendard-Bold.ttf', name: 'PretendardBold', weight: '700' },
-  ];
+  const fontPathRegular = join(
+    rootPath,
+    'dist/resources/fonts/Pretendard-Regular.ttf',
+  );
+
+  const fortPathMedium = join(
+    rootPath,
+    'dist/resources/fonts/Pretendard-Medium.ttf',
+  );
+
+  console.log('[ThumbnailService] 폰트 경로 확인:', fontPathBold);
   const fs = require('fs');
-  for (const font of fonts) {
-    const fontPath = path.join(fontDir, font.file);
-    if (!fs.existsSync(fontPath)) {
-      continue;
-    }
-    registerFont(fontPath, {
+
+  if (
+    fs.existsSync(fontPathBold) &&
+    fs.existsSync(fontPathRegular) &&
+    fs.existsSync(fortPathMedium)
+  ) {
+    // registerFont(fontPathBold, { family: 'PretendardBold' });
+    // registerFont(fontPathRegular, { family: 'PretendardRegular' });
+    registerFont(fontPathRegular, {
       family: 'Pretendard',
-      weight: font.weight,
+      weight: '400',
     });
-    console.log(`[Main] ${font.name} font registered`);
+    registerFont(fontPathBold, {
+      family: 'Pretendard',
+      weight: '700',
+    });
+    registerFont(fortPathMedium, {
+      family: 'Pretendard',
+      weight: '500',
+    });
+    console.log(
+      '[ThumbnailService] Pretendard 폰트 등록 완료 (PretendardBold, PretendardRegular)',
+    );
+  } else {
+    console.warn(
+      '[ThumbnailService] Pretendard TTF 파일을 찾을 수 없습니다. 기본 폰트를 사용합니다.',
+    );
   }
 
   const app = await NestFactory.create<NestFastifyApplication>(
