@@ -184,28 +184,27 @@ export class ThumbnailService {
     afterUrl: string,
   ): Promise<Buffer> {
     const width = 800;
-
     const height = 400;
-
     const canvas = createCanvas(width, height);
-
     const ctx = canvas.getContext('2d');
 
     // Background
-
     ctx.fillStyle = '#ffffff';
-
     ctx.fillRect(0, 0, width, height);
 
-    // Load images
-
-    const [imgBefore, imgAfter] = await Promise.all([
+    // 1. 이미지 로딩
+    const [imgBefore, imgAfter, tagBefore, tagAfter] = await Promise.all([
       this.loadImageFromUrl(beforeUrl),
       this.loadImageFromUrl(afterUrl),
+      this.loadImageFromUrl(
+        'https://pinkroom.blob.core.windows.net/pinkroom/before_tag.png',
+      ),
+      this.loadImageFromUrl(
+        'https://pinkroom.blob.core.windows.net/pinkroom/after_tag.png',
+      ),
     ]);
 
-    //주석추가
-    // Left Half (Before)
+    // 2. Left Half (Before Photo)
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, 0, width / 2, height);
@@ -219,7 +218,7 @@ export class ThumbnailService {
     ctx.drawImage(imgBefore, (width / 2 - w1) / 2, (height - h1) / 2, w1, h1);
     ctx.restore();
 
-    // Right Half (After)
+    // 3. Right Half (After Photo)
     ctx.save();
     ctx.beginPath();
     ctx.rect(width / 2, 0, width / 2, height);
@@ -230,7 +229,6 @@ export class ThumbnailService {
     );
     const w2 = imgAfter.width * ratio2;
     const h2 = imgAfter.height * ratio2;
-
     ctx.drawImage(
       imgAfter,
       width / 2 + (width / 2 - w2) / 2,
@@ -238,37 +236,35 @@ export class ThumbnailService {
       w2,
       h2,
     );
-
     ctx.restore();
-    // Draw Badges
-    // 폰트 설정: 개별 등록한 PretendardBold를 우선 사용합니다.
 
-    ctx.font = '500 22px "Pretendard"';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    const badgeW = 84;
-    const badgeH = 32;
-    const margin = 12; // 사용자 요청 마진
+    // 4. 태그 이미지 설정
+    const margin = 12;
     const badgeY = margin;
-    // Before Badge (Left Half - Top Left)
-    const leftBadgeX = margin;
-    ctx.fillStyle = 'rgba(128, 128, 128, 1.0)';
-    this.drawRoundedRect(ctx, leftBadgeX, badgeY, badgeW, badgeH, 6);
 
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText('Before', leftBadgeX + badgeW / 2, badgeY + badgeH / 2);
+    // 기본 높이는 둘 다 동일하게 유지
+    const badgeH = 32;
 
-    // After Badge (Right Half - Top Left)
-    const rightBadgeX = width / 2 + margin;
-    ctx.fillStyle = '#E9407A';
-    this.drawRoundedRect(ctx, rightBadgeX, badgeY, badgeW, badgeH, 6);
+    // Before 태그 가로 폭 (기존 유지)
+    const beforeW = 84;
 
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText('After', rightBadgeX + badgeW / 2, badgeY + badgeH / 2);
+    // After 태그 가로 폭 (198/249 비율로 축소)
+    // 84 * (198/249) = 약 66.8
+    const afterW = beforeW * (198 / 249);
 
+    // Before Tag 그리기
+    if (tagBefore) {
+      ctx.drawImage(tagBefore, margin, badgeY, beforeW, badgeH);
+    }
+
+    // After Tag 그리기 (높이는 같고 가로만 축소됨)
+    if (tagAfter) {
+      const rightBadgeX = width / 2 + margin;
+      // 가로 폭에 afterW 적용
+      ctx.drawImage(tagAfter, rightBadgeX, badgeY, afterW, badgeH);
+    }
+
+    //return canvas.toBuffer('image/jpeg', { quality: 0.9 });
     return canvas.toBuffer('image/png');
   }
 
