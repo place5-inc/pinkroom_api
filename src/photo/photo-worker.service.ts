@@ -652,7 +652,7 @@ export class PhotoWorkerService {
           keyRow.key,
         );
         const uploadFile = await this.uploadToAzure(image, true);
-        return uploadFile.url;
+        return uploadFile;
       } catch (e) {
         const err = normalizeError(e);
         const code = await this.extractGeminiErrorCode(err.message);
@@ -674,7 +674,7 @@ export class PhotoWorkerService {
         null,
       );
       const uploadFile = await this.uploadToAzure(image);
-      return uploadFile.url;
+      return uploadFile;
     }
   }
 

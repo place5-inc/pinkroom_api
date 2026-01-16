@@ -59,6 +59,7 @@ export type AdminBody = {
   setOn?: boolean;
   image?: Image;
   ai?: string;
+  photoId?: number;
 };
 export type AuthBody = {
   phone?: string;

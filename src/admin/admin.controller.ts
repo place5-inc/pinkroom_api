@@ -122,20 +122,6 @@ export class AdminController {
   async getPrompt(@Query('designId') designId: number) {
     return await this.adminService.getPrompt(designId);
   }
-
-  @Get('test/kakao')
-  async testKakao(
-    @Query('userId') userId: string,
-    @Query('templateCode') templateCode: string,
-  ) {
-    if (isEmpty(userId)) {
-      throw new BadRequestException('userId is required.');
-    }
-    if (isEmpty(templateCode)) {
-      throw new BadRequestException('templateCode is required.');
-    }
-    return await this.adminService.testKakao(userId, templateCode);
-  }
   @Post('prompt/test')
   async generatePhotoAdminTest(@Body() body: AdminBody) {
     if (isEmpty(body.image)) {
@@ -150,6 +136,20 @@ export class AdminController {
       body.ai ?? 'gemini',
     );
   }
+  @Get('test/kakao')
+  async testKakao(
+    @Query('userId') userId: string,
+    @Query('templateCode') templateCode: string,
+  ) {
+    if (isEmpty(userId)) {
+      throw new BadRequestException('userId is required.');
+    }
+    if (isEmpty(templateCode)) {
+      throw new BadRequestException('templateCode is required.');
+    }
+    return await this.adminService.testKakao(userId, templateCode);
+  }
+
   @Get('scheduler/test')
   async testScheduler() {
     return await this.schedulerService.completeVoteWorldcupRemindWeek();
@@ -189,5 +189,21 @@ export class AdminController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
   ) {
     return await this.adminService.getActionLog(page);
+  }
+  @Get('phone')
+  async getPhotos(@Query('phone') phone: string) {
+    return await this.adminService.getPhotos(phone);
+  }
+  @Post('generate')
+  async generateImage(@Body() body: AdminBody) {
+    return await this.adminService.generateImage(body.photoId, body.designId);
+  }
+  @Post('photo/save')
+  async savePhotos(@Body() body: AdminBody) {
+    return await this.adminService.savePhotos(
+      body.photoId,
+      body.designId,
+      body.image.id,
+    );
   }
 }

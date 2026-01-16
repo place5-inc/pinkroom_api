@@ -18,6 +18,7 @@ import { AzureBlobService } from 'src/azure/blob.service';
 import { KakaoService } from 'src/kakao/kakao.service';
 import { PhotoWorkerService } from 'src/photo/photo-worker.service';
 import { PhotoService } from 'src/photo/photo.service';
+import { sql } from 'kysely';
 @Injectable()
 export class AdminService {
   constructor(
@@ -256,24 +257,7 @@ export class AdminService {
       };
     }
   }
-  async generatePhotoAdminTest(image: Image, ment: string, ai: string) {
-    try {
-      const url = await this.workerService.generatePhotoAdminTest(
-        image,
-        ment,
-        ai,
-      );
-      return {
-        status: HttpStatus.OK,
-        url,
-      };
-    } catch (e) {
-      return {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: e.message,
-      };
-    }
-  }
+
   async changePhone(before: string, after: string) {
     try {
       const beforeUser = await this.db
@@ -348,6 +332,114 @@ export class AdminService {
       return {
         status: HttpStatus.OK,
         data: logs,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+
+  async getPhotos(phone: string) {
+    const user = await this.db
+      .selectFrom('users')
+      .where('phone', '=', phone)
+      .selectAll()
+      .executeTakeFirst();
+    if (!user) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: '유저가 없습니다.',
+      };
+    }
+
+    return await this.photoService.getPhotoList(user.id);
+  }
+  async generatePhotoAdminTest(image: Image, ment: string, ai: string) {
+    try {
+      const uploadFile = await this.workerService.generatePhotoAdminTest(
+        image,
+        ment,
+        ai,
+      );
+      return {
+        status: HttpStatus.OK,
+        url: uploadFile.url,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async generateImage(photoId: number, designId: number) {
+    try {
+      const photo = await this.db
+        .selectFrom('photos')
+        .leftJoin('upload_file', 'upload_file.id', 'photos.upload_file_id')
+        .where('id', '=', photoId)
+        .select('upload_file.url as url')
+        .executeTakeFirst();
+      const prompt = await this.db
+        .selectFrom('prompt')
+        .where('design_id', '=', designId)
+        .selectAll()
+        .executeTakeFirst();
+      const image: Image = {
+        url: photo.url,
+      };
+      const uploadFile = await this.workerService.generatePhotoAdminTest(
+        image,
+        prompt.ment,
+        'gemini',
+      );
+      return {
+        status: HttpStatus.OK,
+        image: uploadFile,
+      };
+    } catch (e) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+  async savePhotos(photoId: number, designId: number, imageId: string) {
+    try {
+      await this.db
+        .updateTable('photo_results')
+        .set({
+          result_image_id: imageId,
+          status: 'complete',
+        })
+        .where('original_photo_id', '=', photoId)
+        .where('hair_design_id', '=', designId)
+        .execute();
+
+      const totalCount = await this.db
+        .selectFrom('prompt')
+        .select(sql<number>`count(*)`.as('count'))
+        .executeTakeFirst();
+      const completed = await this.db
+        .selectFrom('photo_results')
+        .where('original_photo_id', '=', photoId)
+        .where('status', '=', 'complete')
+        .select('hair_design_id')
+        .execute();
+      const completedSet = new Set(completed.map((r) => r.hair_design_id));
+      if (completedSet.size === totalCount.count) {
+        await this.db
+          .updateTable('photos')
+          .set({
+            status: 'complete',
+          })
+          .where('id', '=', photoId)
+          .execute();
+      }
+      return {
+        status: HttpStatus.OK,
       };
     } catch (e) {
       return {

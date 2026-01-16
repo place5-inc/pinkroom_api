@@ -151,6 +151,7 @@ export class PhotoService {
     payment_id?: number,
     api?: string,
   ) {
+    /*
     try {
       await this.db
         .insertInto('log_dev')
@@ -175,6 +176,7 @@ export class PhotoService {
         err,
       });
     }
+    */
   }
 
   /* 
