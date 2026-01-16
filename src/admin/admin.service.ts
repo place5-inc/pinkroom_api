@@ -356,7 +356,7 @@ export class AdminService {
       const photo = await this.db
         .selectFrom('photos')
         .leftJoin('upload_file', 'upload_file.id', 'photos.upload_file_id')
-        .where('id', '=', photoId)
+        .where('photos.id', '=', photoId)
         .select('upload_file.url as url')
         .executeTakeFirst();
       const prompt = await this.db
