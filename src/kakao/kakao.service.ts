@@ -32,7 +32,7 @@ export class KakaoService {
     values: string[] = [],
     params: string[] = [],
   ): Promise<void> {
-    return;
+    //return;
     //카카오 알림을 껐다면 보내지 않는다.
     if (!userId) {
       return;
@@ -103,15 +103,19 @@ export class KakaoService {
 
     let isSend = false;
 
-    if (isKakaoProduction) {
-      //실서버에서는 발송
+    //꿀알림톡 테스트 번호가 맞다면 발송
+    if (DEV_CONFIG.devPhoneNumberList.includes(to)) {
       isSend = true;
-    } else {
-      //개발서버에서는 테스터 번호가 맞다면 발송
-      if (this.devPhoneNumberList.includes(to)) {
-        isSend = true;
-      }
     }
+    // if (isKakaoProduction) {
+    //   //실서버에서는 발송
+    //   isSend = true;
+    // } else {
+    //   //개발서버에서는 테스터 번호가 맞다면 발송
+    //   if (this.devPhoneNumberList.includes(to)) {
+    //     isSend = true;
+    //   }
+    // }
 
     if (isSend) {
       // KakaoJson 객체 생성하기
