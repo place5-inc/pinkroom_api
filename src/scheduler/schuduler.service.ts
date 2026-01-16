@@ -266,7 +266,6 @@ export class SchedulerService {
         errorMessage.slice(0, 500),
         title,
         null,
-        null,
       );
       //에러 발생시 문자 발송 기록은 카카오 로그 테이블에 저장.
       await this.insertKakaoLog(
