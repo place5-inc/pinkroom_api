@@ -14,13 +14,12 @@ export class UserRepository {
 
     if (!user) return null;
 
-    let didShareWorldcup = false;
-
     return {
       id: user.id,
       phone: user.phone,
       name: user.name,
       sampleType: user.sample_type,
+      hasUsedFree: user.use_code_id != null,
     };
   }
 }

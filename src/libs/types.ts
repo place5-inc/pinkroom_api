@@ -100,6 +100,7 @@ export type UserVO = {
   phone?: string;
   name?: string;
   sampleType?: number;
+  hasUsedFree?: boolean;
 };
 
 export type PhotoVO = {
