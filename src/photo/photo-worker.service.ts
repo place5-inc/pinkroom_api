@@ -665,6 +665,7 @@ export class PhotoWorkerService {
               .execute();
           }
         }
+        throw new Error(`GeneratePhoto failed (code=${code}): ${err.message}`);
       }
     } else if (ai == 'seedream') {
       const image = await this.aiService.generatePhotoSeedream(
@@ -677,7 +678,6 @@ export class PhotoWorkerService {
       return uploadFile;
     }
   }
-
   async extractGeminiErrorMessage(err: unknown) {
     // 1) err가 문자열(JSON)인 경우
     if (typeof err === 'string') {

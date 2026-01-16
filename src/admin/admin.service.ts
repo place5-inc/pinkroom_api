@@ -241,22 +241,6 @@ export class AdminService {
       };
     }
   }
-  async testKakao(userId: string, templateCode: string) {
-    try {
-      await this.kakaoService.sendKakaoNotification(
-        userId,
-        templateCode,
-        null,
-        [],
-        [],
-      );
-    } catch (e) {
-      return {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: e.message,
-      };
-    }
-  }
 
   async changePhone(before: string, after: string) {
     try {
@@ -357,22 +341,15 @@ export class AdminService {
     return await this.photoService.getPhotoList(user.id);
   }
   async generatePhotoAdminTest(image: Image, ment: string, ai: string) {
-    try {
-      const uploadFile = await this.workerService.generatePhotoAdminTest(
-        image,
-        ment,
-        ai,
-      );
-      return {
-        status: HttpStatus.OK,
-        url: uploadFile.url,
-      };
-    } catch (e) {
-      return {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: e.message,
-      };
-    }
+    const uploadFile = await this.workerService.generatePhotoAdminTest(
+      image,
+      ment,
+      ai,
+    );
+    return {
+      status: HttpStatus.OK,
+      url: uploadFile.url,
+    };
   }
   async generateImage(photoId: number, designId: number) {
     try {

@@ -136,33 +136,7 @@ export class AdminController {
       body.ai ?? 'gemini',
     );
   }
-  @Get('test/kakao')
-  async testKakao(
-    @Query('userId') userId: string,
-    @Query('templateCode') templateCode: string,
-  ) {
-    if (isEmpty(userId)) {
-      throw new BadRequestException('userId is required.');
-    }
-    if (isEmpty(templateCode)) {
-      throw new BadRequestException('templateCode is required.');
-    }
-    return await this.adminService.testKakao(userId, templateCode);
-  }
 
-  @Get('scheduler/test')
-  async testScheduler() {
-    return await this.schedulerService.completeVoteWorldcupRemindWeek();
-  }
-  @Get('make/worldcup/thumbnail')
-  async makeWorldcupThumbnail(
-    @Query('photoId', new ParseIntPipe()) photoId: number,
-  ) {
-    if (isEmpty(photoId)) {
-      throw new BadRequestException('photoId is required.');
-    }
-    return await this.photoWorkerService.generateWorldcupImage(photoId);
-  }
   @Get('change/phone')
   async changePhone(
     @Query('before') before: string,
