@@ -385,15 +385,25 @@ export class AdminService {
   }
   async savePhotos(photoId: number, designId: number, imageId: string) {
     try {
-      await this.db
+      const updated = await this.db
         .updateTable('photo_results')
-        .set({
-          result_image_id: imageId,
-          status: 'complete',
-        })
+        .set({ result_image_id: imageId, status: 'complete' })
         .where('original_photo_id', '=', photoId)
         .where('hair_design_id', '=', designId)
-        .execute();
+        .executeTakeFirst();
+
+      if (Number(updated?.numUpdatedRows ?? 0) === 0) {
+        await this.db
+          .insertInto('photo_results')
+          .values({
+            original_photo_id: photoId,
+            hair_design_id: designId,
+            result_image_id: imageId,
+            created_at: new Date(),
+            status: 'complete',
+          })
+          .execute();
+      }
 
       const totalCount = await this.db
         .selectFrom('prompt')
