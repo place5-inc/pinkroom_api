@@ -209,11 +209,18 @@ export class KakaoService {
 
     const postData = JSON.stringify(value);
 
-    // 토큰 가져오기
-    const token = await this.getKakaoToken();
+    // 토큰 가져오기 (실패해도 다음 진행에 문제없도록 처리)
+    let token;
+    try {
+      token = await this.getKakaoToken();
+    } catch (error) {
+      console.error('Kakao token을 가져오는 데 실패했습니다:', error.message);
+      return;
+    }
 
     if (!token || !token.result) {
-      throw new BadRequestException('Kakao token을 가져오는 데 실패했습니다.');
+      console.error('Kakao token이 유효하지 않습니다.');
+      return;
     }
 
     const url = 'https://api.bizppurio.com/v3/message';
@@ -282,6 +289,7 @@ export class KakaoService {
           'Content-Type': 'application/json; charset=utf-8',
           Authorization: 'Basic cmljaGFyZDU1NTphYWJiMTEyMiFA',
         };
+        return;
         const response = await axios.post(url, {}, { headers, timeout: 30000 });
         const data = response.data;
 
