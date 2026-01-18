@@ -242,7 +242,11 @@ export class PhotoService {
             '공유된 코드는 무료 체험이 가능한 코드가 아닙니다.',
           );
         }
-
+        if (codePhoto.user_id === userId) {
+          throw new BadRequestException(
+            '본인의 공유 코드로는 무료 혜택을 받을 수 없습니다.',
+          );
+        }
         const row = await this.db
           .selectFrom('users')
           .where('use_code_photo_id', '=', code.photo_id)
@@ -254,25 +258,19 @@ export class PhotoService {
         if (useCount >= limit) {
           throw new ForbiddenException('코드 사용 가능 횟수를 초과했습니다.');
         }
-        const user = await this.db
-          .selectFrom('users')
-          .where('id', '=', userId)
-          .selectAll()
-          .executeTakeFirst();
-        if (!user) {
-          throw new NotFoundException('유저 정보를 찾을 수 없습니다.');
-        }
-        if (user.use_code_photo_id != null) {
-          throw new BadRequestException('이미 사용한 코드가 있습니다.');
-        }
-        await this.db
+        const result = await this.db
           .updateTable('users')
           .where('id', '=', userId)
+          .where('use_code_photo_id', 'is', null) // 조건부 업데이트
           .set({
             use_code_id: _code,
             use_code_photo_id: code.photo_id,
           })
-          .execute();
+          .executeTakeFirst();
+
+        if (result.numUpdatedRows === 0n) {
+          throw new BadRequestException('이미 사용한 코드가 있습니다.');
+        }
       }
 
       const uploadedFile = await this.azureBlobService.uploadFileImage(image);
@@ -375,6 +373,15 @@ export class PhotoService {
   ) {
     this.logDev(userId, photoId, null, null, paymentId, 'retry');
     try {
+      const _payment = await this.db
+        .selectFrom('payments')
+        .where('id', '=', paymentId)
+        .where('user_id', '=', userId)
+        .selectAll()
+        .executeTakeFirst();
+      if (!_payment) {
+        throw new NotFoundException('결제내역을 찾을 수 없습니다.');
+      }
       const result = await this.db
         .updateTable('photos')
         .where('id', '=', photoId)
