@@ -25,6 +25,7 @@ export class ShareService {
   async getPhotoWithCode(_code: string) {
     try {
       let canUseFree = false;
+      let reason: 'full' | 'not_paid' | null = 'not_paid';
       const code = await this.db
         .selectFrom('photo_share_code')
         .where('code', '=', _code)
@@ -60,6 +61,7 @@ export class ShareService {
         .executeTakeFirst();
       if (codePhoto.payment_id) {
         canUseFree = true;
+        reason = null;
       }
 
       const row = await this.db
@@ -73,12 +75,14 @@ export class ShareService {
       const limit = Number(process.env.CODE_SHARE_LIMIT ?? 0);
       if (useCount >= limit) {
         canUseFree = false;
+        reason = 'full';
       }
       return {
         status: HttpStatus.OK,
         result,
         user,
         canUseFree,
+        reason,
       };
     } catch (e) {
       if (e instanceof HttpException) throw e;
