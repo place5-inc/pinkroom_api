@@ -102,6 +102,7 @@ export class PhotoRepository {
         'p.created_at',
         'p.status as status',
         'p.retry_count as retry_count',
+        'p.did_show_complete_popup as didShowCompletePopup',
       ])
       .execute();
 
@@ -138,6 +139,7 @@ export class PhotoRepository {
         createdAt: p.created_at.toISOString(),
         status: p.status,
         retryCount: p.retry_count,
+        didShowCompletePopup: p.didShowCompletePopup ?? false,
         resultImages: photoResults
           .filter((r) => r.photoId === p.photoId)
           .map((r) => ({
@@ -171,6 +173,7 @@ export class PhotoRepository {
         'p.created_at',
         'p.status as status',
         'p.retry_count as retry_count',
+        'p.did_show_complete_popup as didShowCompletePopup',
       ])
       .executeTakeFirst();
 
@@ -203,6 +206,7 @@ export class PhotoRepository {
       createdAt: photo.created_at.toISOString(),
       status: photo.status,
       retryCount: photo.retry_count,
+      didShowCompletePopup: photo.didShowCompletePopup ?? false,
       resultImages: photoResults.map((r) => ({
         id: r.resultId,
         url: r.url,
@@ -212,5 +216,15 @@ export class PhotoRepository {
         failCode: r.failCode,
       })),
     };
+  }
+
+  async updateCompletePopupShown(photoId: number) {
+    await this.db
+      .updateTable('photos')
+      .set({
+        did_show_complete_popup: true,
+      })
+      .where('id', '=', photoId)
+      .execute();
   }
 }

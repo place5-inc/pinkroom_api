@@ -60,6 +60,7 @@ model photos {
   merged_image_id           String?     @db.UniqueIdentifier
   status                    String?     @db.NVarChar(50)
   retry_count               Int?
+  did_show_complete_popup   Boolean     @default(false, map: "DEFAULT_photos_did_show_complete_popup")
   upload_file               upload_file @relation(fields: [upload_file_id], references: [id], onUpdate: NoAction, map: "FK_photos_upload_file")
 }
 
@@ -186,7 +187,7 @@ model user_action_log {
 }
 
 model log_dev {
-  id         Int       @id(map: "PK_log_dev")
+  id         Int       @id(map: "PK_log_dev") @default(autoincrement())
   user_id    String?   @db.UniqueIdentifier
   photo_id   Int?
   design_id  Int?

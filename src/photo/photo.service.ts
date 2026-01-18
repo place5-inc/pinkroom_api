@@ -481,4 +481,15 @@ export class PhotoService {
 
     return { status: HttpStatus.OK };
   }
+  async markCompletePopupShown(photoId: number) {
+    try {
+      await this.photoRepository.updateCompletePopupShown(photoId);
+      return { status: HttpStatus.OK };
+    } catch (e: any) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
 }

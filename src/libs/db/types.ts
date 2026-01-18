@@ -33,7 +33,7 @@ export type kakao_log = {
     exception_message: string | null;
 };
 export type log_dev = {
-    id: number;
+    id: Generated<number>;
     user_id: string | null;
     photo_id: number | null;
     design_id: number | null;
@@ -96,6 +96,7 @@ export type photos = {
     merged_image_id: string | null;
     status: string | null;
     retry_count: number | null;
+    did_show_complete_popup: Generated<boolean>;
 };
 export type prompt = {
     design_id: number;

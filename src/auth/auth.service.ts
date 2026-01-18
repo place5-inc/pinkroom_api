@@ -29,14 +29,18 @@ export class AuthService {
       user = await this.userService.createUser(phone, sampleType);
       isNew = true;
 
-      //알림톡보내기
-      await this.kakaoService.sendKakaoNotification(
-        user.id,
-        'pr_wlcm_snup_v1',
-        null,
-        [],
-        [],
-      );
+      //알림톡보내기 (실패해도 회원가입은 성공하도록 처리)
+      try {
+        await this.kakaoService.sendKakaoNotification(
+          user.id,
+          'pr_wlcm_snup_v1',
+          null,
+          [],
+          [],
+        );
+      } catch (error) {
+        console.error('[회원가입 알림톡 발송 실패]', error);
+      }
     }
 
     return {

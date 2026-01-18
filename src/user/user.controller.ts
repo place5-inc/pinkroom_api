@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Param,
   UseGuards,
   Request,
@@ -101,5 +102,12 @@ export class UserController {
       throw new BadRequestException('photoId is required.');
     }
     return await this.photoService.fontTest(photoId);
+  }
+  @Patch('photo/completePopupShown')
+  async markCompletePopupShown(@Body() body: { photoId: number }) {
+    if (isEmpty(body.photoId)) {
+      throw new BadRequestException('photoId is required.');
+    }
+    return await this.photoService.markCompletePopupShown(body.photoId);
   }
 }
