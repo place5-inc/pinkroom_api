@@ -321,7 +321,7 @@ export class PhotoService {
           .where('payment_id', 'is not', null)
           .selectAll()
           .executeTakeFirst();
-        if (!_photos) {
+        if (_photos) {
           throw new BadRequestException('이미 결제한 유저입니다.');
         }
       }
@@ -548,6 +548,18 @@ export class PhotoService {
   async markCompletePopupShown(photoId: number) {
     try {
       await this.photoRepository.updateCompletePopupShown(photoId);
+      return { status: HttpStatus.OK };
+    } catch (e: any) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: e.message,
+      };
+    }
+  }
+
+  async markFreeCompletePopupShown(photoId: number) {
+    try {
+      await this.photoRepository.updateFreeCompletePopupShown(photoId);
       return { status: HttpStatus.OK };
     } catch (e: any) {
       return {

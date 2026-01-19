@@ -110,4 +110,12 @@ export class UserController {
     }
     return await this.photoService.markCompletePopupShown(body.photoId);
   }
+
+  @Patch('photo/freeCompletePopupShown')
+  async markFreeCompletePopupShown(@Body() body: { photoId: number }) {
+    if (isEmpty(body.photoId)) {
+      throw new BadRequestException('photoId is required.');
+    }
+    return await this.photoService.markFreeCompletePopupShown(body.photoId);
+  }
 }

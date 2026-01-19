@@ -104,6 +104,7 @@ export class PhotoRepository {
         'p.status as status',
         'p.retry_count as retry_count',
         'p.did_show_complete_popup as didShowCompletePopup',
+        'p.did_show_free_complete_popup as didShowFreeCompletePopup',
       ])
       .execute();
 
@@ -141,6 +142,7 @@ export class PhotoRepository {
         status: p.status,
         retryCount: p.retry_count,
         didShowCompletePopup: p.didShowCompletePopup ?? false,
+        didShowFreeCompletePopup: p.didShowFreeCompletePopup ?? false,
         resultImages: photoResults
           .filter((r) => r.photoId === p.photoId)
           .map((r) => ({
@@ -175,6 +177,7 @@ export class PhotoRepository {
         'p.status as status',
         'p.retry_count as retry_count',
         'p.did_show_complete_popup as didShowCompletePopup',
+        'p.did_show_free_complete_popup as didShowFreeCompletePopup',
       ])
       .executeTakeFirst();
 
@@ -208,6 +211,7 @@ export class PhotoRepository {
       status: photo.status,
       retryCount: photo.retry_count,
       didShowCompletePopup: photo.didShowCompletePopup ?? false,
+      didShowFreeCompletePopup: photo.didShowFreeCompletePopup ?? false,
       resultImages: photoResults.map((r) => ({
         id: r.resultId,
         url: r.url,
@@ -224,6 +228,16 @@ export class PhotoRepository {
       .updateTable('photos')
       .set({
         did_show_complete_popup: true,
+      })
+      .where('id', '=', photoId)
+      .execute();
+  }
+
+  async updateFreeCompletePopupShown(photoId: number) {
+    await this.db
+      .updateTable('photos')
+      .set({
+        did_show_free_complete_popup: true,
       })
       .where('id', '=', photoId)
       .execute();

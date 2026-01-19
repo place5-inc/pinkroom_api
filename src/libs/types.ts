@@ -115,6 +115,7 @@ export type PhotoVO = {
   selectedDesignId?: number;
   didShareWorldcup?: boolean;
   didShowCompletePopup?: boolean;
+  didShowFreeCompletePopup?: boolean;
   mergedImageUrl?: string;
   status?: string;
   retryCount?: number;
