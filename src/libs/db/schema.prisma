@@ -196,3 +196,11 @@ model log_dev {
   api        String?   @db.NVarChar(50)
   created_at DateTime? @db.DateTime
 }
+
+model log_prompt {
+  id         Int       @id(map: "PK_log_prompt") @default(autoincrement())
+  photo_id   Int?
+  design_id  Int?
+  prompt     String?   @db.NVarChar(Max)
+  created_at DateTime? @db.DateTime
+}

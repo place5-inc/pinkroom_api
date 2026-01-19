@@ -49,6 +49,13 @@ export type log_gemini_error = {
     design_id: number | null;
     error: string | null;
 };
+export type log_prompt = {
+    id: Generated<number>;
+    photo_id: number | null;
+    design_id: number | null;
+    prompt: string | null;
+    created_at: Timestamp | null;
+};
 export type payments = {
     id: Generated<number>;
     user_id: string | null;
@@ -172,6 +179,7 @@ export type DB = {
     kakao_log: kakao_log;
     log_dev: log_dev;
     log_gemini_error: log_gemini_error;
+    log_prompt: log_prompt;
     payments: payments;
     photo_code_log: photo_code_log;
     photo_results: photo_results;

@@ -503,6 +503,19 @@ export class PhotoWorkerService {
       { id: 'B2CEFE9A-756C-4032-9965-06543DA24E5D' },
     ],
   ];
+  async addPromptLog(photoId: number, desginId: number, prompt: string) {
+    try {
+      await this.db
+        .insertInto('log_prompt')
+        .values({
+          photo_id: photoId,
+          design_id: desginId,
+          prompt: prompt,
+          created_at: new Date(),
+        })
+        .execute();
+    } catch (e) {}
+  }
   /*
   사진 만들기
    */
@@ -557,6 +570,7 @@ export class PhotoWorkerService {
       keyRow = await this.getGeminiKey();
 
       if (!keyRow) throw new Error('No available gemini_key');
+      this.addPromptLog(photoId, designId, ment);
 
       const image = await this.aiService.generatePhotoGemini(
         photoUrl,
