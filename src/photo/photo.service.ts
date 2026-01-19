@@ -478,17 +478,17 @@ export class PhotoService {
    */
   async retryUploadPhoto(
     userId: string,
-    photoId: number,
+    paymentId: number,
     retryCount?: number,
     isDummy?: boolean,
     forceFail?: boolean,
     delaySecond?: number,
   ) {
-    this.logDev(userId, photoId, null, null, null, 'retry');
+    this.logDev(userId, paymentId, null, null, null, 'retry');
     const photo = await this.db
       .selectFrom('photos')
       .leftJoin('upload_file', 'upload_file.id', 'photos.upload_file_id')
-      .where('photos.id', '=', photoId)
+      .where('photos.payment_id', '=', paymentId)
       .select([
         'photos.id',
         'payment_id',
@@ -501,14 +501,14 @@ export class PhotoService {
       return { status: HttpStatus.INTERNAL_SERVER_ERROR };
     }
 
-    await this.photoRepository.updatePhotoRetryCount(photoId, retryCount);
+    await this.photoRepository.updatePhotoRetryCount(photo.id, retryCount);
 
     const isPaid = !!photo.payment_id;
 
     const runRestGeneration = async () => {
-      await this.photoRepository.updatePhotoStatus(photoId, 'rest_generating');
+      await this.photoRepository.updatePhotoStatus(photo.id, 'rest_generating');
       this.workerService.makeAllPhotos(
-        photoId,
+        photo.id,
         isDummy,
         forceFail,
         delaySecond,
@@ -517,7 +517,7 @@ export class PhotoService {
 
     const photoResult = await this.db
       .selectFrom('photo_results')
-      .where('original_photo_id', '=', photoId)
+      .where('original_photo_id', '=', photo.id)
       .where('hair_design_id', '=', photo.selected_design_id)
       .where('status', '=', 'complete')
       .selectAll()
