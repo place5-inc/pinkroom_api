@@ -37,10 +37,14 @@ export class KakaoSchedulerService {
     const user = await db
       .selectFrom('users')
       .where('id', '=', userId)
-      .select(['id', 'phone'])
+      .select(['id', 'phone', 'deleted_at'])
       .executeTakeFirst();
 
-    if (user == undefined || (user && user.phone == null)) {
+    if (
+      user == undefined ||
+      (user && user.phone == null) ||
+      (user && user.deleted_at != null) // 탈퇴한 사람에게는 알림톡이 안가도록
+    ) {
       return;
     }
 
