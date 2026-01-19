@@ -72,53 +72,58 @@ export class PhotoService {
     const cutoff = this.getCutoff(params.minutes ?? 2);
 
     // =====================================================
-    // 0) "stuck photo" = original_photo_id 별 마지막 activity(max created_at)가 cutoff 이전
-    //    -> 이 기준을 공통으로 사용 (pending fail도, finished 처리도)
+    // 1) pending -> fail (단, photo.updated_at이 최근 2분 이내면 스킵)
     // =====================================================
-    let stuckQ = this.db
+    let pendingExpireQ = this.db
       .selectFrom('photo_results as pr')
       .innerJoin('photos as p', 'p.id', 'pr.original_photo_id')
       .select(['pr.original_photo_id as photoId'])
-      .groupBy('pr.original_photo_id')
-      .having((eb) => eb.fn.max('pr.created_at'), '<=', cutoff);
+      .where('pr.status', '=', 'pending')
+      .where('pr.created_at', '<=', cutoff)
+      // ✅ 최근 활동 있으면(2분 이내) pending 정리 안 함
+      .where('p.updated_at', '<=', cutoff);
 
     if (params.photoId != null) {
-      stuckQ = stuckQ.where('pr.original_photo_id', '=', params.photoId);
+      pendingExpireQ = pendingExpireQ.where(
+        'pr.original_photo_id',
+        '=',
+        params.photoId,
+      );
     }
 
     if (params.userId != null) {
-      stuckQ = stuckQ.where('p.user_id', '=', params.userId);
+      pendingExpireQ = pendingExpireQ.where('p.user_id', '=', params.userId);
     }
 
-    const stuckRows = await stuckQ.execute();
-    const stuckPhotoIds = [...new Set(stuckRows.map((r) => r.photoId))];
+    const pendingExpired = await pendingExpireQ.execute();
+    const pendingExpiredPhotoIds = [
+      ...new Set(pendingExpired.map((r) => r.photoId)),
+    ];
 
-    if (stuckPhotoIds.length === 0) {
-      return;
+    if (pendingExpiredPhotoIds.length > 0) {
+      await this.db
+        .updateTable('photo_results')
+        .set({ status: 'fail' })
+        .where('original_photo_id', 'in', pendingExpiredPhotoIds)
+        .where('status', '=', 'pending')
+        .where('created_at', '<=', cutoff)
+        .execute();
     }
 
     // =====================================================
-    // 1) stuck인 photo들에 한해서만: pending -> fail
-    //    (결제 직후 pending이 막 만들어진 건 stuck이 아니라서 여기서 안 죽음)
+    // 2) (결제한 건만) complete < 16 && 마지막 활동이 2분 이상 없으면 photos finished
+    //    조건: photos.payment_id IS NOT NULL
+    //          photos.updated_at <= cutoff
     // =====================================================
-    await this.db
-      .updateTable('photo_results')
-      .set({ status: 'fail' })
-      .where('original_photo_id', 'in', stuckPhotoIds)
-      .where('status', '=', 'pending')
-      .execute();
-
-    // =====================================================
-    // 2) (결제한 건만) complete < 16 이면 photos finished
-    //    - 역시 "stuck"인 photo들 중에서만 처리
-    // =====================================================
-    let paidIncompleteStuckQ = this.db
+    let stuckIncompleteQ = this.db
       .selectFrom('photo_results as pr')
       .innerJoin('photos as p', 'p.id', 'pr.original_photo_id')
       .select(['pr.original_photo_id as photoId'])
-      .where('p.payment_id', 'is not', null) // ✅ 결제한 건만 16개 규칙 적용
-      .where('pr.original_photo_id', 'in', stuckPhotoIds) // ✅ stuck에 한정
+      .where('p.payment_id', 'is not', null)
+      // ✅ 최근 활동 있으면(2분 이내) finished 처리 안 함
+      .where('p.updated_at', '<=', cutoff)
       .groupBy('pr.original_photo_id')
+      // complete < 16
       .having(
         (eb) =>
           eb.fn.count(
@@ -128,16 +133,27 @@ export class PhotoService {
         16,
       );
 
-    const paidIncompleteStuckRows = await paidIncompleteStuckQ.execute();
-    const paidIncompleteStuckPhotoIds = [
-      ...new Set(paidIncompleteStuckRows.map((r) => r.photoId)),
-    ];
-
-    if (paidIncompleteStuckPhotoIds.length > 0) {
-      await this.photoRepository.updatePhotoStatuses(
-        paidIncompleteStuckPhotoIds,
-        'finished',
+    if (params.photoId != null) {
+      stuckIncompleteQ = stuckIncompleteQ.where(
+        'pr.original_photo_id',
+        '=',
+        params.photoId,
       );
+    }
+
+    if (params.userId != null) {
+      stuckIncompleteQ = stuckIncompleteQ.where(
+        'p.user_id',
+        '=',
+        params.userId,
+      );
+    }
+
+    const stuckRows = await stuckIncompleteQ.execute();
+    const stuckPhotoIds = [...new Set(stuckRows.map((r) => r.photoId))];
+
+    if (stuckPhotoIds.length > 0) {
+      await this.photoRepository.updatePhotoStatuses(stuckPhotoIds, 'finished');
     }
   }
 
@@ -308,6 +324,7 @@ export class PhotoService {
           user_id: userId,
           upload_file_id: uploadedFile?.id ?? null,
           created_at: new Date(),
+          updated_at: new Date(),
           payment_id: paymentId,
           code: _code,
           selected_design_id: designId,
@@ -417,6 +434,7 @@ export class PhotoService {
         .where('payment_id', 'is', null)
         .set({
           payment_id: paymentId,
+          updated_at: new Date(),
         })
         .executeTakeFirst();
 

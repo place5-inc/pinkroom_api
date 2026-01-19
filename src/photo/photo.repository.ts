@@ -10,6 +10,7 @@ export class PhotoRepository {
       .updateTable('photos')
       .set({
         status: status,
+        updated_at: new Date(),
       })
       .where('id', '=', photoId)
       .execute();
@@ -20,7 +21,7 @@ export class PhotoRepository {
 
     await this.db
       .updateTable('photos')
-      .set({ status })
+      .set({ status: status, updated_at: new Date() })
       .where('id', 'in', photoIds)
       .execute();
   }

@@ -420,6 +420,7 @@ export class AdminService {
         await this.db
           .updateTable('photos')
           .set({
+            updated_at: new Date(),
             status: 'complete',
           })
           .where('id', '=', photoId)

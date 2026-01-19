@@ -104,6 +104,7 @@ export type photos = {
     status: string | null;
     retry_count: number | null;
     did_show_complete_popup: Generated<boolean>;
+    updated_at: Timestamp | null;
 };
 export type prompt = {
     design_id: number;

@@ -61,6 +61,7 @@ model photos {
   status                    String?     @db.NVarChar(50)
   retry_count               Int?
   did_show_complete_popup   Boolean     @default(false, map: "DEFAULT_photos_did_show_complete_popup")
+  updated_at                DateTime?   @db.DateTime
   upload_file               upload_file @relation(fields: [upload_file_id], references: [id], onUpdate: NoAction, map: "FK_photos_upload_file")
 }
 
