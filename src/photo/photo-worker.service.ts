@@ -520,15 +520,15 @@ export class PhotoWorkerService {
     let keyRow: { id: number; key: string } | undefined;
 
     try {
-      if (isDummy === true) {
-        await this.photoRepository.updatePhotoResult(
-          photoId,
-          designId,
-          null,
-          'pending',
-          tryCount,
-        );
+      await this.photoRepository.updatePhotoResult(
+        photoId,
+        designId,
+        null,
+        'pending',
+        tryCount,
+      );
 
+      if (isDummy === true) {
         const forTest = new Promise<{
           id: string;
         }>((resolve, reject) => {
