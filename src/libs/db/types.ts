@@ -103,8 +103,9 @@ export type photos = {
     merged_image_id: string | null;
     status: string | null;
     retry_count: number | null;
-    did_show_complete_popup: Generated<boolean>;
+    did_show_complete_popup: Generated<boolean | null>;
     updated_at: Timestamp | null;
+    did_show_free_complete_popup: boolean | null;
 };
 export type prompt = {
     design_id: number;

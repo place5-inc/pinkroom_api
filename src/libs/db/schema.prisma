@@ -1,8 +1,8 @@
 generator kysely {
   provider     = "prisma-kysely"
   output       = "./"
-  fileName     = "types.ts"
   enumFileName = "enums.ts"
+  fileName     = "types.ts"
 }
 
 datasource db {
@@ -48,21 +48,22 @@ model kakao_log {
 }
 
 model photos {
-  id                        Int         @id(map: "PK_photos") @default(autoincrement())
-  user_id                   String      @db.UniqueIdentifier
-  upload_file_id            String      @db.UniqueIdentifier
-  payment_id                Int?
-  code                      String?     @db.NVarChar(50)
-  created_at                DateTime?   @db.DateTime
-  selected_design_id        Int?
-  thumbnail_before_after_id String?     @db.UniqueIdentifier
-  thumbnail_worldcup_id     String?     @db.UniqueIdentifier
-  merged_image_id           String?     @db.UniqueIdentifier
-  status                    String?     @db.NVarChar(50)
-  retry_count               Int?
-  did_show_complete_popup   Boolean     @default(false, map: "DEFAULT_photos_did_show_complete_popup")
-  updated_at                DateTime?   @db.DateTime
-  upload_file               upload_file @relation(fields: [upload_file_id], references: [id], onUpdate: NoAction, map: "FK_photos_upload_file")
+  id                           Int         @id(map: "PK_photos") @default(autoincrement())
+  user_id                      String      @db.UniqueIdentifier
+  upload_file_id               String      @db.UniqueIdentifier
+  payment_id                   Int?
+  code                         String?     @db.NVarChar(50)
+  created_at                   DateTime?   @db.DateTime
+  selected_design_id           Int?
+  thumbnail_before_after_id    String?     @db.UniqueIdentifier
+  thumbnail_worldcup_id        String?     @db.UniqueIdentifier
+  merged_image_id              String?     @db.UniqueIdentifier
+  status                       String?     @db.NVarChar(50)
+  retry_count                  Int?
+  did_show_complete_popup      Boolean?    @default(false, map: "DEFAULT_photos_did_show_complete_popup")
+  updated_at                   DateTime?   @db.DateTime
+  did_show_free_complete_popup Boolean?
+  upload_file                  upload_file @relation(fields: [upload_file_id], references: [id], onUpdate: NoAction, map: "FK_photos_upload_file")
 }
 
 model prompt {
