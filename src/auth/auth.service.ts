@@ -4,6 +4,7 @@ import { VerificationService } from './verification.service';
 import { MessageService } from 'src/message/message.service';
 import { UserService } from 'src/user/user.service';
 import { KakaoService } from 'src/kakao/kakao.service';
+import { UserRepository } from 'src/user/user.repository';
 
 @Injectable()
 export class AuthService {
@@ -11,6 +12,7 @@ export class AuthService {
     private verificationService: VerificationService,
     private messageService: MessageService,
     private userService: UserService,
+    private userRepository: UserRepository,
     private readonly db: DatabaseProvider,
     private readonly kakaoService: KakaoService,
   ) {}
@@ -24,7 +26,7 @@ export class AuthService {
     await this.verificationService.verifyCode(phone, code);
 
     let isNew = false;
-    let user = await this.userService.findByPhone(phone);
+    let user = await this.userRepository.getUserByPhone(phone);
     if (!user) {
       user = await this.userService.createUser(phone, sampleType);
       isNew = true;
