@@ -478,70 +478,103 @@ export class PhotoService {
    */
   async retryUploadPhoto(
     userId: string,
-    paymentId: number,
     retryCount?: number,
     isDummy?: boolean,
     forceFail?: boolean,
     delaySecond?: number,
   ) {
-    this.logDev(userId, paymentId, null, null, null, 'retry');
-    const photo = await this.db
+    this.logDev(userId, null, null, null, null, 'retry_by_user');
+
+    const photos = await this.db
       .selectFrom('photos')
       .leftJoin('upload_file', 'upload_file.id', 'photos.upload_file_id')
-      .where('photos.payment_id', '=', paymentId)
+      .where('photos.user_id', '=', userId)
       .select([
         'photos.id',
-        'payment_id',
-        'selected_design_id',
+        'photos.payment_id',
+        'photos.status',
+        'photos.selected_design_id',
         'upload_file.url',
       ])
-      .executeTakeFirst();
+      .execute();
 
-    if (!photo) {
-      return { status: HttpStatus.INTERNAL_SERVER_ERROR };
+    if (!photos || photos.length === 0) {
+      return { status: HttpStatus.NOT_FOUND };
     }
 
-    await this.photoRepository.updatePhotoRetryCount(photo.id, retryCount);
+    let skippedComplete = 0;
+    let skippedNoUrl = 0;
+    let triggeredOnlyOne = 0;
+    let triggeredRest = 0;
 
-    const isPaid = !!photo.payment_id;
+    for (const photo of photos) {
+      // ✅ photos.status가 complete면 스킵
+      if (photo.status === 'complete') {
+        skippedComplete++;
+        continue;
+      }
 
-    const runRestGeneration = async () => {
-      await this.photoRepository.updatePhotoStatus(photo.id, 'rest_generating');
-      this.workerService.makeAllPhotos(
+      await this.photoRepository.updatePhotoRetryCount(photo.id, retryCount);
+
+      const isPaid = !!photo.payment_id;
+
+      const runRestGeneration = async () => {
+        await this.photoRepository.updatePhotoStatus(
+          photo.id,
+          'rest_generating',
+        );
+        this.workerService.makeAllPhotos(
+          photo.id,
+          isDummy,
+          forceFail,
+          delaySecond,
+        );
+      };
+
+      if (!photo.url) {
+        skippedNoUrl++;
+        continue;
+      }
+
+      const photoResult = await this.db
+        .selectFrom('photo_results')
+        .where('original_photo_id', '=', photo.id)
+        .where('hair_design_id', '=', photo.selected_design_id)
+        .where('status', '=', 'complete')
+        .select('id')
+        .executeTakeFirst();
+
+      // 첫 장이 이미 있으면: 결제건만 나머지 생성 트리거
+      if (photoResult) {
+        if (isPaid) {
+          await runRestGeneration();
+          triggeredRest++;
+        }
+        continue;
+      }
+
+      // 첫 장이 없으면: 한 장 생성 시도
+      this.workerService.makeOnlyOne(
         photo.id,
+        photo.url,
+        photo.selected_design_id,
+        1,
         isDummy,
         forceFail,
         delaySecond,
+        isPaid,
       );
-    };
-
-    const photoResult = await this.db
-      .selectFrom('photo_results')
-      .where('original_photo_id', '=', photo.id)
-      .where('hair_design_id', '=', photo.selected_design_id)
-      .where('status', '=', 'complete')
-      .selectAll()
-      .executeTakeFirst();
-
-    // 첫 장이 이미 있으면: 결제건만 나머지 생성 트리거
-    if (photoResult) {
-      if (isPaid) await runRestGeneration();
-      return { status: HttpStatus.OK };
+      triggeredOnlyOne++;
     }
 
-    // 첫 장이 없으면: 한 장 생성 시도
-    this.workerService.makeOnlyOne(
-      photo.id,
-      photo.url,
-      photo.selected_design_id,
-      1,
-      isDummy,
-      forceFail,
-      delaySecond,
-      isPaid,
-    );
-
-    return { status: HttpStatus.OK };
+    return {
+      status: HttpStatus.OK,
+      total: photos.length,
+      skippedComplete,
+      skippedNoUrl,
+      triggeredOnlyOne,
+      triggeredRest,
+    };
   }
   async markCompletePopupShown(photoId: number) {
     try {

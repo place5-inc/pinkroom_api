@@ -29,16 +29,38 @@ export class PhotoWorkerService {
   ) {
     const MAX_RETRY = 3;
     let attempt = 0;
-    // 2️⃣ 원본 사진
+
+    // 2️⃣ 원본 사진 (+ payment_id, selected_design_id 포함)
     const originalPhoto = await this.db
       .selectFrom('photos as p')
       .innerJoin('upload_file as u', 'u.id', 'p.upload_file_id')
       .where('p.id', '=', originalPhotoId)
-      .select(['p.id as photo_id', 'u.url as url', 'p.user_id as user_id'])
+      .select([
+        'p.id as photo_id',
+        'u.url as url',
+        'p.user_id as user_id',
+        'p.payment_id as payment_id',
+        'p.selected_design_id as selected_design_id',
+      ])
       .executeTakeFirst();
 
     if (!originalPhoto) {
       throw new Error('원본 사진 없음');
+    }
+
+    const hasPayment = !!originalPhoto.payment_id;
+
+    // ✅ 결제 없으면 selected_design_id 하나만 생성, 결제 있으면 1~16 생성
+    const targetDesignIds = hasPayment
+      ? Array.from({ length: 16 }, (_, i) => i + 1)
+      : originalPhoto.selected_design_id
+        ? [originalPhoto.selected_design_id]
+        : [];
+
+    // ✅ 결제 없는데 selected_design_id 없으면 아무 것도 안 만들고 종료(정책에 맞게)
+    if (!hasPayment && targetDesignIds.length === 0) {
+      await this.photoRepository.updatePhotoStatus(originalPhotoId, 'finished');
+      return;
     }
 
     // 3️⃣ 프롬프트
@@ -51,10 +73,6 @@ export class PhotoWorkerService {
         'upload_file.url as imageUrl',
       ])
       .execute();
-    const totalCount = await this.db
-      .selectFrom('prompt')
-      .select(sql<number>`count(*)`.as('count'))
-      .executeTakeFirst();
 
     while (attempt < MAX_RETRY) {
       attempt++;
@@ -69,16 +87,25 @@ export class PhotoWorkerService {
 
       const completedSet = new Set(completed.map((r) => r.hair_design_id));
 
-      if (completedSet.size === totalCount.count) {
-        this.afterMakeAllPhoto(originalPhotoId);
+      // ✅ "우리가 만들기로 한 target"만 완료되었는지 체크
+      const targetCompletedCount = targetDesignIds.filter((id) =>
+        completedSet.has(id),
+      ).length;
+
+      if (targetCompletedCount === targetDesignIds.length) {
+        if (hasPayment) {
+          this.afterMakeAllPhoto(originalPhotoId);
+        }
         return;
       }
+
+      // 기존 로직 유지: 마지막 직전 시도면 break (원본 코드 흐름 그대로)
       if (attempt == MAX_RETRY - 1) {
         break;
       }
 
-      // 4️⃣ 미완료 design만 재요청
-      for (let designId = 1; designId <= 16; designId++) {
+      // 4️⃣ 미완료 target design만 재요청
+      for (const designId of targetDesignIds) {
         if (completedSet.has(designId)) continue;
 
         const prompt = prompts.find((m) => m.designId === designId);
@@ -108,6 +135,7 @@ export class PhotoWorkerService {
     await this.photoRepository.updatePhotoStatus(originalPhotoId, 'finished');
     this.failMakePhoto(originalPhoto.user_id, 'all');
   }
+
   async makeOnlyOne(
     photoId: number,
     photoUrl: string,
