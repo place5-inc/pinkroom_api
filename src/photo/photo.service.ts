@@ -110,11 +110,14 @@ export class PhotoService {
     }
 
     // =====================================================
-    // 2) complete < 16 이고, 마지막 결과가 cutoff 지난 photo -> photos finished
+    // 2) (결제한 건만) complete < 16 이고 마지막 결과가 cutoff 지난 photo -> photos finished
+    //    조건: photos.payment_id IS NOT NULL
     // =====================================================
     let stuckIncompleteQ = this.db
       .selectFrom('photo_results as pr')
+      .innerJoin('photos as p', 'p.id', 'pr.original_photo_id')
       .select(['pr.original_photo_id as photoId'])
+      .where('p.payment_id', 'is not', null) // ✅ 결제한 것만 16개 규칙 적용
       .groupBy('pr.original_photo_id')
       // complete < 16
       .having(
@@ -137,9 +140,11 @@ export class PhotoService {
     }
 
     if (params.userId != null) {
-      stuckIncompleteQ = stuckIncompleteQ
-        .innerJoin('photos as p', 'p.id', 'pr.original_photo_id')
-        .where('p.user_id', '=', params.userId);
+      stuckIncompleteQ = stuckIncompleteQ.where(
+        'p.user_id',
+        '=',
+        params.userId,
+      );
     }
 
     const stuckRows = await stuckIncompleteQ.execute();
