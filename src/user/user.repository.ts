@@ -27,7 +27,6 @@ export class UserRepository {
     if (!_user) {
       return null;
     }
-    await this.db.selectFrom('photos');
     const _photos = await this.db
       .selectFrom('photos')
       .where('user_id', '=', _user.id)
