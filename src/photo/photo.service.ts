@@ -71,46 +71,83 @@ export class PhotoService {
   }) {
     const cutoff = this.getCutoff(params.minutes ?? 2);
 
-    // 1) 만료 대상 photoId 조회
-    let q = this.db
+    // =====================================================
+    // 1) pending 이고 cutoff 지난 것들 -> fail
+    // =====================================================
+    let pendingExpireQ = this.db
       .selectFrom('photo_results as pr')
       .select(['pr.original_photo_id as photoId'])
       .where('pr.status', '=', 'pending')
       .where('pr.created_at', '<=', cutoff);
 
     if (params.photoId != null) {
-      q = q.where('pr.original_photo_id', '=', params.photoId);
+      pendingExpireQ = pendingExpireQ.where(
+        'pr.original_photo_id',
+        '=',
+        params.photoId,
+      );
     }
 
     if (params.userId != null) {
-      q = q
+      pendingExpireQ = pendingExpireQ
         .innerJoin('photos as p', 'p.id', 'pr.original_photo_id')
         .where('p.user_id', '=', params.userId);
     }
 
-    const expired = await q.execute();
-    const affectedPhotoIds = [...new Set(expired.map((r) => r.photoId))];
+    const pendingExpired = await pendingExpireQ.execute();
+    const pendingExpiredPhotoIds = [
+      ...new Set(pendingExpired.map((r) => r.photoId)),
+    ];
 
-    if (affectedPhotoIds.length === 0) {
-      return { cutoff, affectedPhotoIds, changed: 0 };
+    if (pendingExpiredPhotoIds.length > 0) {
+      await this.db
+        .updateTable('photo_results')
+        .set({ status: 'fail' })
+        .where('original_photo_id', 'in', pendingExpiredPhotoIds)
+        .where('status', '=', 'pending')
+        .where('created_at', '<=', cutoff)
+        .execute();
     }
 
-    // 2) photo_results fail 처리
-    await this.db
-      .updateTable('photo_results')
-      .set({ status: 'fail' })
-      .where('original_photo_id', 'in', affectedPhotoIds)
-      .where('status', '=', 'pending')
-      .where('created_at', '<=', cutoff)
-      .execute();
+    // =====================================================
+    // 2) complete < 16 이고, 마지막 결과가 cutoff 지난 photo -> photos finished
+    // =====================================================
+    let stuckIncompleteQ = this.db
+      .selectFrom('photo_results as pr')
+      .select(['pr.original_photo_id as photoId'])
+      .groupBy('pr.original_photo_id')
+      // complete < 16
+      .having(
+        (eb) =>
+          eb.fn.count(
+            eb.case().when('pr.status', '=', 'complete').then(1).end(),
+          ),
+        '<',
+        16,
+      )
+      // 마지막 activity가 cutoff 이전
+      .having((eb) => eb.fn.max('pr.created_at'), '<=', cutoff);
 
-    // 3) photos finished 처리 (배치)
-    await this.photoRepository.updatePhotoStatuses(
-      affectedPhotoIds,
-      'finished',
-    );
+    if (params.photoId != null) {
+      stuckIncompleteQ = stuckIncompleteQ.where(
+        'pr.original_photo_id',
+        '=',
+        params.photoId,
+      );
+    }
 
-    return { cutoff, affectedPhotoIds, changed: affectedPhotoIds.length };
+    if (params.userId != null) {
+      stuckIncompleteQ = stuckIncompleteQ
+        .innerJoin('photos as p', 'p.id', 'pr.original_photo_id')
+        .where('p.user_id', '=', params.userId);
+    }
+
+    const stuckRows = await stuckIncompleteQ.execute();
+    const stuckPhotoIds = [...new Set(stuckRows.map((r) => r.photoId))];
+
+    if (stuckPhotoIds.length > 0) {
+      await this.photoRepository.updatePhotoStatuses(stuckPhotoIds, 'finished');
+    }
   }
 
   /*
