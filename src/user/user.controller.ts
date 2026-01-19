@@ -43,6 +43,7 @@ export class UserController {
   async retryPhoto(@Body() body: UploadPhotoBody) {
     return await this.photoService.retryUploadPhoto(
       body.userId,
+      body.photoId,
       body.retryCount,
       body.isDummy,
       body.forceFail,

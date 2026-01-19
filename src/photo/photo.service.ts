@@ -404,6 +404,7 @@ export class PhotoService {
       this.workerService.failMakePhoto(userId, 'first');
       return {
         status: HttpStatus.BAD_REQUEST,
+        errorType: 'gemini_error',
       };
     } catch (e) {
       throw new HttpException(
@@ -478,103 +479,71 @@ export class PhotoService {
    */
   async retryUploadPhoto(
     userId: string,
+    photoId: number,
     retryCount?: number,
     isDummy?: boolean,
     forceFail?: boolean,
     delaySecond?: number,
   ) {
-    this.logDev(userId, null, null, null, null, 'retry_by_user');
-
-    const photos = await this.db
+    this.logDev(userId, photoId, null, null, null, 'retry');
+    const photo = await this.db
       .selectFrom('photos')
       .leftJoin('upload_file', 'upload_file.id', 'photos.upload_file_id')
-      .where('photos.user_id', '=', userId)
+      .where('photos.id', '=', photoId)
       .select([
         'photos.id',
-        'photos.payment_id',
-        'photos.status',
-        'photos.selected_design_id',
+        'payment_id',
+        'status',
+        'selected_design_id',
         'upload_file.url',
       ])
-      .execute();
+      .executeTakeFirst();
 
-    if (!photos || photos.length === 0) {
-      return { status: HttpStatus.NOT_FOUND };
+    if (!photo) {
+      return { status: HttpStatus.INTERNAL_SERVER_ERROR };
     }
 
-    let skippedComplete = 0;
-    let skippedNoUrl = 0;
-    let triggeredOnlyOne = 0;
-    let triggeredRest = 0;
+    await this.photoRepository.updatePhotoRetryCount(photoId, retryCount);
 
-    for (const photo of photos) {
-      // ✅ photos.status가 complete면 스킵
-      if (photo.status === 'complete') {
-        skippedComplete++;
-        continue;
-      }
+    const isPaid = !!photo.payment_id;
 
-      await this.photoRepository.updatePhotoRetryCount(photo.id, retryCount);
-
-      const isPaid = !!photo.payment_id;
-
-      const runRestGeneration = async () => {
-        await this.photoRepository.updatePhotoStatus(
-          photo.id,
-          'rest_generating',
-        );
-        this.workerService.makeAllPhotos(
-          photo.id,
-          isDummy,
-          forceFail,
-          delaySecond,
-        );
-      };
-
-      if (!photo.url) {
-        skippedNoUrl++;
-        continue;
-      }
-
-      const photoResult = await this.db
-        .selectFrom('photo_results')
-        .where('original_photo_id', '=', photo.id)
-        .where('hair_design_id', '=', photo.selected_design_id)
-        .where('status', '=', 'complete')
-        .select('id')
-        .executeTakeFirst();
-
-      // 첫 장이 이미 있으면: 결제건만 나머지 생성 트리거
-      if (photoResult) {
-        if (isPaid) {
-          await runRestGeneration();
-          triggeredRest++;
-        }
-        continue;
-      }
-
-      // 첫 장이 없으면: 한 장 생성 시도
-      this.workerService.makeOnlyOne(
-        photo.id,
-        photo.url,
-        photo.selected_design_id,
-        1,
+    const runRestGeneration = async () => {
+      await this.photoRepository.updatePhotoStatus(photoId, 'rest_generating');
+      this.workerService.makeAllPhotos(
+        photoId,
         isDummy,
         forceFail,
         delaySecond,
-        isPaid,
       );
-      triggeredOnlyOne++;
+    };
+
+    const photoResult = await this.db
+      .selectFrom('photo_results')
+      .where('original_photo_id', '=', photoId)
+      .where('hair_design_id', '=', photo.selected_design_id)
+      .where('status', '=', 'complete')
+      .selectAll()
+      .executeTakeFirst();
+
+    // 첫 장이 이미 있으면: 결제건만 나머지 생성 트리거
+    if (photoResult) {
+      if (isPaid) await runRestGeneration();
+      return { status: HttpStatus.OK };
     }
 
-    return {
-      status: HttpStatus.OK,
-      total: photos.length,
-      skippedComplete,
-      skippedNoUrl,
-      triggeredOnlyOne,
-      triggeredRest,
-    };
+    // 첫 장이 없으면: 한 장 생성 시도
+    this.workerService.makeOnlyOne(
+      photo.id,
+      photo.url,
+      photo.selected_design_id,
+      1,
+      isDummy,
+      forceFail,
+      delaySecond,
+      isPaid,
+    );
+
+    return { status: HttpStatus.OK };
   }
   async markCompletePopupShown(photoId: number) {
     try {
