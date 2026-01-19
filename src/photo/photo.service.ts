@@ -315,6 +315,15 @@ export class PhotoService {
         if (result.numUpdatedRows === 0n) {
           throw new BadRequestException('이미 사용한 코드가 있습니다.');
         }
+        const _photos = await this.db
+          .selectFrom('photos')
+          .where('user_id', '=', userId)
+          .where('payment_id', 'is not', null)
+          .selectAll()
+          .executeTakeFirst();
+        if (!_photos) {
+          throw new BadRequestException('이미 결제한 유저입니다.');
+        }
       }
 
       const uploadedFile = await this.azureBlobService.uploadFileImage(image);

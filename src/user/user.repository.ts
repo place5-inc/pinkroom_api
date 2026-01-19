@@ -19,13 +19,27 @@ export class UserRepository {
     field: 'id' | 'phone',
     value: string,
   ): Promise<UserVO | null> {
-    const user = await this.db
+    const _user = await this.db
       .selectFrom('users')
       .where(field, '=', value)
       .selectAll()
       .executeTakeFirst();
+    if (!_user) {
+      return null;
+    }
+    await this.db.selectFrom('photos');
+    const _photos = await this.db
+      .selectFrom('photos')
+      .where('user_id', '=', _user.id)
+      .where('payment_id', 'is not', null)
+      .selectAll()
+      .executeTakeFirst();
+    let user = this.toVO(_user);
+    if (_photos) {
+      user.hasUsedFree = true;
+    }
 
-    return user ? this.toVO(user) : null;
+    return user;
   }
 
   getUser(userId: string): Promise<UserVO | null> {
