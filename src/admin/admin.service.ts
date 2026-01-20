@@ -19,13 +19,14 @@ import { KakaoService } from 'src/kakao/kakao.service';
 import { PhotoWorkerService } from 'src/photo/photo-worker.service';
 import { PhotoService } from 'src/photo/photo.service';
 import { sql } from 'kysely';
+import { PhotoRepository } from 'src/photo/photo.repository';
 @Injectable()
 export class AdminService {
   constructor(
     private readonly db: DatabaseProvider,
     private readonly photoService: PhotoService,
     private readonly azureBlobService: AzureBlobService,
-    private readonly kakaoService: KakaoService,
+    private readonly photoRepository: PhotoRepository,
     private readonly workerService: PhotoWorkerService,
   ) {}
   async test() {
@@ -425,7 +426,19 @@ export class AdminService {
           })
           .where('id', '=', photoId)
           .execute();
+        this.photoRepository.generateWorldcupImage(photoId);
       }
+      const photo = await this.db
+        .selectFrom('photos')
+        .where('id', '=', photoId)
+        .selectAll()
+        .executeTakeFirst();
+      if (photo) {
+        if (photo.selected_design_id === designId) {
+          await this.photoRepository.generateBeforeAfterThumbnail(photoId);
+        }
+      }
+
       return {
         status: HttpStatus.OK,
       };

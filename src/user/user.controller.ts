@@ -18,6 +18,20 @@ export class UserController {
     private photoService: PhotoService,
     private userService: UserService,
   ) {}
+  @Get()
+  async getPhotoList(@Query('userId') userId: string) {
+    if (isEmpty(userId)) {
+      throw new BadRequestException('userId is required.');
+    }
+    return await this.photoService.getPhotoList(userId);
+  }
+  @Get('photo')
+  async getResultPhotoList(@Query('photoId') photoId: number) {
+    if (isEmpty(photoId)) {
+      throw new BadRequestException('photoId is required.');
+    }
+    return await this.photoService.getResultPhotoList(photoId);
+  }
   @Post('photo/upload')
   async uploadPhoto(@Body() body: UploadPhotoBody) {
     return await this.photoService.uploadPhoto(
@@ -53,20 +67,7 @@ export class UserController {
       body.delaySecond,
     );
   }
-  @Get()
-  async getPhotoList(@Query('userId') userId: string) {
-    if (isEmpty(userId)) {
-      throw new BadRequestException('userId is required.');
-    }
-    return await this.photoService.getPhotoList(userId);
-  }
-  @Get('photo')
-  async getResultPhotoList(@Query('photoId') photoId: number) {
-    if (isEmpty(photoId)) {
-      throw new BadRequestException('photoId is required.');
-    }
-    return await this.photoService.getResultPhotoList(photoId);
-  }
+
   @Post('actionLog')
   async addUserActionLog(@Body() body: UserActionBody) {
     return await this.userService.addUserActionLog(body);

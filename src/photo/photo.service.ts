@@ -458,7 +458,7 @@ export class PhotoService {
         );
         if (result) {
           //before After Thumbnail 생성
-          await this.workerService.generateBeforeAfterThumbnail(photo.id);
+          await this.photoRepository.generateBeforeAfterThumbnail(photo.id);
           if (!paymentId) {
             await this.photoRepository.updatePhotoStatus(photo.id, 'complete');
           }
