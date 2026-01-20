@@ -398,6 +398,7 @@ export class PhotoService {
         if (result.numUpdatedRows === 0n) {
           throw new BadRequestException('이미 사용한 코드가 있습니다.');
         }
+        /* 꿀현진 결제한 유저는 무료 쿠폰 사용 못하게 하려면 이 주소 풀면 됨
         const _photos = await this.db
           .selectFrom('photos')
           .where('user_id', '=', userId)
@@ -407,6 +408,7 @@ export class PhotoService {
         if (_photos) {
           throw new BadRequestException('이미 결제한 유저입니다.');
         }
+          */
       }
 
       const uploadedFile = await this.azureBlobService.uploadFileImage(image);

@@ -36,6 +36,8 @@ export class UserRepository {
     let user = this.toVO(_user);
     if (_photos) {
       user.hasUsedFree = true;
+      //꿀현진 - 결제한 유저가 무료코드 이용하게 하려면, 바로 위에 줄 주석 처리하면됨.
+      //_photos도 필요 없음.
     }
 
     return user;
