@@ -3,18 +3,9 @@ import {
   Get,
   Query,
   BadRequestException,
-  HttpException,
-  HttpStatus,
   Post,
   Body,
-  Patch,
-  Delete,
-  Param,
-  ParseBoolPipe,
-  ParseIntPipe,
-  DefaultValuePipe,
 } from '@nestjs/common';
-import { UserService } from 'src/user/user.service';
 import { WorldcupService } from './worldcup.service';
 import { WorldcupBody } from 'src/libs/types';
 import { isEmpty } from 'src/libs/helpers';

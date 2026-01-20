@@ -1,9 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
 import { PhotoResultStatus, PhotoStatus, PhotoVO } from 'src/libs/types';
+import { ThumbnailService } from './thumbnail.service';
+import { AzureBlobService } from 'src/azure/blob.service';
 @Injectable()
 export class PhotoRepository {
-  constructor(private readonly db: DatabaseProvider) {}
+  constructor(
+    private readonly db: DatabaseProvider,
+    private readonly thumbnailService: ThumbnailService,
+    private readonly azureBlobService: AzureBlobService,
+  ) {}
   async updatePhotoTime(photoId: number) {
     await this.db
       .updateTable('photos')
@@ -249,5 +255,94 @@ export class PhotoRepository {
       })
       .where('id', '=', photoId)
       .execute();
+  }
+  async generateWorldcupImage(photoId: number) {
+    const photos = await this.db
+      .selectFrom('photo_results as pf')
+      .leftJoin('upload_file as uf', 'uf.id', 'pf.result_image_id')
+      .where('original_photo_id', '=', photoId)
+      .select(['uf.url as url'])
+      .execute();
+    const imageUrls = photos
+      .map((r) => r.url)
+      .filter(
+        (url): url is string => typeof url === 'string' && url.length > 0,
+      );
+    const MAX_MERGED_IMAGE_RETRY = 2;
+    for (let i = 0; i < MAX_MERGED_IMAGE_RETRY; i++) {
+      try {
+        const mergedImageBuffer =
+          await this.thumbnailService.generateMergedWorldcupImage(imageUrls);
+        if (!mergedImageBuffer) {
+          throw new Error('Thumbnail buffer is empty (generated failed)');
+        }
+        const mergedImageBase64 = `data:image/jpeg;base64,${mergedImageBuffer.toString(
+          'base64',
+        )}`;
+        const mergedImageUpload =
+          await this.azureBlobService.uploadFileImageBase64(
+            mergedImageBase64,
+            false,
+            true,
+          );
+
+        if (mergedImageUpload) {
+          await this.db
+            .updateTable('photos')
+            .set({ merged_image_id: mergedImageUpload.id })
+            .where('id', '=', photoId)
+            .execute();
+          //console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
+          break; // 성공 시 루프 탈출
+        }
+      } catch (error) {
+        console.error(
+          `[PhotoService] 썸네일 생성 실패 (${i + 1}번째 시도):`,
+          error,
+        );
+        if (i === MAX_MERGED_IMAGE_RETRY - 1) {
+          console.error(
+            '[PhotoService] Worldcup merged image generation failed',
+          );
+        }
+      }
+    }
+    const MAX_THUMBNAIL_RETRY = 2;
+    for (let i = 0; i < MAX_THUMBNAIL_RETRY; i++) {
+      try {
+        const thumbnailBuffer =
+          await this.thumbnailService.generateWorldcupThumbnail(imageUrls);
+        if (!thumbnailBuffer) {
+          throw new Error('Thumbnail buffer is empty (generated failed)');
+        }
+        const thumbnailBase64 = `data:image/jpeg;base64,${thumbnailBuffer.toString(
+          'base64',
+        )}`;
+        const thumbnailUpload =
+          await this.azureBlobService.uploadFileImageBase64(
+            thumbnailBase64,
+            false,
+            true,
+          );
+
+        if (thumbnailUpload) {
+          await this.db
+            .updateTable('photos')
+            .set({ thumbnail_worldcup_id: thumbnailUpload.id })
+            .where('id', '=', photoId)
+            .execute();
+          //console.log(`[PhotoService] 썸네일 생성 성공 (${i + 1}번째 시도)`);
+          break; // 성공 시 루프 탈출
+        }
+      } catch (error) {
+        console.error(
+          `[PhotoService] 썸네일 생성 실패 (${i + 1}번째 시도):`,
+          error,
+        );
+        if (i === MAX_THUMBNAIL_RETRY - 1) {
+          console.error('[PhotoService] Worldcup thumbnail generation failed');
+        }
+      }
+    }
   }
 }

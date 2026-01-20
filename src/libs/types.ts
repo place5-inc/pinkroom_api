@@ -5,6 +5,7 @@ export const DEV_CONFIG = {
   isProduction: process.env.NODE_ENV === 'production',
   devPhoneNumberList: [
     '01053095304',
+    '01074055304',
     '01027175360',
     '01082559695',
     '01073002335',

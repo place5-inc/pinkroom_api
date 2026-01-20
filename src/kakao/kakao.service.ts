@@ -7,7 +7,6 @@ import {
 import axios from 'axios';
 import { DateTime } from 'luxon';
 import { DatabaseProvider } from 'src/libs/db';
-import { encrypt } from 'src/libs/helpers';
 import {
   KakaoJson,
   KakaoContentButtonJson,
@@ -22,7 +21,6 @@ import { KakaoHelper } from './kakao.helper';
 export class KakaoService {
   constructor(private readonly db: DatabaseProvider) {}
   private readonly _isKakaoProduction = DEV_CONFIG.isKakaoProduction;
-  private readonly devPhoneNumberList = DEV_CONFIG.devPhoneNumberList;
 
   // 카카오 알림톡 전송
   async sendKakaoNotification(
@@ -79,6 +77,8 @@ export class KakaoService {
         to = '01027175360';
       } else if (aaaa === '2905') {
         to = '01029056598';
+      } else if (aaaa === '7405') {
+        to = '01074055304';
       }
     }
 

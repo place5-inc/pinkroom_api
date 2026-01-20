@@ -3,21 +3,13 @@ import {
   Get,
   Post,
   Patch,
-  Param,
-  UseGuards,
-  Request,
-  HttpStatus,
-  HttpException,
-  NotFoundException,
-  All,
   Body,
   Query,
   BadRequestException,
 } from '@nestjs/common';
 import { PhotoService } from '../photo/photo.service';
-import { UploadPhotoBody, Image, UserActionBody } from 'src/libs/types';
+import { UploadPhotoBody, UserActionBody } from 'src/libs/types';
 import { isEmpty } from 'src/libs/helpers';
-import * as path from 'path';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -75,13 +67,6 @@ export class UserController {
     }
     return await this.photoService.getResultPhotoList(photoId);
   }
-  @Get('test')
-  async test(@Query('photoId') photoId: number) {
-    if (isEmpty(photoId)) {
-      throw new BadRequestException('photoId is required.');
-    }
-    return await this.photoService.test(photoId);
-  }
   @Post('actionLog')
   async addUserActionLog(@Body() body: UserActionBody) {
     return await this.userService.addUserActionLog(body);
@@ -96,13 +81,6 @@ export class UserController {
   //   }
   //   throw new HttpException(message, status);
   // }
-  @Get('font/test')
-  async fontTest(@Query('photoId') photoId: number) {
-    if (isEmpty(photoId)) {
-      throw new BadRequestException('photoId is required.');
-    }
-    return await this.photoService.fontTest(photoId);
-  }
   @Patch('photo/completePopupShown')
   async markCompletePopupShown(@Body() body: { photoId: number }) {
     if (isEmpty(body.photoId)) {

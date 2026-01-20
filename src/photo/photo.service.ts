@@ -13,7 +13,6 @@ import { Image } from 'src/libs/types';
 import { PhotoWorkerService } from './photo-worker.service';
 import { PhotoRepository } from './photo.repository';
 import { sql } from 'kysely';
-import { ThumbnailService } from './thumbnail.service';
 import { UserRepository } from 'src/user/user.repository';
 
 @Injectable()
@@ -23,43 +22,8 @@ export class PhotoService {
     private readonly azureBlobService: AzureBlobService,
     private readonly workerService: PhotoWorkerService,
     private readonly photoRepository: PhotoRepository,
-    private readonly thumbnailService: ThumbnailService,
     private readonly userRepository: UserRepository,
   ) {}
-  async test(photoId: number) {
-    try {
-      //await this.generateBeforeAfterThumbnail(photoId);
-      return {
-        status: HttpStatus.OK,
-      };
-    } catch (e) {
-      return {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: e.message,
-      };
-    }
-  }
-  async fontTest(photoId: number) {
-    try {
-      const url1 =
-        await this.workerService.generateBeforeAfterThumbnailFontTest(photoId);
-      const url2 =
-        await this.workerService.generateWorldcupMergedImageFontTest(photoId);
-      const url3 =
-        await this.workerService.generateWorldcupThumbnailImageFontTest(
-          photoId,
-        );
-      return {
-        status: HttpStatus.OK,
-        url: [url1, url2, url3],
-      };
-    } catch (e) {
-      return {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: e.message,
-      };
-    }
-  }
   private getCutoff(minutes = 2) {
     return new Date(Date.now() - minutes * 60 * 1000);
   }

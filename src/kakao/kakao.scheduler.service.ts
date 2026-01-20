@@ -16,7 +16,6 @@ import {
 import { SendKaKaoNewGetTokenModel } from 'src/libs/types';
 import { NIL } from 'uuid';
 import { KakaoHelper } from './kakao.helper';
-import e from 'express';
 import { generateCode } from 'src/libs/helpers';
 
 @Injectable()
@@ -76,6 +75,8 @@ export class KakaoSchedulerService {
         to = '01027175360';
       } else if (aaaa === '2905') {
         to = '01029056598';
+      } else if (aaaa === '7405') {
+        to = '01074055304';
       }
     }
 

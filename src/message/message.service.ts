@@ -2,10 +2,6 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 
 import axios from 'axios';
 import * as FormData from 'form-data';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class MessageService {

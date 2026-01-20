@@ -3,10 +3,7 @@ import {
   Body,
   Controller,
   DefaultValuePipe,
-  Delete,
   Get,
-  HttpException,
-  HttpStatus,
   ParseBoolPipe,
   ParseIntPipe,
   Patch,
@@ -15,18 +12,13 @@ import {
 } from '@nestjs/common';
 import { isEmpty } from 'src/libs/helpers';
 import { AdminService } from './admin.service';
-import { parseNumberArray } from 'src/libs/helpers';
 import { CommonService } from 'src/common/common.service';
 import { AdminBody } from 'src/libs/types';
-import { SchedulerService } from 'src/scheduler/schuduler.service';
-import { PhotoWorkerService } from 'src/photo/photo-worker.service';
 @Controller('admin')
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly commonService: CommonService,
-    private readonly schedulerService: SchedulerService,
-    private readonly photoWorkerService: PhotoWorkerService,
   ) {}
   @Get('test')
   async test() {
