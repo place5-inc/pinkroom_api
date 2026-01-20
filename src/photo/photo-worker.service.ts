@@ -561,6 +561,7 @@ export class PhotoWorkerService {
     let keyRow: { id: number; key: string } | undefined;
 
     try {
+      await this.photoRepository.updatePhotoTime(photoId);
       await this.photoRepository.updatePhotoResult(
         photoId,
         designId,
@@ -586,6 +587,7 @@ export class PhotoWorkerService {
         });
 
         const uploadFileTest = await forTest;
+        await this.photoRepository.updatePhotoTime(photoId);
         return await this.photoRepository.updatePhotoResult(
           photoId,
           designId,
@@ -614,7 +616,7 @@ export class PhotoWorkerService {
       if (!uploadFile) {
         throw new InternalServerErrorException('Azure 업로드 실패');
       }
-
+      await this.photoRepository.updatePhotoTime(photoId);
       return await this.photoRepository.updatePhotoResult(
         photoId,
         designId,

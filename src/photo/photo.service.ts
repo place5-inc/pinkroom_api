@@ -156,13 +156,132 @@ export class PhotoService {
       await this.photoRepository.updatePhotoStatuses(stuckPhotoIds, 'finished');
     }
   }
+  async expirePendingResult(params: { photoId: number; minutes?: number }) {
+    const cutoff = this.getCutoff(params.minutes ?? 2);
+    const photoId = params.photoId;
 
+    // =====================================================
+    // 0) 대상 photo 한 건의 payment 여부 조회
+    // =====================================================
+    const photo = await this.db
+      .selectFrom('photos')
+      .select(['id', 'payment_id'])
+      .where('id', '=', photoId)
+      .executeTakeFirst();
+
+    if (!photo) return;
+
+    const isPaid = photo.payment_id != null;
+
+    // =====================================================
+    // 1) pending -> fail
+    //    (단, "최근 활동" 판정은 photos.updated_at이 아니라
+    //     photo_results의 마지막 기록 시각으로 판정)
+    //
+    //    조건:
+    //      - status = pending
+    //      - created_at <= cutoff
+    //      - 그리고 해당 photo의 last_any(created_at) <= cutoff (최근 결과 기록 없음)
+    // =====================================================
+    const lastAnyRow = await this.db
+      .selectFrom('photo_results as pr')
+      .select((eb) => eb.fn.max('pr.created_at').as('lastAny'))
+      .where('pr.original_photo_id', '=', photoId)
+      .executeTakeFirst();
+
+    const lastAny = lastAnyRow?.lastAny ?? null;
+
+    if (lastAny != null && lastAny <= cutoff) {
+      await this.db
+        .updateTable('photo_results')
+        .set({ status: 'fail' })
+        .where('original_photo_id', '=', photoId)
+        .where('status', '=', 'pending')
+        .where('created_at', '<=', cutoff)
+        .execute();
+    }
+
+    // =====================================================
+    // 2) "멈춤" 판정 후 photos.status = finished
+    //
+    // [결제건]
+    //   - complete < 16
+    //   - last_any <= cutoff (2분 이상 아무 결과 기록 없음)
+    //
+    // [비결제건]
+    //   - complete < 16 (16개 다 나온 상태면 멈춤/실패가 아님)
+    //   - last_non_complete <= cutoff 이면 실패로 판단
+    //   - 만약 last_non_complete가 null(= complete만 존재)이라면
+    //       last_complete <= cutoff 이면 실패로 판단
+    // =====================================================
+    const agg = await this.db
+      .selectFrom('photo_results as pr')
+      .select((eb) => [
+        eb.fn
+          .count(eb.case().when('pr.status', '=', 'complete').then(1).end())
+          .as('completeCnt'),
+
+        eb.fn.max('pr.created_at').as('lastAny'),
+
+        eb.fn
+          .max(
+            eb
+              .case()
+              .when('pr.status', '!=', 'complete')
+              .then(eb.ref('pr.created_at'))
+              .end(),
+          )
+          .as('lastNonComplete'),
+
+        eb.fn
+          .max(
+            eb
+              .case()
+              .when('pr.status', '=', 'complete')
+              .then(eb.ref('pr.created_at'))
+              .end(),
+          )
+          .as('lastComplete'),
+      ])
+      .where('pr.original_photo_id', '=', photoId)
+      .executeTakeFirst();
+
+    const completeCnt = Number(agg?.completeCnt ?? 0);
+    const lastAny2 = agg?.lastAny ?? null;
+    const lastNonComplete = agg?.lastNonComplete ?? null;
+    const lastComplete = agg?.lastComplete ?? null;
+
+    // 16개 다 끝났으면 굳이 finished 처리할 필요 없음(이미 완료 플로우에서 처리될 것)
+    if (completeCnt >= 16) return;
+
+    let isStuck = false;
+
+    if (isPaid) {
+      // 결제건: "아무 결과 기록" 자체가 cutoff보다 오래되면 멈춤
+      if (lastAny2 != null && lastAny2 <= cutoff) {
+        isStuck = true;
+      }
+    } else {
+      // 비결제건:
+      // 1) complete 아닌 게 존재하면 그 마지막이 cutoff보다 오래되면 멈춤
+      if (lastNonComplete != null) {
+        if (lastNonComplete <= cutoff) isStuck = true;
+      } else {
+        // 2) complete만 존재하면 complete 마지막이 cutoff보다 오래되면 멈춤
+        if (lastComplete != null && lastComplete <= cutoff) isStuck = true;
+      }
+    }
+
+    if (isStuck) {
+      await this.photoRepository.updatePhotoStatuses([photoId], 'finished');
+    }
+  }
   /*
   유저의 사진 리스트
    */
   async getPhotoList(userId: string) {
     try {
-      await this.expirePendingResults({ userId });
+      //await this.expirePendingResults({ userId });
 
       const results = await this.photoRepository.getPhotosByUserId(userId);
       const user = await this.userRepository.getUser(userId);
@@ -176,7 +295,7 @@ export class PhotoService {
    */
   async getResultPhotoList(photoId: number) {
     try {
-      await this.expirePendingResults({ photoId });
+      await this.expirePendingResult({ photoId });
 
       const result = await this.photoRepository.getPhotoById(photoId);
       return { status: HttpStatus.OK, result };

@@ -4,7 +4,15 @@ import { PhotoResultStatus, PhotoStatus, PhotoVO } from 'src/libs/types';
 @Injectable()
 export class PhotoRepository {
   constructor(private readonly db: DatabaseProvider) {}
-
+  async updatePhotoTime(photoId: number) {
+    await this.db
+      .updateTable('photos')
+      .set({
+        updated_at: new Date(),
+      })
+      .where('id', '=', photoId)
+      .execute();
+  }
   async updatePhotoStatus(photoId: number, status: PhotoStatus) {
     await this.db
       .updateTable('photos')
