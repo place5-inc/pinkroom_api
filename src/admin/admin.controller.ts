@@ -14,11 +14,13 @@ import { isEmpty } from 'src/libs/helpers';
 import { AdminService } from './admin.service';
 import { CommonService } from 'src/common/common.service';
 import { AdminBody } from 'src/libs/types';
+import { PhotoWorkerService } from 'src/photo/photo-worker.service';
 @Controller('admin')
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly commonService: CommonService,
+    private readonly photoWorkerService: PhotoWorkerService,
   ) {}
   @Get('test')
   async test() {
@@ -171,5 +173,9 @@ export class AdminController {
       body.designId,
       body.image.id,
     );
+  }
+  @Get('fail/photo')
+  async failPhoto(@Query('userId') userId: string) {
+    this.photoWorkerService.failMakePhoto(userId, 'first');
   }
 }
