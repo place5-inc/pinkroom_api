@@ -107,7 +107,7 @@ export class KakaoService {
 
     let isSend = false;
 
-    if (isKakaoProduction) {
+    if (isKakaoProduction && DEV_CONFIG.isProduction) {
       //실서버에서는 발송
       isSend = true;
     } else {
