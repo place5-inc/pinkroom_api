@@ -17,6 +17,7 @@ export class KakaoHelper {
     if (
       templateCode === 'pr_cplt_hr_smln_test' ||
       templateCode === 'pr_cplt_hr_smln_v1' ||
+      templateCode === 'pr_cplt_hr_smln_v2' ||
       templateCode === 'pr_cplt_wrc_test' ||
       templateCode === 'pr_cplt_wrc_v1' ||
       templateCode === 'pr_cplt_wrc_rmd_week_v1' ||
@@ -99,6 +100,25 @@ export class KakaoHelper {
         type: 'ai',
       },
       pr_cplt_hr_smln_v1: {
+        message: `요청하신 헤어 시뮬레이션 사진 16개가 모두 완성되었어요!
+
+헤어스타일 소화력이 뛰어나시네요😍
+지금 바로 사진을 확인하고 저장해보세요.
+
+🔽 나의 <헤어스타일 월드컵>을 통해 어떤 스타일이 제일 어울리는지 친구들에게 투표를 받으실 수도 있어요!`,
+        buttonList: [
+          {
+            ...OBJ_BUTTON_URL_DEFAULT,
+            name: '결과 확인하기',
+          },
+          {
+            ...OBJ_BUTTON_URL_2,
+            name: '친구들에게 투표 받기',
+          },
+        ],
+        type: 'ai',
+      },
+      pr_cplt_hr_smln_v2: {
         message: `요청하신 헤어 시뮬레이션 사진 16개가 모두 완성되었어요!
 
 헤어스타일 소화력이 뛰어나시네요😍
