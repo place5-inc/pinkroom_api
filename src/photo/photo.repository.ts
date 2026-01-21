@@ -10,11 +10,19 @@ export class PhotoRepository {
     private readonly thumbnailService: ThumbnailService,
     private readonly azureBlobService: AzureBlobService,
   ) {}
-  async updatePhotoTime(photoId: number) {
+  async updatePhotoTime(
+    photoId: number,
+    designId: number,
+    selectedDesignId: number,
+  ) {
     await this.db
       .updateTable('photos')
       .set({
         updated_at: new Date(),
+        status:
+          designId === selectedDesignId
+            ? 'first_generating'
+            : 'rest_generating',
       })
       .where('id', '=', photoId)
       .execute();

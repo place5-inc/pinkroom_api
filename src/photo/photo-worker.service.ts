@@ -122,6 +122,7 @@ export class PhotoWorkerService {
             isDummy,
             forceFail,
             delaySecond,
+            originalPhoto.selected_design_id,
           );
         } catch (e) {
           console.error(`❌ design ${designId} 실패 (attempt ${attempt})`, e);
@@ -170,6 +171,7 @@ export class PhotoWorkerService {
       isDummy,
       forceFail,
       delaySecond,
+      designId,
     );
     if (result) {
       await this.photoRepository.generateBeforeAfterThumbnail(photoId);
@@ -353,11 +355,16 @@ export class PhotoWorkerService {
     isDummy?: boolean,
     forceFail?: boolean,
     delaySecond?: number,
+    selectedDesignId?: number,
   ) {
     let keyRow: { id: number; key: string } | undefined;
 
     try {
-      await this.photoRepository.updatePhotoTime(photoId);
+      await this.photoRepository.updatePhotoTime(
+        photoId,
+        designId,
+        selectedDesignId,
+      );
       await this.photoRepository.updatePhotoResult(
         photoId,
         designId,
@@ -383,7 +390,11 @@ export class PhotoWorkerService {
         });
 
         const uploadFileTest = await forTest;
-        await this.photoRepository.updatePhotoTime(photoId);
+        await this.photoRepository.updatePhotoTime(
+          photoId,
+          designId,
+          selectedDesignId,
+        );
         return await this.photoRepository.updatePhotoResult(
           photoId,
           designId,
@@ -412,7 +423,11 @@ export class PhotoWorkerService {
       if (!uploadFile) {
         throw new InternalServerErrorException('Azure 업로드 실패');
       }
-      await this.photoRepository.updatePhotoTime(photoId);
+      await this.photoRepository.updatePhotoTime(
+        photoId,
+        designId,
+        selectedDesignId,
+      );
       return await this.photoRepository.updatePhotoResult(
         photoId,
         designId,

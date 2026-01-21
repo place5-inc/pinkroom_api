@@ -457,6 +457,7 @@ export class PhotoService {
           isDummy,
           forceFail,
           delaySecond,
+          designId,
         );
         if (result) {
           //before After Thumbnail 생성
