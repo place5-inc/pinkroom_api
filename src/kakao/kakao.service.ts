@@ -107,19 +107,15 @@ export class KakaoService {
 
     let isSend = false;
 
-    //꿀알림톡 테스트 번호가 맞다면 발송
-    if (DEV_CONFIG.devPhoneNumberList.includes(to)) {
+    if (isKakaoProduction) {
+      //실서버에서는 발송
       isSend = true;
+    } else {
+      //개발서버에서는 테스터 번호가 맞다면 발송
+      if (DEV_CONFIG.devPhoneNumberList.includes(to)) {
+        isSend = true;
+      }
     }
-    // if (isKakaoProduction) {
-    //   //실서버에서는 발송
-    //   isSend = true;
-    // } else {
-    //   //개발서버에서는 테스터 번호가 맞다면 발송
-    //   if (this.devPhoneNumberList.includes(to)) {
-    //     isSend = true;
-    //   }
-    // }
 
     if (isSend) {
       // KakaoJson 객체 생성하기
