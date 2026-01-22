@@ -85,7 +85,7 @@ export class KakaoSchedulerService {
     let type: string;
 
     let isKakaoProduction = false;
-    if (DEV_CONFIG.isKakaoProduction) {
+    if (process.env.PRODUCTION === 'on') {
       isKakaoProduction = true;
     }
     // 런칭용
@@ -109,7 +109,7 @@ export class KakaoSchedulerService {
     // if (DEV_CONFIG.devPhoneNumberList.includes(to)) {
     //   isSend = true;
     // }
-    if (isKakaoProduction && DEV_CONFIG.isProduction) {
+    if (isKakaoProduction && process.env.NODE_ENV === 'production') {
       //실서버에서는 발송
       isSend = true;
     } else {

@@ -14,7 +14,6 @@ import { sql, RawBuilder } from 'kysely';
 @Injectable()
 export class SchedulerService {
   private readonly db = new DatabaseProvider();
-  private readonly isKakaoProduction = DEV_CONFIG.isKakaoProduction;
   private readonly messageService = new MessageService();
 
   @CronForENV(['production', 'staging', 'development'], '0 16 * * *') //매일 16시에 동작
@@ -240,9 +239,7 @@ export class SchedulerService {
 
   public async sendMMSMessageForDeveloper(errorMessage: string, type?: string) {
     let phoneNumbers = ['01053095304', '01054697884', '01073002335'];
-    if (!this.isKakaoProduction) {
-      phoneNumbers = ['01053095304'];
-    }
+
     if (type) {
       //5분 사이에 해당 타입의 실패 메시지가 발송된 이력이 있었다면 또 발송하지는 않음.
       const fiveMinutesAgo = DateTime.now().minus({ minutes: 5 }).toJSDate();
@@ -257,7 +254,8 @@ export class SchedulerService {
       }
     }
     let title = '핑크룸 서버 오류 안내';
-    if (!this.isKakaoProduction) {
+    if (process.env.NODE_ENV === 'production') {
+    } else {
       title = '핑크룸 (테스트) 서버 오류 안내';
     }
     for (const phoneNumber of phoneNumbers) {

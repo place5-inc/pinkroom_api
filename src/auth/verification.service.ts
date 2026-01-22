@@ -5,16 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DatabaseProvider } from 'src/libs/db';
-import { DEV_CONFIG } from 'src/libs/types';
 
 @Injectable()
 export class VerificationService {
-  private readonly _isProduction = DEV_CONFIG.isProduction;
   constructor(private readonly db: DatabaseProvider) {}
   async createdCode(phone: string): Promise<string> {
     const randomNumber = Math.floor(Math.random() * 9000) + 1000;
     let code = randomNumber.toString();
-    if (!this._isProduction) {
+    if (process.env.NODE_ENV === 'production') {
+    } else {
       //테스트서버에서는 0000 코드로 고정
       code = '0000';
     }

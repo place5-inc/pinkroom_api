@@ -20,7 +20,6 @@ import { KakaoHelper } from './kakao.helper';
 @Injectable()
 export class KakaoService {
   constructor(private readonly db: DatabaseProvider) {}
-  private readonly _isKakaoProduction = DEV_CONFIG.isKakaoProduction;
 
   // 카카오 알림톡 전송
   async sendKakaoNotification(
@@ -87,7 +86,7 @@ export class KakaoService {
     let type: string;
 
     let isKakaoProduction = false;
-    if (this._isKakaoProduction) {
+    if (process.env.IS_KAKAO_PRODUCTION === 'on') {
       isKakaoProduction = true;
     }
     // 런칭용
@@ -107,7 +106,7 @@ export class KakaoService {
 
     let isSend = false;
 
-    if (isKakaoProduction && DEV_CONFIG.isProduction) {
+    if (isKakaoProduction && process.env.NODE_ENV === 'production') {
       //실서버에서는 발송
       isSend = true;
     } else {
