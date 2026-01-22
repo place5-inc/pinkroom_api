@@ -227,8 +227,16 @@ export class PhotoWorkerService {
   }
 
   async afterMakeAllPhoto(photoId: number) {
-    await this.photoRepository.updatePhotoStatus(photoId, 'complete');
-    this.sendKakao(photoId);
+    const _photo = await this.db
+      .selectFrom('photos')
+      .where('id', '=', photoId)
+      .selectAll()
+      .executeTakeFirst();
+    if (_photo.status === 'complete') {
+    } else {
+      await this.photoRepository.updatePhotoStatus(photoId, 'complete');
+      this.sendKakao(photoId);
+    }
     this.photoRepository.generateWorldcupImage(photoId);
   }
 
