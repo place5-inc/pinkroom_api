@@ -134,6 +134,14 @@ export class PhotoWorkerService {
 
     await this.photoRepository.updatePhotoStatus(originalPhotoId, 'finished');
     this.failMakePhoto(originalPhoto.user_id, 'all');
+    const _photo = await this.db
+      .selectFrom('photos')
+      .where('id', '=', originalPhotoId)
+      .selectAll()
+      .executeTakeFirst();
+    if (_photo.retry_count === 2) {
+      this.messageService.sendMessage('재시도 최대:' + String(originalPhotoId));
+    }
   }
 
   async makeOnlyOne(

@@ -34,14 +34,21 @@ export class CronService {
   );
   @Cron('5,35 * * * *')
   public async check() {
-    const startTime = new Date(Date.now() - 5 * 60 * 60 * 1000);
+    await this.db
+      .insertInto('log_scheduler')
+      .values({
+        created_at: new Date(),
+        ment: 'start scheduler',
+      })
+      .execute();
+    const startTime = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const endTime = new Date(Date.now() - 2 * 60 * 1000);
     const list = await this.db
       .selectFrom('photo_results')
       .where('status', 'in', ['pending', 'fail'])
-      .where('created_at', '>', endTime)
-      .where('created_at', '<', startTime)
+      .where('created_at', '<', endTime)
+      .where('created_at', '>', startTime)
       .select('original_photo_id')
       .distinct()
       .execute();

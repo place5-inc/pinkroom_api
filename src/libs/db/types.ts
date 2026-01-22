@@ -56,6 +56,12 @@ export type log_prompt = {
     prompt: string | null;
     created_at: Timestamp | null;
 };
+export type log_scheduler = {
+    id: Generated<number>;
+    created_at: Timestamp | null;
+    ment: string | null;
+    photo_id: number | null;
+};
 export type payments = {
     id: Generated<number>;
     user_id: string | null;
@@ -182,6 +188,7 @@ export type DB = {
     log_dev: log_dev;
     log_gemini_error: log_gemini_error;
     log_prompt: log_prompt;
+    log_scheduler: log_scheduler;
     payments: payments;
     photo_code_log: photo_code_log;
     photo_results: photo_results;

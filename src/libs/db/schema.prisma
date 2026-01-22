@@ -206,3 +206,10 @@ model log_prompt {
   prompt     String?   @db.NVarChar(Max)
   created_at DateTime? @db.DateTime
 }
+
+model log_scheduler {
+  id         Int       @id(map: "PK_log_scheduler") @default(autoincrement())
+  created_at DateTime? @db.DateTime
+  ment       String?   @db.NVarChar(Max)
+  photo_id   Int?
+}
