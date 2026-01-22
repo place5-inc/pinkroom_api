@@ -20,6 +20,7 @@ import { PhotoWorkerService } from 'src/photo/photo-worker.service';
 import { PhotoService } from 'src/photo/photo.service';
 import { sql } from 'kysely';
 import { PhotoRepository } from 'src/photo/photo.repository';
+import { MessageService } from 'src/message/message.service';
 @Injectable()
 export class AdminService {
   constructor(
@@ -28,6 +29,7 @@ export class AdminService {
     private readonly azureBlobService: AzureBlobService,
     private readonly photoRepository: PhotoRepository,
     private readonly workerService: PhotoWorkerService,
+    private readonly messageService: MessageService,
   ) {}
   async test() {
     try {
@@ -448,5 +450,27 @@ export class AdminService {
         message: e.message,
       };
     }
+  }
+  async reboot() {
+    await this.messageService.sendSMSCertiCode('01054697884', 'server reboot');
+    const time = new Date(Date.now() - 20 * 60 * 1000);
+    const list = await this.db
+      .selectFrom('photo_results')
+      .where('status', '=', 'pending')
+      .where('created_at', '>', time)
+      .select('original_photo_id')
+      .distinct()
+      .execute();
+    for (const item of list) {
+      await this.messageService.sendSMSCertiCode(
+        '01054697884',
+        String(item.original_photo_id),
+      );
+      this.workerService.makeAllPhotos(item.original_photo_id);
+    }
+
+    return {
+      status: HttpStatus.OK,
+    };
   }
 }
