@@ -466,7 +466,7 @@ export class AdminService {
         '01054697884',
         String(item.original_photo_id),
       );
-      await this.workerService.makeAllPhotos(item.original_photo_id);
+      this.workerService.makeAllPhotos(item.original_photo_id);
     }
 
     return {
