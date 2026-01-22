@@ -612,13 +612,34 @@ export class PhotoService {
       .executeTakeFirst();
 
     // 첫 장이 이미 있으면: 결제건만 나머지 생성 트리거
+    console.log('[retryUploadPhoto] enter', { userId, photoId });
+
+    console.log('[retryUploadPhoto] photo', {
+      payment_id: photo.payment_id,
+      status: photo.status,
+      selected_design_id: photo.selected_design_id,
+    });
+
+    console.log('[retryUploadPhoto] isPaid', !!photo.payment_id);
+
+    console.log('[retryUploadPhoto] photoResult', !!photoResult);
+
     if (photoResult) {
       if (isPaid) {
+        console.log('[retryUploadPhoto] paid -> runRestGeneration');
         await runRestGeneration();
       } else {
+        console.log('[retryUploadPhoto] unpaid -> set complete');
         await this.photoRepository.updatePhotoStatus(photoId, 'complete');
-      }
 
+        const after = await this.db
+          .selectFrom('photos')
+          .where('id', '=', photoId)
+          .select(['id', 'status'])
+          .executeTakeFirst();
+
+        console.log('[retryUploadPhoto] after status', after);
+      }
       return { status: HttpStatus.OK };
     }
 
