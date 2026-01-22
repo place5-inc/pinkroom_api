@@ -270,22 +270,22 @@ export class PhotoWorkerService {
       })
       .executeTakeFirst();
 
-    await this.kakaoService.sendKakaoNotification(
-      user.user_id,
-      'pr_cplt_hr_smln_v1', //확정 템플릿 추가
-      null,
-      [],
-      [token, photoId.toString()],
-    );
-
-    // pr_cplt_hr_smln_v1 템플릿에서 부가정보를 변경했고, 검수 통과되면 _v1에서 v2로 변경해주셔야 합니다 @꿀민섭
     // await this.kakaoService.sendKakaoNotification(
     //   user.user_id,
-    //   'pr_cplt_hr_smln_v2', //확정 템플릿 추가
+    //   'pr_cplt_hr_smln_v1', //확정 템플릿 추가
     //   null,
     //   [],
     //   [token, photoId.toString()],
     // );
+
+    //pr_cplt_hr_smln_v1 템플릿에서 부가정보를 변경했고, 검수 통과되면 _v1에서 v2로 변경해주셔야 합니다 @꿀민섭
+    await this.kakaoService.sendKakaoNotification(
+      user.user_id,
+      'pr_cplt_hr_smln_v2', //확정 템플릿 추가
+      null,
+      [],
+      [token, photoId.toString()],
+    );
   }
 
   /*
