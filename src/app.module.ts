@@ -31,6 +31,7 @@ import { WorldcupService } from './worldcup/worldcup.service';
 import { KakaoService } from './kakao/kakao.service';
 import { ThumbnailService } from './photo/thumbnail.service';
 import { SchedulerService } from './scheduler/schuduler.service';
+import { CronService } from './cron/cron.service';
 const modules: ModuleMetadata = {
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -54,6 +55,7 @@ const modules: ModuleMetadata = {
     AdminService,
     AzureBlobService,
     CommonService,
+    CronService,
     MessageService,
     AuthService,
     VerificationService,

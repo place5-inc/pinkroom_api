@@ -5,17 +5,9 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { getMimeTypeFromUri } from 'src/libs/helpers';
-import { AzureBlobService } from 'src/azure/blob.service';
-import { HttpService } from '@nestjs/axios';
 import { GoogleGenAI } from '@google/genai';
 @Injectable()
 export class AiService {
-  constructor(
-    //private readonly db: DatabaseProvider,
-    private readonly azureBlobService: AzureBlobService,
-    private readonly httpService: HttpService,
-    //private readonly photoService: PhotoService,
-  ) {}
   async check() {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
