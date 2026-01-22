@@ -26,7 +26,7 @@ export class PhotoWorkerService {
     forceFail?: boolean,
     delaySecond?: number,
   ) {
-    const MAX_RETRY = 3;
+    const MAX_RETRY = 5;
     let attempt = 0;
 
     // 2️⃣ 원본 사진 (+ payment_id, selected_design_id 포함)
