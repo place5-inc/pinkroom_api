@@ -6,12 +6,9 @@ import { PhotoWorkerService } from 'src/photo/photo-worker.service';
 
 @Injectable()
 export class CronService {
-  constructor(
-    private readonly db: DatabaseProvider,
-    private readonly messageService: MessageService,
-    private readonly workerService: PhotoWorkerService,
-  ) {}
-  @Cron('5,25,35 * * * *')
+  private readonly db = new DatabaseProvider();
+  private readonly messageService = new MessageService();
+  @Cron('5,35,45 * * * *')
   public async check() {
     const startTime = new Date(Date.now() - 60 * 60 * 1000);
 
