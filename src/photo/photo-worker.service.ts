@@ -16,7 +16,6 @@ export class PhotoWorkerService {
     private readonly azureBlobService: AzureBlobService,
     private readonly aiService: AiService,
     private readonly kakaoService: KakaoService,
-    private readonly thumbnailService: ThumbnailService,
     private readonly messageService: MessageService,
     private readonly photoRepository: PhotoRepository,
   ) {}
