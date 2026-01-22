@@ -176,4 +176,9 @@ export class AdminController {
   async reboot() {
     return await this.adminService.reboot();
   }
+
+  @Get('fail')
+  async getFailList() {
+    return await this.adminService.getFailList();
+  }
 }

@@ -37,8 +37,8 @@ export class MessageService {
     }
   }
   async sendMessage(ment: string) {
-    this.sendMMS('010-3362-6141', ment, '핑크룸 에러', 'SMS', null);
-    this.sendMMS('01054697884', ment, '핑크룸 에러', 'SMS', null);
+    this.sendMMS('01033626141', ment, '핑크룸 에러', 'SMS', null);
+    this.sendMMS('01073002335', ment, '핑크룸 에러', 'SMS', null);
   }
   async sendErrorToManager(ment: string) {
     this.sendMMS('01054697884', ment, '핑크룸 에러', 'SMS', null);

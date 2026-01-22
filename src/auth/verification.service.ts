@@ -14,10 +14,10 @@ export class VerificationService {
   async createdCode(phone: string): Promise<string> {
     const randomNumber = Math.floor(Math.random() * 9000) + 1000;
     let code = randomNumber.toString();
-    //if (!this._isProduction) {
-    //테스트서버에서는 0000 코드로 고정
-    code = '0000';
-    //}
+    if (!this._isProduction) {
+      //테스트서버에서는 0000 코드로 고정
+      code = '0000';
+    }
 
     if (phone === '01199999999') {
       code = '0000';

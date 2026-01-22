@@ -473,4 +473,122 @@ export class AdminService {
       status: HttpStatus.OK,
     };
   }
+
+  async getFailList() {
+    const failIds = await this.db
+      .selectFrom('photo_results')
+      .where('status', '=', 'fail')
+      .select('original_photo_id')
+      .distinct()
+      .execute();
+    const photoIds = failIds.map((r) => r.original_photo_id);
+    if (photoIds.length === 0) return [];
+
+    const photoRows = await this.db
+      .selectFrom('photos as p')
+      .leftJoin('users as u', 'u.id', 'p.user_id')
+      .leftJoin('upload_file as uf', 'uf.id', 'p.upload_file_id')
+      .leftJoin('upload_file as bf', 'bf.id', 'p.thumbnail_before_after_id')
+      .leftJoin('upload_file as w', 'w.id', 'p.thumbnail_worldcup_id')
+      .leftJoin('upload_file as mi', 'mi.id', 'p.merged_image_id')
+      .where('p.id', 'in', photoIds)
+      .select([
+        'p.id as photoId',
+        'p.payment_id as paymentId',
+        'p.code as code',
+        'p.selected_design_id as selectedDesignId',
+        'uf.url as sourceImageUrl',
+        'bf.url as thumbnailBeforeAfterUrl',
+        'w.url as thumbnailWorldcupUrl',
+        'mi.url as mergedImageUrl',
+        'p.created_at as createdAt',
+        'p.status as status',
+        'p.retry_count as retryCount',
+        'p.did_show_complete_popup as didShowCompletePopup',
+        'p.did_show_free_complete_popup as didShowFreeCompletePopup',
+        'u.id as userId',
+        'u.phone as phone',
+      ])
+      .orderBy('p.id', 'desc')
+      .execute();
+    const resultRows = await this.db
+      .selectFrom('photo_results as pr')
+      .leftJoin('upload_file as uf', 'uf.id', 'pr.result_image_id')
+      .where('pr.original_photo_id', 'in', photoIds)
+      .select([
+        'pr.id as resultId',
+        'pr.original_photo_id as photoId',
+        'pr.hair_design_id as designId',
+        'pr.status as status',
+        'pr.created_at as createdAt',
+        'pr.fail_code as failCode',
+        'uf.url as url',
+      ])
+      .execute();
+    const resultsByPhotoId = new Map<
+      number,
+      Array<{
+        id: number;
+        url: string | null;
+        designId: number | null;
+        status: string;
+        createdAt: Date;
+        failCode: string | null;
+      }>
+    >();
+
+    for (const r of resultRows) {
+      const arr = resultsByPhotoId.get(r.photoId) ?? [];
+      arr.push({
+        id: r.resultId,
+        url: r.url ?? null,
+        designId: r.designId ?? null,
+        status: r.status,
+        createdAt: r.createdAt,
+        failCode: r.failCode ?? null,
+      });
+      resultsByPhotoId.set(r.photoId, arr);
+    }
+
+    const userPhotoList = photoRows
+      .map((p) => {
+        if (!p.userId) return null;
+
+        const photo = {
+          id: p.photoId,
+          paymentId: p.paymentId,
+          code: p.code,
+          sourceImageUrl: p.sourceImageUrl,
+          thumbnailBeforeAfterUrl: p.thumbnailBeforeAfterUrl,
+          thumbnailWorldcupUrl: p.thumbnailWorldcupUrl,
+          mergedImageUrl: p.mergedImageUrl,
+          selectedDesignId: p.selectedDesignId,
+          createdAt: p.createdAt.toISOString(),
+          status: p.status,
+          retryCount: p.retryCount,
+          didShowCompletePopup: p.didShowCompletePopup ?? false,
+          didShowFreeCompletePopup: p.didShowFreeCompletePopup ?? false,
+          resultImages: (resultsByPhotoId.get(p.photoId) ?? []).map((r) => ({
+            id: r.id,
+            url: r.url,
+            designId: r.designId,
+            status: r.status,
+            createdAt: r.createdAt.toISOString(),
+            failCode: r.failCode,
+          })),
+        };
+
+        const user = {
+          id: p.userId,
+          phone: p.phone,
+        };
+
+        return { photo, user };
+      })
+      .filter((x): x is { photo; user } => !!x);
+    return {
+      status: HttpStatus.OK,
+      list: userPhotoList,
+    };
+  }
 }

@@ -140,7 +140,9 @@ export class PhotoWorkerService {
       .selectAll()
       .executeTakeFirst();
     if (_photo.retry_count === 2) {
-      this.messageService.sendMessage('재시도 최대:' + String(originalPhotoId));
+      this.messageService.sendMessage(
+        '재시도 최대 에러:' + String(originalPhotoId),
+      );
     }
   }
 
