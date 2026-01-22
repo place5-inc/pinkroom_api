@@ -24,7 +24,7 @@ export class CronService {
     this.thumbnailService,
     this.azureBlobService,
   );
-  private readonly photoWorkerService = new PhotoWorkerService(
+  private readonly workerService = new PhotoWorkerService(
     this.db,
     this.azureBlobService,
     this.aiService,
@@ -32,11 +32,25 @@ export class CronService {
     this.messageService,
     this.photoRepository,
   );
-  @Cron('26 * * * *')
+  @Cron('5,35 * * * *')
   public async check() {
-    const startTime = new Date(Date.now() - 60 * 60 * 1000);
+    const startTime = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
     const endTime = new Date(Date.now() - 2 * 60 * 1000);
-    await this.messageService.sendSMSCertiCode('01054697884', 'test');
+    const list = await this.db
+      .selectFrom('photo_results')
+      .where('status', 'in', ['pending', 'fail'])
+      .where('created_at', '>', endTime)
+      .where('created_at', '<', startTime)
+      .select('original_photo_id')
+      .distinct()
+      .execute();
+    for (const item of list) {
+      await this.messageService.sendSMSCertiCode(
+        '01054697884',
+        'cron retry:' + String(item.original_photo_id),
+      );
+      this.workerService.makeAllPhotos(item.original_photo_id);
+    }
   }
 }
