@@ -20,6 +20,7 @@ import { PhotoWorkerService } from 'src/photo/photo-worker.service';
 import { PhotoService } from 'src/photo/photo.service';
 import { sql } from 'kysely';
 import { PhotoRepository } from 'src/photo/photo.repository';
+import { MessageService } from 'src/message/message.service';
 @Injectable()
 export class AdminService {
   constructor(
@@ -28,6 +29,7 @@ export class AdminService {
     private readonly azureBlobService: AzureBlobService,
     private readonly photoRepository: PhotoRepository,
     private readonly workerService: PhotoWorkerService,
+    private readonly messageService: MessageService,
   ) {}
   async test() {
     try {
@@ -448,5 +450,11 @@ export class AdminService {
         message: e.message,
       };
     }
+  }
+  async reboot() {
+    await this.messageService.sendSMSCertiCode('01054697884', 'server reboot');
+    return {
+      status: HttpStatus.OK,
+    };
   }
 }

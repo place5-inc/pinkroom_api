@@ -172,4 +172,8 @@ export class AdminController {
       body.image.id,
     );
   }
+  @Get('reboot')
+  async reboot() {
+    return await this.adminService.reboot();
+  }
 }
