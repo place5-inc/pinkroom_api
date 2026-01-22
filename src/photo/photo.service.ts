@@ -613,7 +613,12 @@ export class PhotoService {
 
     // 첫 장이 이미 있으면: 결제건만 나머지 생성 트리거
     if (photoResult) {
-      if (isPaid) await runRestGeneration();
+      if (isPaid) {
+        await runRestGeneration();
+      } else {
+        await this.photoRepository.updatePhotoStatus(photoId, 'complete');
+      }
+
       return { status: HttpStatus.OK };
     }
 
