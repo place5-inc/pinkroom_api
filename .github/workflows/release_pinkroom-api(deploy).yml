@@ -108,6 +108,7 @@ jobs:
             --resource-group k-astrology \
             --name pinkroom-api \
             --slot deploy
+            --target-slot production
       - name: Call API after swap (restart photos)
         run: |
           URL="https://pinkroom-api-b9c9b4cmhefxexhk.koreacentral-01.azurewebsites.net/admin/reboot"
