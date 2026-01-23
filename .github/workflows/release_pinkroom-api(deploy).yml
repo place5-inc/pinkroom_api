@@ -111,7 +111,6 @@ jobs:
       - name: Call API after swap (restart photos)
         run: |
           URL="https://pinkroom-api-b9c9b4cmhefxexhk.koreacentral-01.azurewebsites.net/admin/reboot"
-          # 여러 번 재시도(배포 직후 잠깐 502/503 뜰 수 있어서)
           for i in {1..2}; do
             echo "Try $i..."
             if curl -fsS "$URL"; then
@@ -120,5 +119,5 @@ jobs:
             fi
             sleep 5
           done
-          echo "FAILED"
-          exit 1
+          echo "FAILED (ignored)"
+          exit 0

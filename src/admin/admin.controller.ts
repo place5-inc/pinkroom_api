@@ -181,4 +181,13 @@ export class AdminController {
   async getFailList() {
     return await this.adminService.getFailList();
   }
+  @Get('check')
+  async check() {
+    //꿀배포 swap 이 안되는 경우가 있어서.
+    //배포하면서 1,2,3,4 늘려보고
+    //https://pinkroom-api-b9c9b4cmhefxexhk.koreacentral-01.azurewebsites.net/admin/check
+    //https://pinkroom-api-deploy-a4fubsd6fpdfdqd8.koreacentral-01.azurewebsites.net/admin/check
+
+    return 1;
+  }
 }
