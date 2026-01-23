@@ -15,7 +15,7 @@ export class VerificationService {
     if (process.env.NODE_ENV === 'production') {
     } else {
       //테스트서버에서는 0000 코드로 고정
-      code = '0000';
+      //code = '0000';
     }
 
     if (phone === '01199999999') {
