@@ -187,7 +187,7 @@ export class AdminController {
     //배포하면서 1,2,3,4 늘려보고
     //https://pinkroom-api-b9c9b4cmhefxexhk.koreacentral-01.azurewebsites.net/admin/check
     //https://pinkroom-api-deploy-a4fubsd6fpdfdqd8.koreacentral-01.azurewebsites.net/admin/check
-
+    //왜 배포가 안되지?
     return 1;
   }
 }
