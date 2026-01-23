@@ -85,7 +85,7 @@ export class KakaoSchedulerService {
     let type: string;
 
     let isKakaoProduction = false;
-    if (process.env.PRODUCTION === 'on') {
+    if (process.env.IS_KAKAO_PRODUCTION === 'on') {
       isKakaoProduction = true;
     }
     // 런칭용
