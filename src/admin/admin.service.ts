@@ -300,7 +300,7 @@ export class AdminService {
   }
   async getActionLog(page: number) {
     try {
-      const pageSize = 100;
+      const pageSize = 500;
       const offset = (page - 1) * pageSize;
       let query = this.db.selectFrom('user_action_log');
       const logs = await query
