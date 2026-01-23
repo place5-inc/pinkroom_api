@@ -188,6 +188,6 @@ export class AdminController {
     //https://pinkroom-api-b9c9b4cmhefxexhk.koreacentral-01.azurewebsites.net/admin/check
     //https://pinkroom-api-deploy-a4fubsd6fpdfdqd8.koreacentral-01.azurewebsites.net/admin/check
     //왜 배포가 안되지?
-    return 2;
+    return 3;
   }
 }
