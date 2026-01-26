@@ -249,6 +249,9 @@ export class PhotoService {
 
       const results = await this.photoRepository.getPhotosByUserId(userId);
       const user = await this.userRepository.getUser(userId);
+      if (!user) {
+        return { status: HttpStatus.UNAUTHORIZED };
+      }
       return { status: HttpStatus.OK, results, user };
     } catch (e: any) {
       return { status: HttpStatus.INTERNAL_SERVER_ERROR, message: e.message };
