@@ -16,7 +16,7 @@ export class SchedulerService {
   private readonly db = new DatabaseProvider();
   private readonly messageService = new MessageService();
 
-  @CronForENV(['production', 'staging', 'development'], '0 16 * * *') //매일 16시에 동작
+  @CronForENV(['production'], '0 7 * * *') //매일 16시에 동작
   public async completeVoteWorldcupRemindWeek() {
     try {
       const isPublish = await this.checkSchedulerPublishState(
@@ -107,7 +107,7 @@ export class SchedulerService {
     }
   }
 
-  @CronForENV(['production', 'staging', 'development'], '0 16 * * *') //매일 16시에 동작
+  @CronForENV(['production'], '0 7 * * *') //매일 16시에 동작
   public async completeVoteWorldcupRemindMonth() {
     try {
       const isPublish = await this.checkSchedulerPublishState(
