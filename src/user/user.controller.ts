@@ -11,13 +11,23 @@ import { PhotoService } from '../photo/photo.service';
 import { UploadPhotoBody, UserActionBody } from 'src/libs/types';
 import { isEmpty } from 'src/libs/helpers';
 import { UserService } from './user.service';
+import { DatabaseProvider } from 'src/libs/db';
 
 @Controller('user')
 export class UserController {
   constructor(
+    private readonly db: DatabaseProvider,
     private photoService: PhotoService,
     private userService: UserService,
   ) {}
+  @Get('test')
+  async test() {
+    const log = await this.db
+      .selectFrom('scheduler_log')
+      .select('start_at')
+      .execute();
+    return log;
+  }
   @Get()
   async getPhotoList(@Query('userId') userId: string) {
     if (isEmpty(userId)) {

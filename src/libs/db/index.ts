@@ -62,7 +62,7 @@ export class DatabaseProvider {
               database: process.env.SQLSERVER_DB ?? 'pinkroom',
               port: Number(process.env.SQLSERVER_PORT ?? '1433'),
               trustServerCertificate: true,
-              encrypt: false,
+              encrypt: true,
             },
             server: process.env.SQLSERVER_HOST ?? '210.89.176.239',
           }),
