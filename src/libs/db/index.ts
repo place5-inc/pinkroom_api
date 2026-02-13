@@ -53,18 +53,20 @@ export class DatabaseProvider {
           new tedious.Connection({
             authentication: {
               options: {
-                password: process.env.SQLSERVER_PASSWORD ?? 'rlarhkdhl1777',
-                userName: process.env.SQLSERVER_USER ?? 'apiaccount',
+                password: process.env.SQLSERVER_PASSWORD ?? 'rlarhkdhl1777!@#',
+                userName: process.env.SQLSERVER_USER ?? 'kimadmin',
               },
               type: 'default',
             },
             options: {
               database: process.env.SQLSERVER_DB ?? 'pinkroom',
-              port: Number(process.env.SQLSERVER_PORT ?? '1433'),
+              port: Number(process.env.SQLSERVER_PORT ?? '3342'),
               trustServerCertificate: true,
-              encrypt: false,
+              encrypt: true,
             },
-            server: process.env.SQLSERVER_HOST ?? '210.89.176.239',
+            server:
+              process.env.SQLSERVER_HOST ??
+              'kim-mssql.public.6a578cca366e.database.windows.net',
           }),
       },
     }),
