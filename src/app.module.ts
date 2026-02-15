@@ -32,6 +32,8 @@ import { KakaoService } from './kakao/kakao.service';
 import { ThumbnailService } from './photo/thumbnail.service';
 import { SchedulerService } from './scheduler/schuduler.service';
 import { CronService } from './cron/cron.service';
+import { AppController } from './app.controller';
+
 const modules: ModuleMetadata = {
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -39,6 +41,7 @@ const modules: ModuleMetadata = {
     HttpModule,
   ],
   controllers: [
+    AppController,
     UserController,
     CommonController,
     AdminController,

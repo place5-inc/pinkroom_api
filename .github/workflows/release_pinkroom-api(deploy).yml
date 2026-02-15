@@ -29,10 +29,8 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Remove devDependencies from package-lock.json
-        run: |
-          jq 'del(.devDependencies)' package-lock.json > package-lock-cleaned.json
-          mv package-lock-cleaned.json package-lock.json
+      - name: Only production packages
+        run: npm prune --omit=dev
 
       - name: Zip artifact for deployment
         run: |
@@ -40,9 +38,7 @@ jobs:
             dist \
             node_modules \
             package.json \
-            package-lock.json \
-            resources \
-            .npmrc
+            resources
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -88,36 +84,36 @@ jobs:
         with:
           name: node-app
 
-  swap:
-    runs-on: ubuntu-latest
-    needs: deploy
-    permissions:
-      id-token: write #This is required for requesting the JWT
+  # swap:
+  #   runs-on: ubuntu-latest
+  #   needs: deploy
+  #   permissions:
+  #     id-token: write #This is required for requesting the JWT
 
-    steps:
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_459C2FAA0B404A55BE217A4E06298F8F }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_72FD6977A70E4E5E9351462A7CC9E1A7 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B2B7858164A042D18CC190D2F0436412 }}
+  #   steps:
+  #     - name: Login to Azure
+  #       uses: azure/login@v2
+  #       with:
+  #         client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_459C2FAA0B404A55BE217A4E06298F8F }}
+  #         tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_72FD6977A70E4E5E9351462A7CC9E1A7 }}
+  #         subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B2B7858164A042D18CC190D2F0436412 }}
 
-      - name: Swap to production
-        run: |
-          az webapp deployment slot swap \
-            --resource-group k-astrology \
-            --name pinkroom-api \
-            --slot deploy
-      - name: Call API after swap (restart photos)
-        run: |
-          URL="https://pinkroom-api-b9c9b4cmhefxexhk.koreacentral-01.azurewebsites.net/admin/reboot"
-          for i in {1..2}; do
-            echo "Try $i..."
-            if curl -fsS "$URL"; then
-              echo "OK"
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "FAILED (ignored)"
-          exit 0
+  #     - name: Swap to production
+  #       run: |
+  #         az webapp deployment slot swap \
+  #           --resource-group k-astrology \
+  #           --name pinkroom-api \
+  #           --slot deploy
+  #     - name: Call API after swap (restart photos)
+  #       run: |
+  #         URL="https://pinkroom-api-b9c9b4cmhefxexhk.koreacentral-01.azurewebsites.net/admin/reboot"
+  #         for i in {1..2}; do
+  #           echo "Try $i..."
+  #           if curl -fsS "$URL"; then
+  #             echo "OK"
+  #             exit 0
+  #           fi
+  #           sleep 5
+  #         done
+  #         echo "FAILED (ignored)"
+  #         exit 0

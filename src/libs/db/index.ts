@@ -53,8 +53,8 @@ export class DatabaseProvider {
           new tedious.Connection({
             authentication: {
               options: {
-                password: process.env.SQLSERVER_PASSWORD ?? 'rlarhkdhl1777!@#',
-                userName: process.env.SQLSERVER_USER ?? 'kimadmin',
+                password: process.env.SQLSERVER_PASSWORD ?? 'rlatjqj#@!',
+                userName: process.env.SQLSERVER_USER ?? 'kimserver',
               },
               type: 'default',
             },
